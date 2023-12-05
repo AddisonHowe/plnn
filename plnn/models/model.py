@@ -2,14 +2,16 @@
 
 """
 
+import warnings
+import numpy as np
+import matplotlib.pyplot as plt
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
-from jaxtyping import Array, Float  # https://github.com/google/jaxtyping
+from jaxtyping import Array, Float
 from diffrax import diffeqsolve, ControlTerm, MultiTerm, ODETerm, SaveAt
 from diffrax import Euler, ReversibleHeun, VirtualBrownianTree
 import equinox as eqx
-from functools import partial
 
 _ACTIVATION_KEYS = {
     'none' : None,
@@ -36,16 +38,18 @@ _INIT_METHOD_KEYS = {
 }
 
 class PLNN(eqx.Module):
-    
+
+    phi_nn: eqx.Module   # learnable
+    tilt_nn: eqx.Module  # learnable
+    logsigma: Array      # learnable
+
     ndim: int
     nsig: int
     ncells: int
-    nsigparams: int
-    phi_nn: eqx.Module
-    tilt_nn: eqx.Module
-    logsigma: Array
-    sigma_init: float
     signal_type: str
+    nsigparams: int
+    sigma_init: float
+    solver: str
     dt0: float
     sample_cells: bool
     include_phi_bias: bool
@@ -60,15 +64,16 @@ class PLNN(eqx.Module):
         signal_type='jump',
         nsigparams=5,
         sigma_init=1e-2,
+        solver='euler',
         dt0=1e-2,
-        hidden_dims=[16, 32, 32, 16],
+        sample_cells=True,
+        include_phi_bias=True,
+        include_signal_bias=False,
+        hidden_dims=[16, 32, 32, 16],  # end of attributes
         hidden_acts='elu',
         final_act='softplus',
         layer_normalize=False,
-        include_phi_bias=True,
-        include_signal_bias=False,
         dtype=jnp.float32,
-        sample_cells=True,
     ):
         """
         """
@@ -78,9 +83,10 @@ class PLNN(eqx.Module):
         self.ndim = ndim
         self.nsig = nsig
         self.ncells = ncells
+        self.signal_type = signal_type
         self.nsigparams = nsigparams
         self.sigma_init = sigma_init
-        self.signal_type = signal_type
+        self.solver = solver
         self.dt0 = dt0
         self.sample_cells = sample_cells
         self.include_phi_bias = include_phi_bias
@@ -101,11 +107,10 @@ class PLNN(eqx.Module):
         
         # Tilt Neural Network: Linear tilt values. Maps nsigs to ndims.
         self.tilt_nn = self._construct_tilt_nn(
-            key2, 
-            bias=include_signal_bias, dtype=dtype
+            key2, bias=include_signal_bias, dtype=dtype
         )
 
-        # Noise inference or constant
+        # Noise parameter
         self.logsigma = jnp.array(jnp.log(sigma_init), dtype=dtype)
 
     def __call__(
@@ -116,7 +121,7 @@ class PLNN(eqx.Module):
         sigparams: Float[Array, "b nsigparams"],
         key: Array,
     ) -> Float[Array, "b ncells ndim"]:
-        """Forward call.
+        """Forward call. Acts on batched data.
 
         TODO
         
@@ -132,11 +137,11 @@ class PLNN(eqx.Module):
         """
         # Parse the inputs
         fwdvec = jax.vmap(self.simulate_forward, 0)
-        key, subkey = jrandom.split(key, 2)
+        key, sample_key = jrandom.split(key, 2)
         if self.sample_cells:
-            y0 = self._sample_y0(subkey, y0)
-        keys = jax.random.split(key, t0.shape[0])
-        return fwdvec(t0, t1, y0, sigparams, keys)
+            y0 = self._sample_y0(sample_key, y0)
+        batch_keys = jax.random.split(key, t0.shape[0])
+        return fwdvec(t0, t1, y0, sigparams, batch_keys)
     
     ######################
     ##  Getter Methods  ##
@@ -149,6 +154,50 @@ class PLNN(eqx.Module):
         return jnp.exp(self.logsigma.item())
     
     def get_parameters(self):
+        """Return dictionary of learnable model parameters.
+
+        Returned dictionary contains (str) keys: 
+            phi.w, phi.b, tilt.w, tilt.b, sigma
+        Each key maps to a list of jnp.array objects.
+        
+        Returns:
+            dict: Dictionary containing learnable parameters.
+                
+        """
+        def linear_layers(m):
+            return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
+        phi_linlayers  = linear_layers(self.phi_nn)
+        tilt_linlayers = linear_layers(self.tilt_nn)
+        d = {
+            'phi.w'  : [l.weight for l in phi_linlayers],
+            'phi.b'  : [l.bias for l in phi_linlayers],
+            'tilt.w' : [l.weight for l in tilt_linlayers],
+            'tilt.b' : [l.bias for l in tilt_linlayers],
+            'sigma'  : self.get_sigma(),
+        }
+        return d
+    
+    def get_hyperparameters(self):
+        """Return dictionary of hyperparameters specifying the model.
+        
+        Returns:
+            dict: dictionary of hyperparameters.
+        """
+        return {
+            'ndim' : self.ndim,
+            'nsig' : self.nsig,
+            'ncells' : self.ncells,
+            'signal_type' : self.signal_type,
+            'nsigparams' : self.nsigparams,
+            'sigma_init' : self.sigma_init,
+            'solver' : self.solver,
+            'dt0' : self.dt0,
+            'sample_cells' : self.sample_cells,
+            'include_phi_bias' : self.include_phi_bias,
+            'include_signal_bias' : self.include_signal_bias,
+        }
+    
+    def get_linear_layer_parameters(self):
         def linear_layers(m):
             return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
         phi_linlayers  = linear_layers(self.phi_nn)
@@ -164,16 +213,7 @@ class PLNN(eqx.Module):
             if layer.bias is not None:
                 tilt_params.append(layer.bias)
         return phi_params + tilt_params
-    
-    def get_hyperparameters(self):
-        return {
-            'ndim' : self.ndim,
-            'nsig' : self.nsig,
-            'ncells' : self.ncells,
-            'nsigparams' : self.nsigparams,
-            'sigma_init' : self.sigma_init,
-        }
-    
+
     ##########################
     ##  Simulation Methods  ##
     ##########################
@@ -387,58 +427,6 @@ class PLNN(eqx.Module):
         """
         return jax.vmap(self.eval_grad_phi, (None, 0))(t, y)
         
-    ##########################################
-    ##  Batch-Vectorized Landscape Methods  ##
-    ##########################################
-
-    @eqx.filter_jit
-    def f_batched(
-        self, 
-        t: Float[Array, "b 1"], 
-        y: Float[Array, "b ncells ndim"], 
-        sig_params: Float[Array, "b nsigparams"],
-    ) -> Float[Array, "b ncells ndim"]:
-        """Batch-vectorized drift term. 
-
-        Args:
-            t (Array)          : Time values. Shape (b,).
-            y (Array)          : State vector. Shape (b,n,d).
-            sig_params (Array) : Signal parameters. Shape (b,nsigparams,).
-        Returns:
-            Array of shape (b,n,d).
-        """
-        return jax.vmap(self.f_vec, 0)(t, y, sig_params)
-    
-    @eqx.filter_jit
-    def phi_batched(
-        self, 
-        y: Float[Array, "b ncells ndim"]
-    ) -> Float[Array, "b ncells 1"]:
-        """Batch-vectorized potential value, without tilt. 
-
-        Args:
-            y (Array) : State vector. Shape (b,n,d).
-        Returns:
-            Array of shape (b,n,1).
-        """
-        return jax.vmap(self.phi_vec, 0)(y)
-
-    @eqx.filter_jit
-    def grad_phi_batched(
-        self, 
-        t: Float[Array, "b 1"], 
-        y: Float[Array, "b ncells ndim"]
-    ) -> Float[Array, "b ncells ndim"]:
-        """Batch-vectorized gradient of potential, without tilt. 
-
-        Args:
-            t (Array) : Time values. Shape (b,).
-            y (Array) : State vector. Shape (b,n,d).
-        Returns:
-            Array of shape (b,n,d).
-        """
-        return jax.vmap(self.grad_phi_vec, 0)(t, y)
-        
     ########################
     ##  Signal Functions  ##
     ########################
@@ -452,9 +440,36 @@ class PLNN(eqx.Module):
         p1 = sigparams[...,3:5]
         return (t < tcrit) * p0 + (t >= tcrit) * p1
 
-    ##############################
-    ##  Initialization Methods  ##
-    ##############################
+    #############################
+    ##  Initialization Method  ##
+    #############################
+
+    def initialize(self, key, dtype=jnp.float32, *,
+        init_phi_weights_method='xavier_uniform',
+        init_phi_weights_args=[],
+        init_phi_bias_method='constant',
+        init_phi_bias_args=[0.],
+        init_tilt_weights_method='xavier_uniform',
+        init_tilt_weights_args=[],
+        init_tilt_bias_method='constant',
+        init_tilt_bias_args=[0.],
+    ):
+        new_model = initialize_model(
+            key, self, dtype=dtype,
+            init_phi_weights_method=init_phi_weights_method,
+            init_phi_weights_args=init_phi_weights_args,
+            init_phi_bias_method=init_phi_bias_method,
+            init_phi_bias_args=init_phi_bias_args,
+            init_tilt_weights_method=init_tilt_weights_method,
+            init_tilt_weights_args=init_tilt_weights_args,
+            init_tilt_bias_method=init_tilt_bias_method,
+            init_tilt_bias_args=init_tilt_bias_args,
+        )
+        return new_model
+    
+    ###################################
+    ##  Construction Helper Methods  ##
+    ###################################
 
     def _check_hidden_layers(self, hidden_dims, hidden_acts, final_act):
         """Check the model architecture.
@@ -539,11 +554,215 @@ class PLNN(eqx.Module):
         layer_list = [eqx.nn.Linear(self.nsig, self.ndim,
                                     use_bias=bias, key=key)]
         return eqx.nn.Sequential(layer_list)
+    
+    ########################
+    ##  Plotting Methods  ##
+    ########################
+
+    def plot_phi(self, r=4, res=50, plot3d=False, **kwargs):
+        """Plot the scalar function phi.
+        Args:
+            r (int) : 
+            res (int) :
+            plot3d (bool) :
+            normalize (bool) :
+            log_normalize (bool) :
+            clip (float) :
+            ax (Axis) :
+            figsize (tuple[float]) :
+            xlims (tuple[float]) :
+            ylims (tuple[float]) :
+            xlabel (str) :
+            ylabel (str) :
+            zlabel (str) :
+            title (str) :
+            cmap (Colormap) :
+            include_cbar (bool) :
+            cbar_title (str) :
+            cbar_titlefontsize (int) :
+            cbar_ticklabelsize (int) :
+            view_init (tuple) :
+            saveas (str) :
+            show (bool) :
+        Returns:
+            Axis object.
+        """
+        #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
+        normalize = kwargs.get('normalize', True)
+        log_normalize = kwargs.get('log_normalize', True)
+        clip = kwargs.get('clip', None)
+        ax = kwargs.get('ax', None)
+        figsize = kwargs.get('figsize', (6, 4))
+        xlims = kwargs.get('xlims', None)
+        ylims = kwargs.get('ylims', None)
+        xlabel = kwargs.get('xlabel', "$x$")
+        ylabel = kwargs.get('ylabel', "$y$")
+        zlabel = kwargs.get('zlabel', "$\\phi$")
+        title = kwargs.get('title', "$\\phi(x,y)$")
+        cmap = kwargs.get('cmap', 'coolwarm')
+        include_cbar = kwargs.get('include_cbar', True)
+        cbar_title = kwargs.get('cbar_title', 
+                                "$\\ln\\phi$" if log_normalize else "$\\phi$")
+        cbar_titlefontsize = kwargs.get('cbar_titlefontsize', 10)
+        cbar_ticklabelsize = kwargs.get('cbar_ticklabelsize', 8)
+        view_init = kwargs.get('view_init', (30, -45))
+        saveas = kwargs.get('saveas', None)
+        show = kwargs.get('show', False)
+        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+        # if self.training:
+        #     warnings.warn("Not plotting. Currently training=True.")
+        #     return
+        if ax is None and plot3d:
+            fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+        elif ax is None and (not plot3d):
+            fig, ax = plt.subplots(1, 1, figsize=figsize)
+        
+        # Compute phi
+        x = np.linspace(-r, r, res)
+        y = np.linspace(-r, r, res)
+        xs, ys = np.meshgrid(x, y)
+        z = np.array([xs.flatten(), ys.flatten()]).T
+        z = jnp.array(z, dtype=jnp.float32)
+        phi = np.array(self.phi(z))  # move to cpu
+        
+        # Normalization
+        if normalize:
+            phi = 1 + phi - phi.min()  # set minimum to 1
+        if log_normalize:
+            phi = np.log(phi)
+
+        # Clipping
+        clip = phi.max() if clip is None else clip
+        if clip < phi.min():
+            warnings.warn(f"Clip value {clip} is below minimum value to plot.")
+            clip = phi.max()
+        under_cutoff = phi <= clip
+        plot_screen = np.ones(under_cutoff.shape)
+        plot_screen[~under_cutoff] = np.nan
+        phi_plot = phi * plot_screen
+
+        # Plot phi
+        if plot3d:
+            sc = ax.plot_surface(
+                xs, ys, phi_plot.reshape(xs.shape), 
+                vmin=phi[under_cutoff].min(),
+                vmax=phi[under_cutoff].max(),
+                cmap=cmap
+            )
+        else:
+            sc = ax.pcolormesh(
+                xs, ys, phi_plot.reshape(xs.shape),
+                vmin=phi[under_cutoff].min(),
+                vmax=phi[under_cutoff].max(),
+                cmap=cmap, 
+            )
+        # Colorbar
+        if include_cbar:
+            cbar = plt.colorbar(sc)
+            cbar.ax.set_title(cbar_title, size=cbar_titlefontsize)
+            cbar.ax.tick_params(labelsize=cbar_ticklabelsize)
+        
+        # Format plot
+        if xlims is not None: ax.set_xlim(*xlims)
+        if ylims is not None: ax.set_ylim(*ylims)
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        if plot3d: 
+            ax.set_zlabel(zlabel)
+            ax.view_init(*view_init)
+        plt.tight_layout()
+        
+        # Save and close
+        if saveas: plt.savefig(saveas, bbox_inches='tight')
+        if not show: plt.close()
+        return ax
+    
+    def plot_f(self, signal=0, r=4, res=50, **kwargs):
+        """Plot the vector field f.
+        Args:
+            signal (float or tuple[float]) :
+            r (int) : 
+            res (int) :
+            ax (Axis) :
+            figsize (tuple[float]) :
+            xlims (tuple[float]) :
+            ylims (tuple[float]) :
+            xlabel (str) :
+            ylabel (str) :
+            title (str) :
+            cmap (Colormap) :
+            include_cbar (bool) :
+            cbar_title (str) :
+            cbar_titlefontsize (int) :
+            cbar_ticklabelsize (int) :
+            saveas (str) :
+            show (bool) :
+        Returns:
+            Axis object.
+        """
+        #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
+        ax = kwargs.get('ax', None)
+        figsize = kwargs.get('figsize', (6, 4))
+        xlims = kwargs.get('xlims', None)
+        ylims = kwargs.get('ylims', None)
+        xlabel = kwargs.get('xlabel', "$x$")
+        ylabel = kwargs.get('ylabel', "$y$")
+        title = kwargs.get('title', "$f(x,y|\\vec{s})$")
+        cmap = kwargs.get('cmap', 'coolwarm')
+        include_cbar = kwargs.get('include_cbar', True)
+        cbar_title = kwargs.get('cbar_title', "$|f|$")
+        cbar_titlefontsize = kwargs.get('cbar_titlefontsize', 10)
+        cbar_ticklabelsize = kwargs.get('cbar_ticklabelsize', 8)
+        saveas = kwargs.get('saveas', None)
+        show = kwargs.get('show', False)
+        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+        # if self.training:
+        #     warnings.warn("Not plotting. Currently training=True.")
+        #     return
+        if ax is None: fig, ax = plt.subplots(1, 1, figsize=figsize)
+        
+        # Initialize signal parameters TODO: don't hard-code the parameters
+        signal_params = jnp.array([1, *signal, *signal], dtype=self.dtype)
+        eval_time = 1.
+        
+        # Compute f
+        x = np.linspace(-r, r, res)
+        y = np.linspace(-r, r, res)
+        xs, ys = np.meshgrid(x, y)
+        z = np.array([xs.flatten(), ys.flatten()]).T
+        z = jnp.array(z, dtype=self.dtype)
+        f = np.array(self.f(eval_time, z, signal_params))
+        fu, fv = f.T
+        fnorms = np.sqrt(fu**2 + fv**2)
+
+        # Plot force field, tilted by signals
+        sc = ax.quiver(xs, ys, fu/fnorms, fv/fnorms, fnorms, cmap=cmap)
+        
+        # Colorbar
+        if include_cbar:
+            cbar = plt.colorbar(sc)
+            cbar.ax.set_title(cbar_title, size=cbar_titlefontsize)
+            cbar.ax.tick_params(labelsize=cbar_ticklabelsize)
+        
+        # Format plot
+        if xlims is not None: ax.set_xlim(*xlims)
+        if ylims is not None: ax.set_ylim(*ylims)
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        plt.tight_layout()
+        
+        # Save and close
+        if saveas: plt.savefig(saveas, bbox_inches='tight')
+        if not show: plt.close()
+        return ax
 
     ######################
     ##  Helper Methods  ##
     ######################
 
+    @eqx.filter_jit
     def _sample_y0(self, key, y0):
         y0_samp = jnp.empty([y0.shape[0], self.ncells, y0.shape[2]])
         if y0.shape[1] < self.ncells:
@@ -572,46 +791,61 @@ class PLNN(eqx.Module):
 ##  Model Construction  ##
 ##########################
 
-def make_model(key, ndim, nsig, ncells, 
-               signal_type, nsigparams, sigma_init, 
-               hidden_dims, hidden_acts, final_act, layer_normalize, 
-               include_phi_bias, include_signal_bias, sample_cells, 
-               dt0, dtype=jnp.float32):
-    hyperparams = {
-        'ndim' : ndim,
-        'nsig' : nsig,
-        'ncells' : ncells,
-        'signal_type' : signal_type,
-        'nsigparams' : nsigparams,
-        'sigma_init' : sigma_init,
+def make_model(
+    *, key, 
+    ndim, nsig, ncells, 
+    signal_type, nsigparams, sigma_init, 
+    solver, dt0, sample_cells,
+    include_phi_bias, include_signal_bias,
+    hidden_dims, hidden_acts, final_act, layer_normalize, 
+    dtype,
+):
+    """Construct a model and store all hyperparameters.
+    
+    Args:
+        key
+        ndim
+        nsig
+        ncells
+        signal_type
+        nsigparams
+        sigma_init
+        solver
+        dt0
+        sample_cells
+        include_phi_bias
+        include_signal_bias
+        hidden_dims
+        hidden_acts
+        final_act
+        layer_normalize
+        dtype
+    
+    Returns:
+        PLNN: model.
+        dict: dictionary of hyperparameters.
+    """
+    model = PLNN(
+        key=key,
+        ndim=ndim, nsig=nsig, ncells=ncells,
+        signal_type=signal_type, nsigparams=nsigparams,
+        sigma_init=sigma_init,
+        solver=solver, dt0=dt0, sample_cells=sample_cells,
+        include_phi_bias=include_phi_bias,
+        include_signal_bias=include_signal_bias,
+        hidden_dims=hidden_dims, hidden_acts=hidden_acts, final_act=final_act,
+        layer_normalize=layer_normalize,
+        dtype=dtype,
+    )
+    hyperparams = model.get_hyperparameters()
+    # Append to dictionary those hyperparams not stored internally.
+    hyperparams.update({
         'hidden_dims' : hidden_dims,
         'hidden_acts' : hidden_acts,
         'final_act' : final_act,
         'layer_normalize' : layer_normalize,
-        'include_phi_bias' : include_phi_bias,
-        'include_signal_bias' : include_signal_bias,
-        'sample_cells' : sample_cells,
-        'dt0' : dt0,
         'dtype' : dtype,
-    }
-    model = PLNN(
-        key=key, 
-        ndim=ndim,
-        nsig=nsig,
-        ncells=ncells,
-        signal_type=signal_type,
-        nsigparams=nsigparams,
-        sigma_init=sigma_init,
-        hidden_dims=hidden_dims,
-        hidden_acts=hidden_acts,
-        final_act=final_act,
-        layer_normalize=layer_normalize,
-        include_phi_bias=include_phi_bias,
-        include_signal_bias=include_signal_bias,
-        sample_cells=sample_cells,
-        dt0=dt0,
-        dtype=dtype,
-    )
+    })
     return model, hyperparams
 
 

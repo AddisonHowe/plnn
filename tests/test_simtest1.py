@@ -121,7 +121,7 @@ class TestTwoStepSimulation:
             learning_rate=learning_rate, 
         )
 
-        oldparams = model.get_parameters()
+        oldparams = model.get_linear_layer_parameters()
 
         model = train_model(
             model,
@@ -138,7 +138,7 @@ class TestTwoStepSimulation:
 
         self._remove_files(OUTDIR, 'tmp_model')
 
-        newparams = model.get_parameters()
+        newparams = model.get_linear_layer_parameters()
 
         if len(newparams) != 4:
             msg = "Bad length for parameters after training 1 epoch. " + \
@@ -191,7 +191,7 @@ class TestTwoStepSimulation:
             learning_rate=learning_rate, 
         )
 
-        oldparams = model.get_parameters()
+        oldparams = model.get_linear_layer_parameters()
 
         model = train_model(
             model,
@@ -208,7 +208,7 @@ class TestTwoStepSimulation:
 
         self._remove_files(OUTDIR, 'tmp_model')
         
-        newparams = model.get_parameters()
+        newparams = model.get_linear_layer_parameters()
 
         if len(newparams) != 4:
             msg = "Bad length for parameters after training 1 epoch. " + \
@@ -264,7 +264,7 @@ class TestTwoStepSimulation:
 
         self._remove_files(OUTDIR, 'tmp_model')
 
-        newparams = model2.get_parameters()
+        newparams = model2.get_linear_layer_parameters()
         
         if len(newparams) != 4:
             msg = "Bad length for parameters after training 2 epochs. " + \

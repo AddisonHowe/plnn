@@ -1,7 +1,7 @@
 """Model Training Script
 """
 
-import sys, time
+import time
 import json
 import numpy as np
 import jax.random as jrandom
@@ -11,28 +11,27 @@ from plnn.models import PLNN
 
 
 def train_model(
-        model, 
-        loss_fn, 
-        optimizer,
-        train_dataloader, 
-        validation_dataloader,
-        key,
-        num_epochs=50,
-        batch_size=1,
-        **kwargs
-    ):
-    """TODO
+    model, 
+    loss_fn, 
+    optimizer,
+    train_dataloader, 
+    validation_dataloader,
+    key,
+    num_epochs=50,
+    batch_size=1,
+    **kwargs
+):
+    """Train a PLNN model.
 
     Args:
-        model (_type_): _description_
-        dt (_type_): _description_
-        loss_fn (_type_): _description_
-        optimizer (_type_): _description_
-        train_dataloader (_type_): _description_
-        validation_dataloader (_type_): _description_
-        key (_type_): _description_
-        num_epochs (int, optional): _description_. Defaults to 50.
-        batch_size (int, optional): _description_. Defaults to 1.
+        model (PLNN): Model to train.
+        loss_fn (callable): Loss function.
+        optimizer (optax.GradientTransformation): Optimizer.
+        train_dataloader (DataLoader): Training dataloader.
+        validation_dataloader (DataLoader): Validation dataloader.
+        key (PRNGKey): Random number generator key.
+        num_epochs (int, optional): Number of training epochs. Defaults to 50.
+        batch_size (int, optional): Batch size. Defaults to 1.
     """
     #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
     model_name = kwargs.get('model_name', 'model')
@@ -50,7 +49,10 @@ def train_model(
     sigma_hist = []
 
     opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
-    print(opt_state)
+
+    # Initial state plot, if specified
+    if plotting:
+        make_plots(0, model, outdir, plotting_opts)
 
     for epoch in range(num_epochs):
         print(f'EPOCH {epoch + 1}:', flush=True)
@@ -99,7 +101,7 @@ def train_model(
         
         # Plotting, if specified
         if plotting:
-            make_plots(epoch, model, outdir, plotting_opts)
+            make_plots(epoch + 1, model, outdir, plotting_opts)
         
     time1 = time.time()
     print(f"Finished training in {time1-time0:.3f} seconds.")
@@ -115,7 +117,8 @@ def train_one_epoch(
         dataloader, 
         key,
         batch_size=1,
-        verbosity=1,   # 0: none. 1: default. 2: debug.
+        report_every=100,  # print running loss every 10 batches.
+        verbosity=1,  # 0: none. 1: default. 2: debug.
     ):
     """One epoch of training.
 
@@ -131,14 +134,18 @@ def train_one_epoch(
         device (str): Default 'cpu'.
 
     Returns:
-        float: last loss
+        PLNN: updated model.
+        float: training loss with respect to the last batch.
+        PyTree: optimizer state
     """
 
     running_loss = 0.
     last_loss = 0.
+    if report_every <= 0 or report_every > len(dataloader):
+        report_every = len(dataloader)
 
     # Train over batches
-    for i, data in enumerate(dataloader):
+    for bidx, data in enumerate(dataloader):
         inputs, y1 = data
         key, subkey = jrandom.split(key, 2)
         loss, model, opt_state = make_step(
@@ -146,10 +153,10 @@ def train_one_epoch(
         )
         
         running_loss += loss.item()
-        if i % batch_size == (batch_size - 1):
-            last_loss = running_loss / batch_size  # loss per batch
+        if bidx % report_every == (report_every - 1):
+            last_loss = running_loss / report_every  # average loss per batch
             if verbosity: 
-                print(f'\tbatch {i + 1} loss: {last_loss}', flush=True)
+                print(f'\tbatch {bidx + 1} loss: {last_loss}', flush=True)
             running_loss = 0.
 
     return model, last_loss, opt_state
@@ -228,5 +235,48 @@ def load(filename):
         return eqx.tree_deserialise_leaves(f, model)
     
 
-def make_plots():
-    pass
+def make_plots(epoch, model, outdir, plotting_opts):
+    """Make plots at the end of each epoch.
+    
+    Args:
+        plotting_opts (dict) : dictionary of options. Handles following keys:
+            ...
+    """
+    plot_radius = plotting_opts.get('plot_radius', 4)
+    plot_res = plotting_opts.get('plot_res', 50)
+    model.plot_phi(
+        r=plot_radius, res=plot_res, plot3d=False,
+        normalize=False, log_normalize=False,
+        title=f"$\\phi$ (Epoch {epoch})",
+        saveas=f"{outdir}/images/phi_heatmap_{epoch}.png",
+    )
+    model.plot_phi(
+        r=plot_radius, res=plot_res, plot3d=True,
+        normalize=False, log_normalize=False,
+        title=f"$\\phi$ (Epoch {epoch})",
+        saveas=f"{outdir}/images/phi_landscape_{epoch}.png",
+    )
+    model.plot_phi(
+        r=plot_radius, res=plot_res, plot3d=False,
+        normalize=True, log_normalize=False,
+        title=f"$\\phi$ (Epoch {epoch})",
+        saveas=f"{outdir}/images/normphi_heatmap_{epoch}.png",
+    )
+    model.plot_phi(
+        r=plot_radius, res=plot_res, plot3d=True,
+        normalize=True, log_normalize=False,
+        title=f"$\\phi$ (Epoch {epoch})",
+        saveas=f"{outdir}/images/normphi_landscape_{epoch}.png",
+    )
+    model.plot_phi(
+        r=plot_radius, res=plot_res, plot3d=False,
+        normalize=True, log_normalize=True,
+        title=f"$\\phi$ (Epoch {epoch})",
+        saveas=f"{outdir}/images/logphi_heatmap_{epoch}.png",
+    )
+    model.plot_phi(
+        r=plot_radius, res=plot_res, plot3d=True,
+        normalize=True, log_normalize=True,
+        title=f"$\\phi$ (Epoch {epoch})",
+        saveas=f"{outdir}/images/logphi_landscape_{epoch}.png",
+    )

@@ -9,15 +9,16 @@ import numpy as np
 import jax.numpy as jnp
 import jax.random as jrandom
 import optax
-from torch.utils.data import DataLoader
-from plnn.dataset import LandscapeSimulationDataset, get_dataloaders
-from plnn.models import PLNN, make_model, initialize_model
+
+from plnn.dataset import get_dataloaders
+from plnn.models import make_model, initialize_model
 from plnn.model_training import train_model, load
 from plnn.helpers import mean_diff_loss, mean_cov_loss, kl_divergence_est
 
 
 def parse_args(args):
     parser = argparse.ArgumentParser()
+    
     # Training options
     parser.add_argument('--name', type=str, default="model")
     parser.add_argument('-o', '--outdir', type=str, 
@@ -31,7 +32,7 @@ def parse_args(args):
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
     parser.add_argument('-b', '--batch_size', type=int, default=25)
 
-    # Model options
+    # Model simulation
     parser.add_argument('-nd', '--ndims', type=int, default=2,
                         help="Number of state space dimensions for the data.")
     parser.add_argument('-ns', '--nsigs', type=int, default=2, 
@@ -44,6 +45,7 @@ def parse_args(args):
                         choices=['jump'], 
                         help="Identifier for the signal function.")
 
+    # Model architecture
     parser.add_argument('--hidden_dims', type=int, nargs='+', 
                         default=[16, 32, 32, 16])
     parser.add_argument('--hidden_acts', type=str, nargs='+', 
@@ -51,12 +53,13 @@ def parse_args(args):
     parser.add_argument('--final_act', type=str, default='softplus')
     parser.add_argument('--layer_normalize', default=False)
 
-    # parser.add_argument('--infer_noise', action="store_true",
-    #                     help="If specified, infer the noise level.")
+    parser.add_argument('--infer_noise', action="store_true",
+                        help="If specified, infer the noise level.")
     parser.add_argument('--sigma', type=float, default=1e-3,
                         help="Noise level if not inferring sigma." + \
                         "Otherwise, the initial value for the sigma parameter.")
 
+    # Model initialization
     parser.add_argument('--init_phi_weights_method', type=str, 
                         default='xavier_uniform', 
                         choices=[None, 'xavier_uniform', 'constant', 'normal'])
@@ -64,7 +67,7 @@ def parse_args(args):
                         default=[])
     parser.add_argument('--init_phi_bias_method', type=str, 
                         default='constant', 
-                        choices=[None, 'xavier_uniform', 'constant', 'normal'])
+                        choices=[None, 'constant', 'normal'])
     parser.add_argument('--init_phi_bias_args', type=float, nargs='?', 
                         default=0.)
     parser.add_argument('--init_tilt_weights_method', type=str, 
@@ -74,29 +77,29 @@ def parse_args(args):
                         default=0.)
     parser.add_argument('--init_tilt_bias_method', type=str, 
                         default=None, 
-                        choices=[None, 'xavier_uniform', 'constant', 'normal'])
+                        choices=[None, 'constant', 'normal'])
     parser.add_argument('--init_tilt_bias_args', type=float, nargs='?', 
                         default=None)
 
-    # Loss function options
+    # Loss function
     parser.add_argument('--loss', type=str, default="kl", 
                         choices=['kl', 'mcd'], 
                         help='kl: KL divergence est; mcd: mean+cov difference.')
     parser.add_argument('--continuation', type=str, default=None, 
                         help="Path to file with model parameters to load.")
     
-    # Optimizer options
+    # Optimizer
     parser.add_argument('--optimizer', type=str, default="sgd", 
                         choices=['sgd', 'adam', 'rms'])
     parser.add_argument('--learning_rate', type=float, default=1e-3)
     parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--weight_decay', type=float, default=0.)
     
-    parser.add_argument('--dtype', type=str, default="float32", 
-                        choices=['float32', 'float64'])
-    
     # Misc. options
     parser.add_argument('--plot', action="store_true")
+    parser.add_argument('--use_gpu', action="store_true")
+    parser.add_argument('--dtype', type=str, default="float32", 
+                        choices=['float32', 'float64'])
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--timestamp', action="store_true",
                         help="Add timestamp to out directory.")
@@ -145,12 +148,12 @@ def main(args):
     
     seed = seed if seed else np.random.randint(2**32)
     rng = np.random.default_rng(seed=seed)
-    key = jrandom.PRNGKeyArray(int(rng.integers(2**32)))
+    key = jrandom.PRNGKey(int(rng.integers(2**32)))
     key, modelkey, initkey, trainkey = jrandom.split(key, 4)
-    print(f"Using seed: {seed}")
+    print(f"Using seed: {seed}", flush=True)
 
     if cont_path: 
-        print(f"Continuing training of model {cont_path}")
+        print(f"Continuing training of model {cont_path}", flush=True)
     
     if args.timestamp:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -160,11 +163,11 @@ def main(args):
     train_dataloader, valid_dataloader = get_dataloaders(
         datdir_train, datdir_valid, nsims_train, nsims_valid, 
         batch_size_train=batch_size, batch_size_valid=batch_size, 
-        ndims=ndims, dtype=dtype, return_datasets=False
+        ndims=ndims, dtype=dtype, return_datasets=False,
     )
 
-    # Construct the model
-    signal_type, nsigparams = get_signal_function(signal_function_key)
+    # Get signal specification
+    signal_type, nsigparams = get_signal_spec(signal_function_key)
     
     if cont_path:
         model = load(cont_path)
@@ -174,15 +177,18 @@ def main(args):
             ndim=ndims, 
             nsig=nsigs, 
             ncells=ncells, 
-            nsigparams=nsigparams,
             sigma_init=sigma,
-            hidden_dims=hidden_dims,
             signal_type=signal_type,
+            nsigparams=nsigparams,
+            hidden_dims=hidden_dims,
             hidden_acts=hidden_acts,
             final_act=final_act,
             layer_normalize=layer_normalize,
+            include_phi_bias=True,
             include_signal_bias=False,
             sample_cells=True,
+            dtype=dtype,
+            dt0=dt,
         )
 
         model = initialize_model(
@@ -197,25 +203,6 @@ def main(args):
             init_tilt_weights_args=init_tilt_weights_args,
             init_tilt_bias_method=init_tilt_bias_method,
             init_tilt_bias_args=init_tilt_bias_args,
-        )
-        model = PLNN(
-            
-
-            # hidden_acts=hidden_acts,
-            # final_act=final_act,
-            # layer_normalize=layer_normalize,
-            # infer_noise=infer_noise,
-            # init_phi_weights_method=init_phi_weights_method,
-            # init_phi_weights_args=init_phi_weights_args,
-            # init_phi_bias_method=init_phi_bias_method,
-            # init_phi_bias_args=init_phi_bias_args,
-            # init_tilt_weights_method=init_tilt_weights_method,
-            # init_tilt_weights_args=init_tilt_weights_args,
-            # init_tilt_bias_method=init_tilt_bias_method,
-            # init_tilt_bias_args=init_tilt_bias_args,
-            # device=device,
-            # dtype=dtype,
-            # 
         )
 
     loss_fn = select_loss_function(loss_fn_key)
@@ -244,7 +231,7 @@ def main(args):
     )
     
 
-def get_signal_function(key):
+def get_signal_spec(key):
     if key == 'jump':
         nsigparams = 5
     else:
@@ -303,5 +290,5 @@ def log_model(outdir, model):
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
-    print('args:', args)
+    print('args:', args, flush=True)
     main(args)
