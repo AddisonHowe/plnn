@@ -551,7 +551,10 @@ class PLNN(eqx.Module):
     def _check_hidden_layers(self, hidden_dims, hidden_acts, final_act):
         """Check the model architecture.
         """
-        hidden_dims = [] if hidden_dims is None else hidden_dims
+        if hidden_dims is None \
+                or (isinstance(hidden_dims, int) and hidden_dims <= 0) \
+                or (isinstance(hidden_dims, list) and 0 in hidden_dims):
+            hidden_dims = []
         nlayers = len(hidden_dims)
         # Convert singular hidden activation to a list.
         if hidden_acts is None or isinstance(hidden_acts, (str, type)):
