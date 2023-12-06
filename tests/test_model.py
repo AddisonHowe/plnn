@@ -44,12 +44,23 @@ def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1,
         sigma_init=sigma,
         dt0=dt,
         include_phi_bias=False, 
-        include_signal_bias=False, 
-        hidden_acts='tanh',
-        final_act=None,
-        hidden_dims=[3,3],
+        include_tilt_bias=False, 
+        include_metric_bias=False, 
+        phi_hidden_dims=[3,3],
+        phi_hidden_acts='tanh',
+        phi_final_act=None,
+        phi_layer_normalize=False,
+        tilt_hidden_dims=[],
+        tilt_hidden_acts=None,
+        tilt_final_act=None,
+        tilt_layer_normalize=False,
+        metric_hidden_dims=[3,3],
+        metric_hidden_acts='tanh',
+        metric_final_act=None,
+        metric_layer_normalize=False,
         key=jrandom.PRNGKey(seed),
         sample_cells=sample_cells,
+        infer_metric=True,
     )
     model = initialize_model(
         jrandom.PRNGKey(seed+1),
@@ -62,26 +73,30 @@ def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1,
         init_tilt_weights_args=[wts],
         init_tilt_bias_method='none',
         init_tilt_bias_args=[],
+        init_metric_weights_method='constant',
+        init_metric_weights_args=[0.],
+        init_metric_bias_method='constant',
+        init_metric_bias_args=[0.],
     )
     return model
 
-class BrownianTestPath(AbstractPath):
+# class BrownianTestPath(AbstractPath):
     
-    dw: jax.Array
+#     dw: jax.Array
 
-    def __init__(self, t0, t1, dw):
-        self.dw = dw
+#     def __init__(self, t0, t1, dw):
+#         self.dw = dw
 
-    @property
-    def t0(self):
-        return self.t0
+#     @property
+#     def t0(self):
+#         return self.t0
 
-    @property
-    def t1(self):
-        return self.t1
+#     @property
+#     def t1(self):
+#         return self.t1
 
-    def evaluate(self, t0, t1=None, left=True):
-        return self.dw
+#     def evaluate(self, t0, t1=None, left=True):
+#         return self.dw
 
 ###############################################################################
 ###############################   BEGIN TESTS   ###############################

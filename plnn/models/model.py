@@ -39,9 +39,10 @@ _INIT_METHOD_KEYS = {
 
 class PLNN(eqx.Module):
 
-    phi_nn: eqx.Module   # learnable
-    tilt_nn: eqx.Module  # learnable
-    logsigma: Array      # learnable
+    phi_nn: eqx.Module     # learnable
+    tilt_nn: eqx.Module    # learnable
+    logsigma: Array        # learnable
+    metric_nn: eqx.Module  # learnable
 
     ndim: int
     nsig: int
@@ -52,8 +53,10 @@ class PLNN(eqx.Module):
     solver: str
     dt0: float
     sample_cells: bool
+    infer_metric: bool
     include_phi_bias: bool
-    include_signal_bias: bool
+    include_tilt_bias: bool
+    include_metric_bias: bool
 
     def __init__(
         self, 
@@ -67,18 +70,27 @@ class PLNN(eqx.Module):
         solver='euler',
         dt0=1e-2,
         sample_cells=True,
+        infer_metric=True,
         include_phi_bias=True,
-        include_signal_bias=False,
-        hidden_dims=[16, 32, 32, 16],  # end of attributes
-        hidden_acts='elu',
-        final_act='softplus',
-        layer_normalize=False,
+        include_tilt_bias=False,
+        include_metric_bias=True,
+        phi_hidden_dims=[16, 32, 32, 16],  # end of attributes
+        phi_hidden_acts='softplus',
+        phi_final_act=None,
+        phi_layer_normalize=False,
+        tilt_hidden_dims=[],
+        tilt_hidden_acts=None,
+        tilt_final_act=None,
+        tilt_layer_normalize=False,
+        metric_hidden_dims=[8, 8, 8, 8],
+        metric_hidden_acts='softplus',
+        metric_final_act=None,
+        metric_layer_normalize=False,
         dtype=jnp.float32,
     ):
         """
         """
         super().__init__()
-        key, key1, key2 = jax.random.split(key, 3)
         
         self.ndim = ndim
         self.nsig = nsig
@@ -89,25 +101,44 @@ class PLNN(eqx.Module):
         self.solver = solver
         self.dt0 = dt0
         self.sample_cells = sample_cells
+        self.infer_metric = infer_metric
         self.include_phi_bias = include_phi_bias
-        self.include_signal_bias = include_signal_bias
+        self.include_tilt_bias = include_tilt_bias
+        self.include_metric_bias = include_metric_bias
 
-        # Potential Network hidden layer specifications
-        hidden_dims, hidden_acts, final_act = self._check_hidden_layers(
-            hidden_dims=hidden_dims, 
-            hidden_acts=hidden_acts, 
-            final_act=final_act,
-        )
+        key, key1, key2, key3 = jax.random.split(key, 4)
 
-        # Potential Neural Network: Maps ndims to a scalar.
+        # Potential Neural Network: Maps ndim to a scalar.
         self.phi_nn = self._construct_phi_nn(
-            key1, hidden_dims, hidden_acts, final_act, layer_normalize,
-            bias=include_phi_bias, dtype=dtype
+            key1, 
+            phi_hidden_dims, 
+            phi_hidden_acts, 
+            phi_final_act, 
+            phi_layer_normalize,
+            bias=include_phi_bias, 
+            dtype=dtype
         )
         
-        # Tilt Neural Network: Linear tilt values. Maps nsigs to ndims.
+        # Tilt Neural Network: Linear tilt values. Maps nsigs to ndim.
         self.tilt_nn = self._construct_tilt_nn(
-            key2, bias=include_signal_bias, dtype=dtype
+            key2, 
+            tilt_hidden_dims,
+            tilt_hidden_acts,
+            tilt_final_act,
+            tilt_layer_normalize,
+            bias=include_tilt_bias, 
+            dtype=dtype
+        )
+
+        # Metric Neural Network: Maps ndim to (ndim, ndim).
+        self.metric_nn = self._construct_metric_nn(
+            key3, 
+            metric_hidden_dims, 
+            metric_hidden_acts, 
+            metric_final_act, 
+            metric_layer_normalize,
+            bias=include_metric_bias, 
+            dtype=dtype
         )
 
         # Noise parameter
@@ -168,11 +199,14 @@ class PLNN(eqx.Module):
             return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
         phi_linlayers  = linear_layers(self.phi_nn)
         tilt_linlayers = linear_layers(self.tilt_nn)
+        metric_linlayers = linear_layers(self.metric_nn)
         d = {
             'phi.w'  : [l.weight for l in phi_linlayers],
             'phi.b'  : [l.bias for l in phi_linlayers],
             'tilt.w' : [l.weight for l in tilt_linlayers],
             'tilt.b' : [l.bias for l in tilt_linlayers],
+            'metric.w' : [l.weight for l in metric_linlayers],
+            'metric.b' : [l.bias for l in metric_linlayers],
             'sigma'  : self.get_sigma(),
         }
         return d
@@ -193,17 +227,21 @@ class PLNN(eqx.Module):
             'solver' : self.solver,
             'dt0' : self.dt0,
             'sample_cells' : self.sample_cells,
+            'infer_metric' : self.infer_metric,
             'include_phi_bias' : self.include_phi_bias,
-            'include_signal_bias' : self.include_signal_bias,
+            'include_tilt_bias' : self.include_tilt_bias,
+            'include_metric_bias' : self.include_metric_bias,
         }
     
-    def get_linear_layer_parameters(self):
+    def get_linear_layer_parameters(self, include_metric=False):
         def linear_layers(m):
             return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
         phi_linlayers  = linear_layers(self.phi_nn)
         tilt_linlayers = linear_layers(self.tilt_nn)
+        metric_linlayers = linear_layers(self.metric_nn)
         phi_params = []
         tilt_params = []
+        metric_params = []
         for layer in phi_linlayers:
             phi_params.append(layer.weight)
             if layer.bias is not None:
@@ -212,7 +250,12 @@ class PLNN(eqx.Module):
             tilt_params.append(layer.weight)
             if layer.bias is not None:
                 tilt_params.append(layer.bias)
-        return phi_params + tilt_params
+        for layer in metric_linlayers:
+            metric_params.append(layer.weight)
+            if layer.bias is not None:
+                metric_params.append(layer.bias)
+        return phi_params + tilt_params \
+                          + (metric_params if include_metric else [])
 
     ##########################
     ##  Simulation Methods  ##
@@ -249,8 +292,8 @@ class PLNN(eqx.Module):
     ):
         """TODO
         """
-        drift = lambda t, y, args: self.eval_f(t, y, sigparams)
-        diffusion = lambda t, y, args: self.eval_g(t, y)
+        drift = lambda t, y, args: self.eval_metric(t, y) @ self.eval_f(t, y, sigparams)
+        diffusion = lambda t, y, args: self.eval_metric(t, y) @ self.eval_g(t, y)
         brownian_motion = VirtualBrownianTree(
             t0, t1, tol=1e-3, 
             shape=(len(y0),), 
@@ -292,6 +335,7 @@ class PLNN(eqx.Module):
         """
         gphi = self.eval_grad_phi(t, y)
         gtilt = self.grad_tilt(t, sig_params)
+        # metric = self.eval_metric(t, y)
         return -(gphi + gtilt)
 
     @eqx.filter_jit
@@ -312,6 +356,31 @@ class PLNN(eqx.Module):
         """
         return jnp.exp(self.logsigma) * jnp.ones(y.shape)
     
+    @eqx.filter_jit
+    def eval_metric(
+        self,
+        t: Float,
+        y: Float[Array, "ndim"]
+    ) -> Float[Array, "ndim ndim"]:
+        """Evaluate metric tensor.
+        
+        Args:
+            t (Scalar) : Time.
+            y (Array)  : State. Shape (d,).
+        Returns:
+            Array of shape (d,d).
+        """
+        if self.infer_metric:
+            # Get upper triangular values including diag.
+            dm_vals = self.metric_nn(y)
+            dm = jnp.zeros([self.ndim, self.ndim])
+            dm = dm.at[jnp.triu_indices(self.ndim)].set(dm_vals) # array
+            dm = dm + dm.T
+            dm = dm.at[jnp.diag_indices(self.ndim)].set(dm.diagonal() / 2)
+        else:
+            dm = 0
+        return jnp.eye(self.ndim) + dm
+
     @eqx.filter_jit
     def eval_phi(
         self, 
@@ -453,6 +522,10 @@ class PLNN(eqx.Module):
         init_tilt_weights_args=[],
         init_tilt_bias_method='constant',
         init_tilt_bias_args=[0.],
+        init_metric_weights_method='xavier_uniform',
+        init_metric_weights_args=[],
+        init_metric_bias_method='constant',
+        init_metric_bias_args=[0.],
     ):
         new_model = initialize_model(
             key, self, dtype=dtype,
@@ -464,6 +537,10 @@ class PLNN(eqx.Module):
             init_tilt_weights_args=init_tilt_weights_args,
             init_tilt_bias_method=init_tilt_bias_method,
             init_tilt_bias_args=init_tilt_bias_args,
+            init_metric_weights_method=init_metric_weights_method,
+            init_metric_weights_args=init_metric_weights_args,
+            init_metric_bias_method=init_metric_bias_method,
+            init_metric_bias_args=init_metric_bias_args,
         )
         return new_model
     
@@ -517,12 +594,168 @@ class PLNN(eqx.Module):
         
     def _construct_phi_nn(self, key, hidden_dims, hidden_acts, final_act, 
                           layer_normalize, bias=True, dtype=jnp.float32):
+        return self._construct_ffn(
+            key, self.ndim, 1,
+            hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
+        )
+        # hidden_dims, hidden_acts, final_act = self._check_hidden_layers(
+        #     hidden_dims=hidden_dims, 
+        #     hidden_acts=hidden_acts, 
+        #     final_act=final_act,
+        # )
+        # layer_list = []
+        # # Hidden layers
+        # key, subkey = jrandom.split(key, 2)
+        # self._add_layer(
+        #     subkey, 
+        #     layer_list, self.ndim, hidden_dims[0], 
+        #     activation=hidden_acts[0], 
+        #     normalization=layer_normalize,
+        #     bias=bias,
+        #     dtype=dtype,
+        # )
+        # for i in range(len(hidden_dims) - 1):
+        #     key, subkey = jrandom.split(key, 2)
+        #     self._add_layer(
+        #         subkey,
+        #         layer_list, hidden_dims[i], hidden_dims[i+1], 
+        #         activation=hidden_acts[i+1], 
+        #         normalization=layer_normalize,
+        #         bias=bias,
+        #         dtype=dtype,
+        #     )
+        # # Final layer
+        # key, subkey = jrandom.split(key, 2)
+        # self._add_layer(
+        #     subkey,
+        #     layer_list, hidden_dims[-1], 1,  
+        #     activation=final_act, 
+        #     normalization=False,
+        #     bias=bias,
+        #     dtype=dtype,
+        # )
+        # return eqx.nn.Sequential(layer_list)
+    
+    def _construct_tilt_nn(self, key, hidden_dims, hidden_acts, final_act, 
+                          layer_normalize, bias=False, dtype=jnp.float32):
+        return self._construct_ffn(
+            key, self.nsig, self.ndim, 
+            hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
+        )
+        # hidden_dims, hidden_acts, final_act = self._check_hidden_layers(
+        #     hidden_dims=hidden_dims, 
+        #     hidden_acts=hidden_acts, 
+        #     final_act=final_act,
+        # )
+        # layer_list = []
+        # if len(hidden_dims) == 0:
+        #     layer_list = [eqx.nn.Linear(self.nsig, self.ndim,
+        #                             use_bias=bias, key=key)]
+        #     return eqx.nn.Sequential(layer_list)
+        # # Hidden layers
+        # key, subkey = jrandom.split(key, 2)
+        # self._add_layer(
+        #     subkey, 
+        #     layer_list, self.ndim, hidden_dims[0], 
+        #     activation=hidden_acts[0], 
+        #     normalization=layer_normalize,
+        #     bias=bias,
+        #     dtype=dtype,
+        # )
+        # for i in range(len(hidden_dims) - 1):
+        #     key, subkey = jrandom.split(key, 2)
+        #     self._add_layer(
+        #         subkey,
+        #         layer_list, hidden_dims[i], hidden_dims[i+1], 
+        #         activation=hidden_acts[i+1], 
+        #         normalization=layer_normalize,
+        #         bias=bias,
+        #         dtype=dtype,
+        #     )
+        # # Final layer
+        # key, subkey = jrandom.split(key, 2)
+        # self._add_layer(
+        #     subkey,
+        #     layer_list, hidden_dims[-1], 1,  
+        #     activation=final_act, 
+        #     normalization=False,
+        #     bias=bias,
+        #     dtype=dtype,
+        # )
+        # return eqx.nn.Sequential(layer_list)
+    
+    def _construct_metric_nn(self, key, hidden_dims, hidden_acts, final_act, 
+                             layer_normalize, bias=True, dtype=jnp.float32):
+        return self._construct_ffn(
+            key, self.ndim, int(self.ndim * (self.ndim + 1) / 2), 
+            hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
+        )
+        # hidden_dims, hidden_acts, final_act = self._check_hidden_layers(
+        #     hidden_dims=hidden_dims, 
+        #     hidden_acts=hidden_acts, 
+        #     final_act=final_act,
+        # )
+        # layer_list = []
+        # # Hidden layers
+        # key, subkey = jrandom.split(key, 2)
+        # self._add_layer(
+        #     subkey, 
+        #     layer_list, self.ndim, hidden_dims[0], 
+        #     activation=hidden_acts[0], 
+        #     normalization=layer_normalize,
+        #     bias=bias,
+        #     dtype=dtype,
+        # )
+        # for i in range(len(hidden_dims) - 1):
+        #     key, subkey = jrandom.split(key, 2)
+        #     self._add_layer(
+        #         subkey,
+        #         layer_list, hidden_dims[i], hidden_dims[i+1], 
+        #         activation=hidden_acts[i+1], 
+        #         normalization=layer_normalize,
+        #         bias=bias,
+        #         dtype=dtype,
+        #     )
+        # # Final layer
+        # key, subkey = jrandom.split(key, 2)
+        # self._add_layer(
+        #     subkey,
+        #     layer_list, hidden_dims[-1], int(self.ndim * (self.ndim + 1) / 2),
+        #     activation=final_act, 
+        #     normalization=False,
+        #     bias=bias,
+        #     dtype=dtype,
+        # )
+        # return eqx.nn.Sequential(layer_list)
+    
+    def _construct_ffn(self, key, dim0, dim1, hidden_dims, hidden_acts, 
+                       final_act, layer_normalize, bias, dtype):
+        hidden_dims, hidden_acts, final_act = self._check_hidden_layers(
+            hidden_dims=hidden_dims, 
+            hidden_acts=hidden_acts, 
+            final_act=final_act,
+        )
+
         layer_list = []
+        
+        if len(hidden_dims) == 0:
+            self._add_layer(
+                key, 
+                layer_list, dim0, dim1, 
+                activation=final_act, 
+                normalization=layer_normalize,
+                bias=bias,
+                dtype=dtype,
+            )
+            # layer_list = [eqx.nn.Linear(self.nsig, self.ndim, 
+            #                             use_bias=bias, key=key)]
+            return eqx.nn.Sequential(layer_list)
+        
         # Hidden layers
         key, subkey = jrandom.split(key, 2)
         self._add_layer(
             subkey, 
-            layer_list, self.ndim, hidden_dims[0], 
+            layer_list, dim0, hidden_dims[0], 
             activation=hidden_acts[0], 
             normalization=layer_normalize,
             bias=bias,
@@ -542,17 +775,12 @@ class PLNN(eqx.Module):
         key, subkey = jrandom.split(key, 2)
         self._add_layer(
             subkey,
-            layer_list, hidden_dims[-1], 1,  
+            layer_list, hidden_dims[-1], dim1,
             activation=final_act, 
             normalization=False,
             bias=bias,
             dtype=dtype,
         )
-        return eqx.nn.Sequential(layer_list)
-    
-    def _construct_tilt_nn(self, key, bias, dtype=jnp.float32):
-        layer_list = [eqx.nn.Linear(self.nsig, self.ndim,
-                                    use_bias=bias, key=key)]
         return eqx.nn.Sequential(layer_list)
     
     ########################
@@ -792,13 +1020,33 @@ class PLNN(eqx.Module):
 ##########################
 
 def make_model(
-    *, key, 
-    ndim, nsig, ncells, 
-    signal_type, nsigparams, sigma_init, 
-    solver, dt0, sample_cells,
-    include_phi_bias, include_signal_bias,
-    hidden_dims, hidden_acts, final_act, layer_normalize, 
-    dtype,
+    key, *, 
+    ndim=2, 
+    nsig=2, 
+    ncells=100, 
+    signal_type='jump', 
+    nsigparams=5, 
+    sigma_init=1e-2, 
+    solver='euler', 
+    dt0=1e-2, 
+    sample_cells=True, 
+    infer_metric=True,
+    include_phi_bias=True, 
+    include_tilt_bias=False,
+    include_metric_bias=True,
+    phi_hidden_dims=[16,32,32,16], 
+    phi_hidden_acts='softplus', 
+    phi_final_act=None, 
+    phi_layer_normalize=False, 
+    tilt_hidden_dims=[],
+    tilt_hidden_acts=None,
+    tilt_final_act=None,
+    tilt_layer_normalize=False,
+    metric_hidden_dims=[8,8,8,8], 
+    metric_hidden_acts='softplus', 
+    metric_final_act=None, 
+    metric_layer_normalize=False, 
+    dtype=jnp.float32,
 ):
     """Construct a model and store all hyperparameters.
     
@@ -813,12 +1061,22 @@ def make_model(
         solver
         dt0
         sample_cells
+        infer_metric
         include_phi_bias
-        include_signal_bias
-        hidden_dims
-        hidden_acts
-        final_act
-        layer_normalize
+        include_tilt_bias
+        include_metric_bias
+        phi_hidden_dims
+        phi_hidden_acts
+        phi_final_act
+        phi_layer_normalize
+        tilt_hidden_dims
+        tilt_hidden_acts
+        tilt_final_act
+        tilt_layer_normalize
+        metric_hidden_dims
+        metric_hidden_acts
+        metric_final_act
+        metric_layer_normalize
         dtype
     
     Returns:
@@ -831,19 +1089,39 @@ def make_model(
         signal_type=signal_type, nsigparams=nsigparams,
         sigma_init=sigma_init,
         solver=solver, dt0=dt0, sample_cells=sample_cells,
+        infer_metric=infer_metric,
         include_phi_bias=include_phi_bias,
-        include_signal_bias=include_signal_bias,
-        hidden_dims=hidden_dims, hidden_acts=hidden_acts, final_act=final_act,
-        layer_normalize=layer_normalize,
+        include_tilt_bias=include_tilt_bias,
+        include_metric_bias=include_metric_bias,
+        phi_hidden_dims=phi_hidden_dims, 
+        phi_hidden_acts=phi_hidden_acts, 
+        phi_final_act=phi_final_act,
+        phi_layer_normalize=phi_layer_normalize,
+        tilt_hidden_dims=tilt_hidden_dims, 
+        tilt_hidden_acts=tilt_hidden_acts, 
+        tilt_final_act=tilt_final_act,
+        tilt_layer_normalize=tilt_layer_normalize,
+        metric_hidden_dims=metric_hidden_dims, 
+        metric_hidden_acts=metric_hidden_acts, 
+        metric_final_act=metric_final_act,
+        metric_layer_normalize=metric_layer_normalize,
         dtype=dtype,
     )
     hyperparams = model.get_hyperparameters()
     # Append to dictionary those hyperparams not stored internally.
     hyperparams.update({
-        'hidden_dims' : hidden_dims,
-        'hidden_acts' : hidden_acts,
-        'final_act' : final_act,
-        'layer_normalize' : layer_normalize,
+        'phi_hidden_dims' : phi_hidden_dims,
+        'phi_hidden_acts' : phi_hidden_acts,
+        'phi_final_act' : phi_final_act,
+        'phi_layer_normalize' : phi_layer_normalize,
+        'tilt_hidden_dims' : tilt_hidden_dims,
+        'tilt_hidden_acts' : tilt_hidden_acts,
+        'tilt_final_act' : tilt_final_act,
+        'tilt_layer_normalize' : tilt_layer_normalize,
+        'metric_hidden_dims' : metric_hidden_dims,
+        'metric_hidden_acts' : metric_hidden_acts,
+        'metric_final_act' : metric_final_act,
+        'metric_layer_normalize' : metric_layer_normalize,
         'dtype' : dtype,
     })
     return model, hyperparams
@@ -854,9 +1132,7 @@ def make_model(
 ############################
 
 def initialize_model(
-    key,
-    model, 
-    dtype=jnp.float32,
+    key, model, dtype=jnp.float32, *, 
     init_phi_weights_method='xavier_uniform',
     init_phi_weights_args=[],
     init_phi_bias_method='constant',
@@ -865,10 +1141,15 @@ def initialize_model(
     init_tilt_weights_args=[],
     init_tilt_bias_method='constant',
     init_tilt_bias_args=[0.],
+    init_metric_weights_method='xavier_uniform',
+    init_metric_weights_args=[],
+    init_metric_bias_method='constant',
+    init_metric_bias_args=[0.],
 ):
-    if 'xavier_uniform' in [init_phi_bias_method, init_tilt_bias_method]:
+    if 'xavier_uniform' in [init_phi_bias_method, init_tilt_bias_method, 
+                            init_metric_bias_method]:
         raise RuntimeError("Cannot initialize bias using `xavier_uniform`")
-    key, key1, key2, key3, key4 = jrandom.split(key, 5)
+    key, key1, key2, key3, key4, key5, key6 = jrandom.split(key, 7)
     is_linear = lambda x: isinstance(x, eqx.nn.Linear)
     
     # Initialize PLNN Weights
@@ -930,12 +1211,46 @@ def initialize_model(
         ]
     init_fn_args = _get_nn_init_args(init_tilt_bias_args)
     init_fn_handle = _get_nn_init_func(init_tilt_bias_method)
-    if init_fn_handle and model.include_signal_bias:
+    if init_fn_handle and model.include_tilt_bias:
         init_fn = init_fn_handle(*init_fn_args)
         biases = get_biases(model)
         new_biases = [
             init_fn(subkey, b.shape, dtype) 
             for b, subkey in zip(biases, jrandom.split(key4, len(biases)))
+        ]
+        model = eqx.tree_at(get_biases, model, new_biases)
+
+    # Initialize MetricNN Weights
+    get_weights = lambda m: [
+            x.weight 
+            for x in jax.tree_util.tree_leaves(m.metric_nn, is_leaf=is_linear) 
+            if is_linear(x)
+        ]
+    init_fn_args = _get_nn_init_args(init_metric_weights_args)
+    init_fn_handle = _get_nn_init_func(init_metric_weights_method)
+    if init_fn_handle:
+        init_fn = init_fn_handle(*init_fn_args)
+        weights = get_weights(model)
+        new_weights = [
+            init_fn(subkey, w.shape, dtype) 
+            for w, subkey in zip(weights, jrandom.split(key5, len(weights)))
+        ]
+        model = eqx.tree_at(get_weights, model, new_weights)
+
+    # Initialize MetricNN Bias if applicable
+    get_biases = lambda m: [
+            x.bias 
+            for x in jax.tree_util.tree_leaves(m.metric_nn, is_leaf=is_linear) 
+            if is_linear(x) and x.use_bias
+        ]
+    init_fn_args = _get_nn_init_args(init_metric_bias_args)
+    init_fn_handle = _get_nn_init_func(init_metric_bias_method)
+    if init_fn_handle and model.include_metric_bias:
+        init_fn = init_fn_handle(*init_fn_args)
+        biases = get_biases(model)
+        new_biases = [
+            init_fn(subkey, b.shape, dtype) 
+            for b, subkey in zip(biases, jrandom.split(key6, len(biases)))
         ]
         model = eqx.tree_at(get_biases, model, new_biases)
 

@@ -46,12 +46,26 @@ def parse_args(args):
                         help="Identifier for the signal function.")
 
     # Model architecture
-    parser.add_argument('--hidden_dims', type=int, nargs='+', 
+    parser.add_argument('--phi_hidden_dims', type=int, nargs='+', 
                         default=[16, 32, 32, 16])
-    parser.add_argument('--hidden_acts', type=str, nargs='+', 
+    parser.add_argument('--phi_hidden_acts', type=str, nargs='+', 
                         default=4*['softplus'])
-    parser.add_argument('--final_act', type=str, default='softplus')
-    parser.add_argument('--layer_normalize', default=False)
+    parser.add_argument('--phi_final_act', type=str, default='softplus')
+    parser.add_argument('--phi_layer_normalize', default=False)
+
+    parser.add_argument('--tilt_hidden_dims', type=int, nargs='+', 
+                        default=[])
+    parser.add_argument('--tilt_hidden_acts', type=str, nargs='+', 
+                        default=None)
+    parser.add_argument('--tilt_final_act', type=str, default=None)
+    parser.add_argument('--tilt_layer_normalize', default=False)
+
+    parser.add_argument('--metric_hidden_dims', type=int, nargs='+', 
+                        default=[8, 8, 8, 8])
+    parser.add_argument('--metric_hidden_acts', type=str, nargs='+', 
+                        default=4*['softplus'])
+    parser.add_argument('--metric_final_act', type=str, default=None)
+    parser.add_argument('--metric_layer_normalize', default=False)
 
     parser.add_argument('--infer_noise', action="store_true",
                         help="If specified, infer the noise level.")
@@ -80,6 +94,16 @@ def parse_args(args):
                         choices=[None, 'constant', 'normal'])
     parser.add_argument('--init_tilt_bias_args', type=float, nargs='?', 
                         default=None)
+    parser.add_argument('--init_metric_weights_method', type=str, 
+                        default='xavier_uniform', 
+                        choices=[None, 'xavier_uniform', 'constant', 'normal'])
+    parser.add_argument('--init_metric_weights_args', type=float, nargs='?', 
+                        default=0.)
+    parser.add_argument('--init_metric_bias_method', type=str, 
+                        default=None, 
+                        choices=[None, 'constant', 'normal'])
+    parser.add_argument('--init_metric_bias_args', type=float, nargs='?', 
+                        default=None)
 
     # Loss function
     parser.add_argument('--loss', type=str, default="kl", 
@@ -96,6 +120,7 @@ def parse_args(args):
     parser.add_argument('--weight_decay', type=float, default=0.)
     
     # Misc. options
+    parser.add_argument('--infer_metric', action="store_true")
     parser.add_argument('--plot', action="store_true")
     parser.add_argument('--use_gpu', action="store_true")
     parser.add_argument('--dtype', type=str, default="float32", 
@@ -118,10 +143,18 @@ def main(args):
     nsigs = args.nsigs
     dt = args.dt
     ncells = args.ncells
-    hidden_dims = args.hidden_dims
-    hidden_acts = args.hidden_acts
-    final_act = args.final_act
-    layer_normalize = args.layer_normalize
+    phi_hidden_dims = args.phi_hidden_dims
+    phi_hidden_acts = args.phi_hidden_acts
+    phi_final_act = args.phi_final_act
+    phi_layer_normalize = args.phi_layer_normalize
+    tilt_hidden_dims = args.tilt_hidden_dims
+    tilt_hidden_acts = args.tilt_hidden_acts
+    tilt_final_act = args.tilt_final_act
+    tilt_layer_normalize = args.tilt_layer_normalize
+    metric_hidden_dims = args.metric_hidden_dims
+    metric_hidden_acts = args.metric_hidden_acts
+    metric_final_act = args.metric_final_act
+    metric_layer_normalize = args.metric_layer_normalize
     init_phi_weights_method = args.init_phi_weights_method
     init_phi_weights_args = args.init_phi_weights_args
     init_phi_bias_method = args.init_phi_bias_method
@@ -130,6 +163,10 @@ def main(args):
     init_tilt_weights_args = args.init_tilt_weights_args
     init_tilt_bias_method = args.init_tilt_bias_method
     init_tilt_bias_args = args.init_tilt_bias_args
+    init_metric_weights_method = args.init_metric_weights_method
+    init_metric_weights_args = args.init_metric_weights_args
+    init_metric_bias_method = args.init_metric_bias_method
+    init_metric_bias_args = args.init_metric_bias_args
     # infer_noise = args.infer_noise
     sigma = args.sigma
     # use_gpu = args.use_gpu
@@ -145,6 +182,7 @@ def main(args):
     seed = args.seed
     dtype = jnp.float32 if args.dtype == 'float32' else jnp.float64
     do_plot = args.plot
+    infer_metric = args.infer_metric
     
     seed = seed if seed else np.random.randint(2**32)
     rng = np.random.default_rng(seed=seed)
@@ -180,13 +218,23 @@ def main(args):
             sigma_init=sigma,
             signal_type=signal_type,
             nsigparams=nsigparams,
-            hidden_dims=hidden_dims,
-            hidden_acts=hidden_acts,
-            final_act=final_act,
-            layer_normalize=layer_normalize,
+            phi_hidden_dims=phi_hidden_dims,
+            phi_hidden_acts=phi_hidden_acts,
+            phi_final_act=phi_final_act,
+            phi_layer_normalize=phi_layer_normalize,
+            tilt_hidden_dims=tilt_hidden_dims,
+            tilt_hidden_acts=tilt_hidden_acts,
+            tilt_final_act=tilt_final_act,
+            tilt_layer_normalize=tilt_layer_normalize,
+            metric_hidden_dims=metric_hidden_dims,
+            metric_hidden_acts=metric_hidden_acts,
+            metric_final_act=metric_final_act,
+            metric_layer_normalize=metric_layer_normalize,
             include_phi_bias=True,
-            include_signal_bias=False,
+            include_tilt_bias=False,
+            include_metric_bias=True,
             sample_cells=True,
+            infer_metric=infer_metric,
             dtype=dtype,
             dt0=dt,
         )
@@ -203,6 +251,10 @@ def main(args):
             init_tilt_weights_args=init_tilt_weights_args,
             init_tilt_bias_method=init_tilt_bias_method,
             init_tilt_bias_args=init_tilt_bias_args,
+            init_metric_weights_method=init_metric_weights_method,
+            init_metric_weights_args=init_metric_weights_args,
+            init_metric_bias_method=init_metric_bias_method,
+            init_metric_bias_args=init_metric_bias_args,
         )
 
     loss_fn = select_loss_function(loss_fn_key)
