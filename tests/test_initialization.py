@@ -1,84 +1,112 @@
 import pytest
-import numpy as np
-import jax
+from contextlib import nullcontext as does_not_raise
+from jax import config
+config.update("jax_enable_x64", True)
 import jax.numpy as jnp
 import jax.random as jrandom
-from plnn.helpers import mean_cov_loss, mean_diff_loss, kl_divergence_est
 
 from plnn.models import PLNN, make_model, initialize_model
 
 
-def test_make():
-    key = jrandom.PRNGKey(0)
-    model, hyperparams = make_model(
-        key, 2, 2, 100, 
-        'jump', 5, 0, 
-        [16,32,32,16], 
-        'tanh', 
-        'none', 
-        layer_normalize=False, 
-        include_phi_bias=True, 
-        include_signal_bias=False, 
-        sample_cells=True, 
-        dt0=1e-2,
-        dtype=jnp.float32,
-    )
-    
+class TestMake:
 
-@pytest.mark.parametrize('phi_w_method, phi_w_args', [
-    ['constant', [0.]],
-    ['normal', [0., 1.]],
-    ['xavier_uniform', []],
-    ['explicit', [[[1],[2],[3],[4],[5]]]],
-])
-@pytest.mark.parametrize('phibias, phi_b_method, phi_b_args', [
-    [True, 'constant', [0.]],
-    [True, 'normal', [0., 1.]],
-    # [True, 'xavier_uniform', []],  # error: cannot use xavier for bias
-    [False, 'constant', [0.]],
-    [False, 'normal', [0., 1.]],
-    # [False, 'xavier_uniform', []],
-])
-@pytest.mark.parametrize('tilt_w_method, tilt_w_args', [
-    ['constant', [0.]],
-    ['normal', [0., 1.]],
-    ['xavier_uniform', []],
-])
-@pytest.mark.parametrize('sigbias, tilt_b_method, tilt_b_args', [
-    [True, 'constant', [0.]],
-    [True, 'normal', [0., 1.]],
-    # [True, 'xavier_uniform', []],  # error: cannot use xavier for bias
-    [False, 'constant', [0.]],
-    [False, 'normal', [0., 1.]],
-    # [False, 'xavier_uniform', []],
-])
-def test_init(phi_w_method, phi_w_args, 
-              phibias, phi_b_method, phi_b_args, 
-              tilt_w_method, tilt_w_args,
-              sigbias, tilt_b_method, tilt_b_args):
-    key = jrandom.PRNGKey(0)
-    model, hyperparams = make_model(
-        key, 2, 2, 100, 
-        'jump', 5, 0, 
-        [16,32,32,16], 'tanh', 'none', 
-        layer_normalize=False, 
-        include_phi_bias=phibias, 
-        include_signal_bias=sigbias,
-        sample_cells=True,
-        dt0=1e-2,
-        dtype=jnp.float32,
-    )
-    key, subkey = jrandom.split(key, 2)
-    new_model = initialize_model(
-        subkey, 
-        model, 
-        init_phi_weights_method=phi_w_method,
-        init_phi_weights_args=phi_w_args,
-        init_phi_bias_method=phi_b_method,
-        init_phi_bias_args=phi_b_args,
-        init_tilt_weights_method=tilt_w_method,
-        init_tilt_weights_args=tilt_w_args,
-        init_tilt_bias_method=tilt_b_method,
-        init_tilt_bias_args=tilt_b_args,
-    )
+    def _make_model(self, **kwargs):
+        key = jrandom.PRNGKey(0)
+        model, hyperparams = make_model(key=key, **kwargs)
+        return model, hyperparams
     
+    def test_default_make(self):
+        key = jrandom.PRNGKey(0)
+        model, _ = make_model(key)
+        assert isinstance(model, PLNN)
+
+    @pytest.mark.parametrize("signal_type, nsigparams", [['jump', 5]])
+    def test_signal_args(self, signal_type, nsigparams):
+        model, _ = self._make_model(
+            signal_type=signal_type, nsigparams=nsigparams
+        )
+        assert isinstance(model, PLNN)
+
+    @pytest.mark.parametrize("solver", ['euler'])
+    def test_solver(self, solver):
+        model, _ = self._make_model(solver=solver)
+        assert isinstance(model, PLNN)   
+
+
+@pytest.mark.parametrize('dtype', [jnp.float32, jnp.float64])
+class TestInitialization:
+
+    def _make_model(self, **kwargs):
+        key = jrandom.PRNGKey(0)
+        model, hyperparams = make_model(key=key, **kwargs)
+        return model, hyperparams
+    
+    def _init_model(self, model, dtype, **kwargs):
+        key = jrandom.PRNGKey(1)
+        model = initialize_model(key, model, dtype, **kwargs)
+        return model
+
+    @pytest.mark.parametrize('method, args, expect', [
+        ['constant', [0.], does_not_raise()],
+        ['normal', [0., 1.], does_not_raise()],
+        ['xavier_uniform', [], does_not_raise()],
+        ['explicit', [[[1],[2],[3],[4],[5]]], does_not_raise()],
+    ])
+    def test_phi_weights(self, dtype, method, args, expect):
+        with expect:
+            model, _ = self._make_model()
+            model = self._init_model(
+                model, dtype, 
+                init_phi_weights_method=method,
+                init_phi_weights_args=args,
+            )
+            assert isinstance(model, PLNN)
+
+    @pytest.mark.parametrize('include_bias, method, args, expect', [
+        [True, 'constant', [0.], does_not_raise()],
+        [True, 'normal', [0., 1.], does_not_raise()],
+        [True, 'xavier_uniform', [], pytest.raises(RuntimeError)],
+        [False, 'constant', [0.], does_not_raise()],
+        [False, 'normal', [0., 1.], does_not_raise()],
+    ])
+    def test_phi_bias(self, dtype, include_bias, method, args, expect):
+        with expect:
+            model, _ = self._make_model(include_phi_bias=include_bias)
+            model = self._init_model(
+                model, dtype, 
+                init_phi_bias_method=method,
+                init_phi_bias_args=args,
+            )
+            assert isinstance(model, PLNN)
+
+    @pytest.mark.parametrize('method, args, expect', [
+        ['constant', [0.], does_not_raise()],
+        ['normal', [0., 1.], does_not_raise()],
+        ['xavier_uniform', [], does_not_raise()],
+    ])
+    def test_tilt_weights(self, dtype, method, args, expect):
+        with expect:
+            model, _ = self._make_model()
+            model = self._init_model(
+                model, dtype, 
+                init_tilt_weights_method=method,
+                init_tilt_weights_args=args,
+            )
+            assert isinstance(model, PLNN)
+
+    @pytest.mark.parametrize('include_bias, method, args, expect', [
+        [True, 'constant', [0.], does_not_raise()],
+        [True, 'normal', [0., 1.], does_not_raise()],
+        [True, 'xavier_uniform', [], pytest.raises(RuntimeError)],
+        [False, 'constant', [0.], does_not_raise()],
+        [False, 'normal', [0., 1.], does_not_raise()],
+    ])
+    def test_tilt_bias(self, dtype, include_bias, method, args, expect):
+        with expect:
+            model, _ = self._make_model(include_tilt_bias=include_bias)
+            model = self._init_model(
+                model, dtype, 
+                init_tilt_bias_method=method,
+                init_tilt_bias_args=args,
+            )
+            assert isinstance(model, PLNN)
