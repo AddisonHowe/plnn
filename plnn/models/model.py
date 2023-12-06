@@ -551,6 +551,7 @@ class PLNN(eqx.Module):
     def _check_hidden_layers(self, hidden_dims, hidden_acts, final_act):
         """Check the model architecture.
         """
+        hidden_dims = [] if hidden_dims is None else hidden_dims
         nlayers = len(hidden_dims)
         # Convert singular hidden activation to a list.
         if hidden_acts is None or isinstance(hidden_acts, (str, type)):
@@ -598,43 +599,6 @@ class PLNN(eqx.Module):
             key, self.ndim, 1,
             hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
         )
-        # hidden_dims, hidden_acts, final_act = self._check_hidden_layers(
-        #     hidden_dims=hidden_dims, 
-        #     hidden_acts=hidden_acts, 
-        #     final_act=final_act,
-        # )
-        # layer_list = []
-        # # Hidden layers
-        # key, subkey = jrandom.split(key, 2)
-        # self._add_layer(
-        #     subkey, 
-        #     layer_list, self.ndim, hidden_dims[0], 
-        #     activation=hidden_acts[0], 
-        #     normalization=layer_normalize,
-        #     bias=bias,
-        #     dtype=dtype,
-        # )
-        # for i in range(len(hidden_dims) - 1):
-        #     key, subkey = jrandom.split(key, 2)
-        #     self._add_layer(
-        #         subkey,
-        #         layer_list, hidden_dims[i], hidden_dims[i+1], 
-        #         activation=hidden_acts[i+1], 
-        #         normalization=layer_normalize,
-        #         bias=bias,
-        #         dtype=dtype,
-        #     )
-        # # Final layer
-        # key, subkey = jrandom.split(key, 2)
-        # self._add_layer(
-        #     subkey,
-        #     layer_list, hidden_dims[-1], 1,  
-        #     activation=final_act, 
-        #     normalization=False,
-        #     bias=bias,
-        #     dtype=dtype,
-        # )
-        # return eqx.nn.Sequential(layer_list)
     
     def _construct_tilt_nn(self, key, hidden_dims, hidden_acts, final_act, 
                           layer_normalize, bias=False, dtype=jnp.float32):
@@ -642,47 +606,6 @@ class PLNN(eqx.Module):
             key, self.nsig, self.ndim, 
             hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
         )
-        # hidden_dims, hidden_acts, final_act = self._check_hidden_layers(
-        #     hidden_dims=hidden_dims, 
-        #     hidden_acts=hidden_acts, 
-        #     final_act=final_act,
-        # )
-        # layer_list = []
-        # if len(hidden_dims) == 0:
-        #     layer_list = [eqx.nn.Linear(self.nsig, self.ndim,
-        #                             use_bias=bias, key=key)]
-        #     return eqx.nn.Sequential(layer_list)
-        # # Hidden layers
-        # key, subkey = jrandom.split(key, 2)
-        # self._add_layer(
-        #     subkey, 
-        #     layer_list, self.ndim, hidden_dims[0], 
-        #     activation=hidden_acts[0], 
-        #     normalization=layer_normalize,
-        #     bias=bias,
-        #     dtype=dtype,
-        # )
-        # for i in range(len(hidden_dims) - 1):
-        #     key, subkey = jrandom.split(key, 2)
-        #     self._add_layer(
-        #         subkey,
-        #         layer_list, hidden_dims[i], hidden_dims[i+1], 
-        #         activation=hidden_acts[i+1], 
-        #         normalization=layer_normalize,
-        #         bias=bias,
-        #         dtype=dtype,
-        #     )
-        # # Final layer
-        # key, subkey = jrandom.split(key, 2)
-        # self._add_layer(
-        #     subkey,
-        #     layer_list, hidden_dims[-1], 1,  
-        #     activation=final_act, 
-        #     normalization=False,
-        #     bias=bias,
-        #     dtype=dtype,
-        # )
-        # return eqx.nn.Sequential(layer_list)
     
     def _construct_metric_nn(self, key, hidden_dims, hidden_acts, final_act, 
                              layer_normalize, bias=True, dtype=jnp.float32):
@@ -690,43 +613,6 @@ class PLNN(eqx.Module):
             key, self.ndim, int(self.ndim * (self.ndim + 1) / 2), 
             hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
         )
-        # hidden_dims, hidden_acts, final_act = self._check_hidden_layers(
-        #     hidden_dims=hidden_dims, 
-        #     hidden_acts=hidden_acts, 
-        #     final_act=final_act,
-        # )
-        # layer_list = []
-        # # Hidden layers
-        # key, subkey = jrandom.split(key, 2)
-        # self._add_layer(
-        #     subkey, 
-        #     layer_list, self.ndim, hidden_dims[0], 
-        #     activation=hidden_acts[0], 
-        #     normalization=layer_normalize,
-        #     bias=bias,
-        #     dtype=dtype,
-        # )
-        # for i in range(len(hidden_dims) - 1):
-        #     key, subkey = jrandom.split(key, 2)
-        #     self._add_layer(
-        #         subkey,
-        #         layer_list, hidden_dims[i], hidden_dims[i+1], 
-        #         activation=hidden_acts[i+1], 
-        #         normalization=layer_normalize,
-        #         bias=bias,
-        #         dtype=dtype,
-        #     )
-        # # Final layer
-        # key, subkey = jrandom.split(key, 2)
-        # self._add_layer(
-        #     subkey,
-        #     layer_list, hidden_dims[-1], int(self.ndim * (self.ndim + 1) / 2),
-        #     activation=final_act, 
-        #     normalization=False,
-        #     bias=bias,
-        #     dtype=dtype,
-        # )
-        # return eqx.nn.Sequential(layer_list)
     
     def _construct_ffn(self, key, dim0, dim1, hidden_dims, hidden_acts, 
                        final_act, layer_normalize, bias, dtype):
@@ -747,8 +633,6 @@ class PLNN(eqx.Module):
                 bias=bias,
                 dtype=dtype,
             )
-            # layer_list = [eqx.nn.Linear(self.nsig, self.ndim, 
-            #                             use_bias=bias, key=key)]
             return eqx.nn.Sequential(layer_list)
         
         # Hidden layers
@@ -837,9 +721,6 @@ class PLNN(eqx.Module):
         saveas = kwargs.get('saveas', None)
         show = kwargs.get('show', False)
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-        # if self.training:
-        #     warnings.warn("Not plotting. Currently training=True.")
-        #     return
         if ax is None and plot3d:
             fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
         elif ax is None and (not plot3d):
@@ -945,9 +826,6 @@ class PLNN(eqx.Module):
         saveas = kwargs.get('saveas', None)
         show = kwargs.get('show', False)
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-        # if self.training:
-        #     warnings.warn("Not plotting. Currently training=True.")
-        #     return
         if ax is None: fig, ax = plt.subplots(1, 1, figsize=figsize)
         
         # Initialize signal parameters TODO: don't hard-code the parameters
