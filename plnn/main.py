@@ -51,21 +51,21 @@ def parse_args(args):
     parser.add_argument('--phi_hidden_acts', type=str, nargs='+', 
                         default=4*['softplus'])
     parser.add_argument('--phi_final_act', type=str, default='softplus')
-    parser.add_argument('--phi_layer_normalize', default=False)
+    parser.add_argument('--phi_layer_normalize', action='store_true')
 
     parser.add_argument('--tilt_hidden_dims', type=int, nargs='+', 
                         default=[])
     parser.add_argument('--tilt_hidden_acts', type=str, nargs='+', 
                         default=None)
     parser.add_argument('--tilt_final_act', type=str, default=None)
-    parser.add_argument('--tilt_layer_normalize', default=False)
+    parser.add_argument('--tilt_layer_normalize', action='store_true')
 
     parser.add_argument('--metric_hidden_dims', type=int, nargs='+', 
                         default=[8, 8, 8, 8])
     parser.add_argument('--metric_hidden_acts', type=str, nargs='+', 
                         default=4*['softplus'])
     parser.add_argument('--metric_final_act', type=str, default=None)
-    parser.add_argument('--metric_layer_normalize', default=False)
+    parser.add_argument('--metric_layer_normalize', action='store_true')
 
     parser.add_argument('--infer_noise', action="store_true",
                         help="If specified, infer the noise level.")
