@@ -77,32 +77,32 @@ def parse_args(args):
     parser.add_argument('--init_phi_weights_method', type=str, 
                         default='xavier_uniform', 
                         choices=[None, 'xavier_uniform', 'constant', 'normal'])
-    parser.add_argument('--init_phi_weights_args', type=float, nargs='?', 
+    parser.add_argument('--init_phi_weights_args', type=float, nargs='*', 
                         default=[])
     parser.add_argument('--init_phi_bias_method', type=str, 
                         default='constant', 
                         choices=[None, 'constant', 'normal'])
-    parser.add_argument('--init_phi_bias_args', type=float, nargs='?', 
+    parser.add_argument('--init_phi_bias_args', type=float, nargs='*', 
                         default=0.)
     parser.add_argument('--init_tilt_weights_method', type=str, 
                         default='xavier_uniform', 
                         choices=[None, 'xavier_uniform', 'constant', 'normal'])
-    parser.add_argument('--init_tilt_weights_args', type=float, nargs='?', 
-                        default=0.)
+    parser.add_argument('--init_tilt_weights_args', type=float, nargs='*', 
+                        default=[])
     parser.add_argument('--init_tilt_bias_method', type=str, 
                         default=None, 
                         choices=[None, 'constant', 'normal'])
-    parser.add_argument('--init_tilt_bias_args', type=float, nargs='?', 
+    parser.add_argument('--init_tilt_bias_args', type=float, nargs='*', 
                         default=None)
     parser.add_argument('--init_metric_weights_method', type=str, 
                         default='xavier_uniform', 
                         choices=[None, 'xavier_uniform', 'constant', 'normal'])
-    parser.add_argument('--init_metric_weights_args', type=float, nargs='?', 
-                        default=0.)
+    parser.add_argument('--init_metric_weights_args', type=float, nargs='*', 
+                        default=[])
     parser.add_argument('--init_metric_bias_method', type=str, 
                         default=None, 
                         choices=[None, 'constant', 'normal'])
-    parser.add_argument('--init_metric_bias_args', type=float, nargs='?', 
+    parser.add_argument('--init_metric_bias_args', type=float, nargs='*', 
                         default=None)
 
     # Loss function
