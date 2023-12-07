@@ -3,6 +3,7 @@
 """
 
 import warnings
+import json
 import numpy as np
 import matplotlib.pyplot as plt
 import jax
@@ -1003,9 +1004,40 @@ def make_model(
         'metric_hidden_acts' : metric_hidden_acts,
         'metric_final_act' : metric_final_act,
         'metric_layer_normalize' : metric_layer_normalize,
-        'dtype' : dtype,
     })
     return model, hyperparams
+
+
+############################
+##  Model Saving/Loading  ##
+############################
+
+def save_model(fname, model, hyperparams):
+    """Save a model and hyperparameters to output file.
+
+    Args:
+        fname (str): Output file name.
+        model (PLNN): Model instance.
+        hyperparams (dict): Hyperparameters of the model.
+    """
+    with open(fname, "wb") as f:
+        hyperparam_str = json.dumps(hyperparams)
+        f.write((hyperparam_str + "\n").encode())
+        eqx.tree_serialise_leaves(f, model)  
+
+def load_model(fname):
+    """Load a model from a binary parameter file.
+    
+    Args:
+        fname (str): Parameter file to load.
+
+    Returns:
+        PLNN: Model instance.
+    """
+    with open(fname, "rb") as f:
+        hyperparams = json.loads(f.readline().decode())
+        model, _ = make_model(key=jrandom.PRNGKey(0), **hyperparams)
+        return eqx.tree_deserialise_leaves(f, model), hyperparams
 
 
 ############################
