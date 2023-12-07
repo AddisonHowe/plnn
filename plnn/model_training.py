@@ -7,7 +7,7 @@ import numpy as np
 import jax.random as jrandom
 import equinox as eqx
 
-from plnn.models import PLNN
+from plnn.models import PLNN, make_model
 
 
 def train_model(
@@ -19,6 +19,7 @@ def train_model(
     key,
     num_epochs=50,
     batch_size=1,
+    hyperparams={},
     **kwargs
 ):
     """Train a PLNN model.
@@ -32,6 +33,7 @@ def train_model(
         key (PRNGKey): Random number generator key.
         num_epochs (int, optional): Number of training epochs. Defaults to 50.
         batch_size (int, optional): Batch size. Defaults to 1.
+        hyperparams (dict, optional): Hyperparameters. Defaults to {}.
     """
     #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
     model_name = kwargs.get('model_name', 'model')
@@ -96,8 +98,7 @@ def train_model(
             best_vloss = avg_vloss
             model_path = f"{outdir}/{model_name}_{epoch}.pth"
             print("Saving model.")
-            hyperparams = model.get_hyperparameters()
-            save(model_path, hyperparams, model)
+            save(model_path, model, hyperparams)
         
         # Plotting, if specified
         if plotting:
@@ -210,18 +211,8 @@ def validation_step(model, x, y, loss_fn, key):
     return vloss
 
 
-def make(*, key, ncells):
-    return PLNN(
-        ndim=2,
-        nsig=2,
-        ncells=ncells,
-        key=key,
-        nsigparams=5,
-        sigma_init=1e-2,
-    )
 
-
-def save(filename, hyperparams, model):
+def save(filename, model, hyperparams={}):
     with open(filename, "wb") as f:
         hyperparam_str = json.dumps(hyperparams)
         f.write((hyperparam_str + "\n").encode())
@@ -231,7 +222,7 @@ def save(filename, hyperparams, model):
 def load(filename):
     with open(filename, "rb") as f:
         hyperparams = json.loads(f.readline().decode())
-        model = make(key=jrandom.PRNGKey(0), **hyperparams)
+        model, _ = make_model(key=jrandom.PRNGKey(0), **hyperparams)
         return eqx.tree_deserialise_leaves(f, model)
     
 

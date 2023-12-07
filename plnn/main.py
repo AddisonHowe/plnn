@@ -277,6 +277,7 @@ def main(args):
         num_epochs=num_epochs,
         batch_size=batch_size,
         model_name=model_name,
+        hyperparams=hyperparams,
         outdir=outdir,
         plotting=do_plot,
         plotting_opts={},  # Default plotting options
