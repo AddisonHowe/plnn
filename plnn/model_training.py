@@ -7,7 +7,7 @@ import numpy as np
 import jax.random as jrandom
 import equinox as eqx
 
-from plnn.models import PLNN, make_model
+from plnn.models import save_model
 
 
 def train_model(
@@ -98,7 +98,7 @@ def train_model(
             best_vloss = avg_vloss
             model_path = f"{outdir}/{model_name}_{epoch}.pth"
             print("Saving model.")
-            save(model_path, model, hyperparams)
+            save_model(model_path, model, hyperparams)
         
         # Plotting, if specified
         if plotting:
@@ -209,21 +209,6 @@ def validation_step(model, x, y, loss_fn, key):
     y_pred = model(t0, t1, y0, sigparams, key)
     vloss = loss_fn(y_pred, y)
     return vloss
-
-
-
-def save(filename, model, hyperparams={}):
-    with open(filename, "wb") as f:
-        hyperparam_str = json.dumps(hyperparams)
-        f.write((hyperparam_str + "\n").encode())
-        eqx.tree_serialise_leaves(f, model)
-
-
-def load(filename):
-    with open(filename, "rb") as f:
-        hyperparams = json.loads(f.readline().decode())
-        model, _ = make_model(key=jrandom.PRNGKey(0), **hyperparams)
-        return eqx.tree_deserialise_leaves(f, model)
     
 
 def make_plots(epoch, model, outdir, plotting_opts):

@@ -11,8 +11,8 @@ import jax.random as jrandom
 import optax
 
 from plnn.dataset import get_dataloaders
-from plnn.models import make_model, initialize_model
-from plnn.model_training import train_model, load
+from plnn.models import make_model, initialize_model, load_model
+from plnn.model_training import train_model
 from plnn.helpers import mean_diff_loss, mean_cov_loss, kl_divergence_est
 
 
@@ -208,7 +208,7 @@ def main(args):
     signal_type, nsigparams = get_signal_spec(signal_function_key)
     
     if cont_path:
-        model = load(cont_path)
+        model, hyperparams = load_model(cont_path)
     else:
         model, hyperparams = make_model(
             key=modelkey,
