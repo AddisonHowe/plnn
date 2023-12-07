@@ -244,39 +244,52 @@ def make_plots(epoch, model, outdir, plotting_opts):
     """
     plot_radius = plotting_opts.get('plot_radius', 4)
     plot_res = plotting_opts.get('plot_res', 50)
-    model.plot_phi(
-        r=plot_radius, res=plot_res, plot3d=False,
-        normalize=False, log_normalize=False,
-        title=f"$\\phi$ (Epoch {epoch})",
-        saveas=f"{outdir}/images/phi_heatmap_{epoch}.png",
-    )
-    model.plot_phi(
-        r=plot_radius, res=plot_res, plot3d=True,
-        normalize=False, log_normalize=False,
-        title=f"$\\phi$ (Epoch {epoch})",
-        saveas=f"{outdir}/images/phi_landscape_{epoch}.png",
-    )
-    model.plot_phi(
-        r=plot_radius, res=plot_res, plot3d=False,
-        normalize=True, log_normalize=False,
-        title=f"$\\phi$ (Epoch {epoch})",
-        saveas=f"{outdir}/images/normphi_heatmap_{epoch}.png",
-    )
-    model.plot_phi(
-        r=plot_radius, res=plot_res, plot3d=True,
-        normalize=True, log_normalize=False,
-        title=f"$\\phi$ (Epoch {epoch})",
-        saveas=f"{outdir}/images/normphi_landscape_{epoch}.png",
-    )
-    model.plot_phi(
-        r=plot_radius, res=plot_res, plot3d=False,
-        normalize=True, log_normalize=True,
-        title=f"$\\phi$ (Epoch {epoch})",
-        saveas=f"{outdir}/images/logphi_heatmap_{epoch}.png",
-    )
-    model.plot_phi(
-        r=plot_radius, res=plot_res, plot3d=True,
-        normalize=True, log_normalize=True,
-        title=f"$\\phi$ (Epoch {epoch})",
-        saveas=f"{outdir}/images/logphi_landscape_{epoch}.png",
-    )
+    plot_phi_heatmap = plotting_opts.get('plot_phi_heatmap', True)
+    plot_phi_landscape = plotting_opts.get('plot_phi_landscape', False)
+    plot_phi_heatmap_norm = plotting_opts.get('plot_phi_heatmap_norm', False)
+    plot_phi_landscape_norm = plotting_opts.get('plot_phi_landscape_norm', False)
+    plot_phi_heatmap_lognorm = plotting_opts.get('plot_phi_heatmap_lognorm', False)
+    plot_phi_landscape_lognorm = plotting_opts.get('plot_phi_landscape_lognorm', False)
+
+    if plot_phi_heatmap: 
+        model.plot_phi(
+            r=plot_radius, res=plot_res, plot3d=False,
+            normalize=False, log_normalize=False,
+            title=f"$\\phi$ (Epoch {epoch})",
+            saveas=f"{outdir}/images/phi_heatmap_{epoch}.png",
+        )
+    if plot_phi_landscape:
+        model.plot_phi(
+            r=plot_radius, res=plot_res, plot3d=True,
+            normalize=False, log_normalize=False,
+            title=f"$\\phi$ (Epoch {epoch})",
+            saveas=f"{outdir}/images/phi_landscape_{epoch}.png",
+        )
+    if plot_phi_heatmap_norm:
+        model.plot_phi(
+            r=plot_radius, res=plot_res, plot3d=False,
+            normalize=True, log_normalize=False,
+            title=f"$\\phi$ (Epoch {epoch})",
+            saveas=f"{outdir}/images/normphi_heatmap_{epoch}.png",
+        )
+    if plot_phi_landscape_norm:
+        model.plot_phi(
+            r=plot_radius, res=plot_res, plot3d=True,
+            normalize=True, log_normalize=False,
+            title=f"$\\phi$ (Epoch {epoch})",
+            saveas=f"{outdir}/images/normphi_landscape_{epoch}.png",
+        )
+    if plot_phi_heatmap_lognorm:
+        model.plot_phi(
+            r=plot_radius, res=plot_res, plot3d=False,
+            normalize=True, log_normalize=True,
+            title=f"$\\phi$ (Epoch {epoch})",
+            saveas=f"{outdir}/images/logphi_heatmap_{epoch}.png",
+        )
+    if plot_phi_landscape_lognorm:
+        model.plot_phi(
+            r=plot_radius, res=plot_res, plot3d=True,
+            normalize=True, log_normalize=True,
+            title=f"$\\phi$ (Epoch {epoch})",
+            saveas=f"{outdir}/images/logphi_landscape_{epoch}.png",
+        )
