@@ -336,7 +336,6 @@ class PLNN(eqx.Module):
         """
         gphi = self.eval_grad_phi(t, y)
         gtilt = self.grad_tilt(t, sig_params)
-        # metric = self.eval_metric(t, y)
         return -(gphi + gtilt)
 
     @eqx.filter_jit
@@ -429,6 +428,26 @@ class PLNN(eqx.Module):
         signal_vals = self.binary_signal_function(t, sig_params)
         return self.tilt_nn(signal_vals)
     
+    @eqx.filter_jit
+    def eval_tilted_phi(
+        self, 
+        t: Float, 
+        y: Float[Array, "ndim"], 
+        sig_params: Float[Array, "nsigparams"],
+    ) -> Float:
+        """Evaluate tilted landscape level. 
+
+        Args:
+            t (Scalar)         : Time.
+            y (Array)          : State. Shape (d,).
+            sig_params (Array) : Signal parameters. Shape (nsigparams,).
+        Returns:
+            Array of shape (1,).
+        """
+        phi = self.eval_phi(y)
+        gtilt = self.grad_tilt(t, sig_params)
+        return phi + jnp.dot(gtilt, y)
+    
     ####################################
     ##  Vectorized Landscape Methods  ##
     ####################################
@@ -496,6 +515,24 @@ class PLNN(eqx.Module):
             Array of shape (n,d).
         """
         return jax.vmap(self.eval_grad_phi, (None, 0))(t, y)
+    
+    @eqx.filter_jit
+    def tilted_phi(
+        self, 
+        t: Float, 
+        y: Float[Array, "ncells ndim"],
+        sig_params: Float[Array, "nsigparams"]
+    ) -> Float[Array, "ncells"]:
+        """Tilted landscape level. 
+
+        Args:
+            t (Scalar) : Time.
+            y (Array)  : State. Shape (n,d).
+            sig_params (Array) : Signal parameters. Shape (nsigparams,).
+        Returns:
+            Array of shape (n,1).
+        """
+        return jax.vmap(self.eval_tilted_phi, (None, 0, None))(t, y, sig_params)
         
     ########################
     ##  Signal Functions  ##
@@ -675,7 +712,7 @@ class PLNN(eqx.Module):
     ##  Plotting Methods  ##
     ########################
 
-    def plot_phi(self, r=4, res=50, plot3d=False, **kwargs):
+    def plot_phi(self, signal=None, r=4, res=50, plot3d=False, **kwargs):
         """Plot the scalar function phi.
         Args:
             r (int) : 
@@ -731,12 +768,19 @@ class PLNN(eqx.Module):
             fig, ax = plt.subplots(1, 1, figsize=figsize)
         
         # Compute phi
+        if signal is None:
+            signal = [0, 0]
+        
+        # Initialize signal parameters TODO: don't hard-code the parameters
+        signal_params = jnp.array([1, *signal, *signal])
+        eval_time = 0.
+
         x = np.linspace(-r, r, res)
         y = np.linspace(-r, r, res)
         xs, ys = np.meshgrid(x, y)
         z = np.array([xs.flatten(), ys.flatten()]).T
         z = jnp.array(z, dtype=jnp.float32)
-        phi = np.array(self.phi(z))  # move to cpu
+        phi = np.array(self.tilted_phi(eval_time, z, signal_params))
         
         # Normalization
         if normalize:
@@ -833,7 +877,7 @@ class PLNN(eqx.Module):
         if ax is None: fig, ax = plt.subplots(1, 1, figsize=figsize)
         
         # Initialize signal parameters TODO: don't hard-code the parameters
-        signal_params = jnp.array([1, *signal, *signal], dtype=self.dtype)
+        signal_params = jnp.array([1, *signal, *signal])
         eval_time = 1.
         
         # Compute f
@@ -841,7 +885,7 @@ class PLNN(eqx.Module):
         y = np.linspace(-r, r, res)
         xs, ys = np.meshgrid(x, y)
         z = np.array([xs.flatten(), ys.flatten()]).T
-        z = jnp.array(z, dtype=self.dtype)
+        z = jnp.array(z)
         f = np.array(self.f(eval_time, z, signal_params))
         fu, fv = f.T
         fnorms = np.sqrt(fu**2 + fv**2)
@@ -1025,7 +1069,7 @@ def save_model(fname, model, hyperparams):
         f.write((hyperparam_str + "\n").encode())
         eqx.tree_serialise_leaves(f, model)  
 
-def load_model(fname):
+def load_model(fname)->tuple[PLNN,dict]:
     """Load a model from a binary parameter file.
     
     Args:
