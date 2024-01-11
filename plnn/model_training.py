@@ -1,6 +1,7 @@
 """Model Training Script
 """
 
+import os
 import time
 import json
 import numpy as np
@@ -38,6 +39,7 @@ def train_model(
     #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
     model_name = kwargs.get('model_name', 'model')
     outdir = kwargs.get('outdir', 'out')
+    save_all = kwargs.get('save_all', False)
     plotting = kwargs.get('plotting', False)
     plotting_opts = kwargs.get('plotting_opts', {})
     verbosity = kwargs.get('verbosity', 1)
@@ -57,6 +59,12 @@ def train_model(
         make_plots(0, model, outdir, plotting_opts)
 
     if verbosity: print(f"\nTraining model...\n")
+    
+    # Save initial model state
+    os.makedirs(f"{outdir}/states", exist_ok=True)
+    model_path = f"{outdir}/states/{model_name}_0.pth"
+    print("Saving model.")
+    save_model(model_path, model, hyperparams)
 
     for epoch in range(num_epochs):
         if verbosity: print(f'EPOCH {epoch + 1}:', flush=True)
@@ -98,12 +106,15 @@ def train_model(
         sigma_hist.append(model.get_sigma())
         np.save(f"{outdir}/sigma_history.npy", sigma_hist)
 
-        # Track best performance, and save the model's state
+        # Save the model's state
+        if avg_vloss < best_vloss or save_all:
+            model_path = f"{outdir}/states/{model_name}_{epoch + 1}.pth"
+            print("Saving model.")
+            save_model(model_path, model, hyperparams)
+
+        # Track best performance
         if avg_vloss < best_vloss:
             best_vloss = avg_vloss
-            model_path = f"{outdir}/{model_name}_{epoch}.pth"
-            if verbosity: print("\tSaving model.")
-            save_model(model_path, model, hyperparams)
         
         # Plotting, if specified
         if plotting:
