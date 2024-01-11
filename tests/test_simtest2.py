@@ -164,7 +164,7 @@ class TestTraining:
             model_name='tmp_model',
         )
 
-        self._remove_files(OUTDIR, 'tmp_model')
+        self._remove_files(f"{OUTDIR}/states", 'tmp_model')
 
         newparams = model.get_linear_layer_parameters()
 

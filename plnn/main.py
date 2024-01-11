@@ -128,6 +128,7 @@ def parse_args(args):
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--timestamp', action="store_true",
                         help="Add timestamp to out directory.")
+    parser.add_argument('--save_all', action="store_true")
 
     return parser.parse_args(args)
 
@@ -279,6 +280,7 @@ def main(args):
         model_name=model_name,
         hyperparams=hyperparams,
         outdir=outdir,
+        save_all=args.save_all,
         plotting=do_plot,
         plotting_opts={},  # Default plotting options
     )
