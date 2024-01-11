@@ -56,8 +56,10 @@ def train_model(
     if plotting:
         make_plots(0, model, outdir, plotting_opts)
 
+    if verbosity: print(f"\nTraining model...\n")
+
     for epoch in range(num_epochs):
-        print(f'EPOCH {epoch + 1}:', flush=True)
+        if verbosity: print(f'EPOCH {epoch + 1}:', flush=True)
         etime0 = time.time()
         key, trainkey, validkey = jrandom.split(key, 3)
 
@@ -82,8 +84,11 @@ def train_model(
             validkey,
         )
         
-        print("LOSS [train: {}] [valid: {}] TIME [epoch: {:.3g} sec]".format(
-            avg_tloss, avg_vloss, time.time() - etime0), flush=True)
+        if verbosity:
+            print(
+                "\tLOSS [train: {}] [valid: {}] TIME [epoch: {:.3g} sec]".format(
+                    avg_tloss, avg_vloss, time.time() - etime0), flush=True
+            )
         
         loss_hist_train.append(avg_tloss)
         loss_hist_valid.append(avg_vloss)
@@ -97,7 +102,7 @@ def train_model(
         if avg_vloss < best_vloss:
             best_vloss = avg_vloss
             model_path = f"{outdir}/{model_name}_{epoch}.pth"
-            print("Saving model.")
+            if verbosity: print("\tSaving model.")
             save_model(model_path, model, hyperparams)
         
         # Plotting, if specified
@@ -105,7 +110,7 @@ def train_model(
             make_plots(epoch + 1, model, outdir, plotting_opts)
         
     time1 = time.time()
-    print(f"Finished training in {time1-time0:.3f} seconds.")
+    if verbosity: print(f"Finished training in {time1-time0:.3f} seconds.")
     return model
 
 
@@ -157,7 +162,8 @@ def train_one_epoch(
         if bidx % report_every == (report_every - 1):
             last_loss = running_loss / report_every  # average loss per batch
             if verbosity: 
-                print(f'\tbatch {bidx + 1} loss: {last_loss}', flush=True)
+                print(f"\t[batch {bidx + 1}/{len(dataloader)}] loss: {last_loss}", 
+                      flush=True)
             running_loss = 0.
 
     return model, last_loss, opt_state
@@ -231,41 +237,41 @@ def make_plots(epoch, model, outdir, plotting_opts):
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=False,
             normalize=False, log_normalize=False,
-            title=f"$\\phi$ (Epoch {epoch})",
+            title=f"$\\phi$ ({epoch} epochs)",
             saveas=f"{outdir}/images/phi_heatmap_{epoch}.png",
         )
     if plot_phi_landscape:
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=True,
             normalize=False, log_normalize=False,
-            title=f"$\\phi$ (Epoch {epoch})",
+            title=f"$\\phi$ ({epoch} epochs)",
             saveas=f"{outdir}/images/phi_landscape_{epoch}.png",
         )
     if plot_phi_heatmap_norm:
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=False,
             normalize=True, log_normalize=False,
-            title=f"$\\phi$ (Epoch {epoch})",
+            title=f"$\\phi$ ({epoch} epochs)",
             saveas=f"{outdir}/images/normphi_heatmap_{epoch}.png",
         )
     if plot_phi_landscape_norm:
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=True,
             normalize=True, log_normalize=False,
-            title=f"$\\phi$ (Epoch {epoch})",
+            title=f"$\\phi$ ({epoch} epochs)",
             saveas=f"{outdir}/images/normphi_landscape_{epoch}.png",
         )
     if plot_phi_heatmap_lognorm:
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=False,
             normalize=True, log_normalize=True,
-            title=f"$\\phi$ (Epoch {epoch})",
+            title=f"$\\phi$ ({epoch} epochs)",
             saveas=f"{outdir}/images/logphi_heatmap_{epoch}.png",
         )
     if plot_phi_landscape_lognorm:
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=True,
             normalize=True, log_normalize=True,
-            title=f"$\\phi$ (Epoch {epoch})",
+            title=f"$\\phi$ ({epoch} epochs)",
             saveas=f"{outdir}/images/logphi_landscape_{epoch}.png",
         )
