@@ -6,6 +6,9 @@ import os, sys
 import argparse
 from datetime import datetime
 import numpy as np
+from jax import config
+config.update("jax_enable_x64", True)
+
 import jax.numpy as jnp
 import jax.random as jrandom
 import optax
@@ -27,8 +30,8 @@ def parse_args(args):
                         default="data/model_training_data")
     parser.add_argument('-v', '--validation_data', type=str, 
                         default="data/model_validation_data")
-    parser.add_argument('-nt', '--nsims_training', type=int, default=100)
-    parser.add_argument('-nv', '--nsims_validation', type=int, default=30)
+    parser.add_argument('-nt', '--nsims_training', type=int, default=None)
+    parser.add_argument('-nv', '--nsims_validation', type=int, default=None)
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
     parser.add_argument('-b', '--batch_size', type=int, default=25)
 
@@ -138,8 +141,8 @@ def main(args):
     model_name = args.name
     datdir_train = args.training_data
     datdir_valid = args.validation_data
-    nsims_train = args.nsims_training
-    nsims_valid = args.nsims_validation
+    nsims_train = args.nsims_training if args.nsims_training else read_nsims(datdir_train)
+    nsims_valid = args.nsims_validation if args.nsims_validation else read_nsims(datdir_valid)
     ndims = args.ndims
     nsigs = args.nsigs
     dt = args.dt
@@ -341,6 +344,9 @@ def log_model(outdir, model):
     with open(f"{outdir}/log_model.txt", 'w') as f:
         for arg, value in sorted(vars(model).items()):
             f.write(str(arg) + " : " + "%r" % value + "\n")
+
+def read_nsims(datdir):
+    return np.genfromtxt(f"{datdir}/nsims.txt", dtype=int)
 
 
 if __name__ == "__main__":
