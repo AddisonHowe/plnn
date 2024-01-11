@@ -63,11 +63,11 @@ def train_model(
     # Save initial model state
     os.makedirs(f"{outdir}/states", exist_ok=True)
     model_path = f"{outdir}/states/{model_name}_0.pth"
-    print("Saving model.")
+    if verbosity: print(f"Saving initial model state to: {model_path}")
     save_model(model_path, model, hyperparams)
 
     for epoch in range(num_epochs):
-        if verbosity: print(f'EPOCH {epoch + 1}:', flush=True)
+        if verbosity: print(f'EPOCH {epoch + 1}/{num_epochs}:', flush=True)
         etime0 = time.time()
         key, trainkey, validkey = jrandom.split(key, 3)
 
@@ -93,10 +93,8 @@ def train_model(
         )
         
         if verbosity:
-            print(
-                "\tLOSS [train: {}] [valid: {}] TIME [epoch: {:.3g} sec]".format(
-                    avg_tloss, avg_vloss, time.time() - etime0), flush=True
-            )
+            print(f"\tLOSS [training: {avg_tloss} | validation: {avg_vloss}]")
+            print(f"\tTIME [epoch: {time.time() - etime0:.3g} sec]", flush=True)
         
         loss_hist_train.append(avg_tloss)
         loss_hist_valid.append(avg_vloss)
@@ -109,12 +107,13 @@ def train_model(
         # Save the model's state
         if avg_vloss < best_vloss or save_all:
             model_path = f"{outdir}/states/{model_name}_{epoch + 1}.pth"
-            print("Saving model.")
+            if verbosity: print(f"\tSaving model to: {model_path}")
             save_model(model_path, model, hyperparams)
 
         # Track best performance
         if avg_vloss < best_vloss:
             best_vloss = avg_vloss
+            if verbosity: print(f"\tModel improved!!!", flush=True)
         
         # Plotting, if specified
         if plotting:
@@ -158,10 +157,13 @@ def train_one_epoch(
 
     running_loss = 0.
     last_loss = 0.
-    if report_every <= 0 or report_every > len(dataloader):
-        report_every = len(dataloader)
+    n = len(dataloader)
+    if report_every <= 0 or report_every > n:
+        report_every = n
 
     # Train over batches
+    if verbosity:
+        print("\tTraining over batches...")
     for bidx, data in enumerate(dataloader):
         inputs, y1 = data
         key, subkey = jrandom.split(key, 2)
@@ -173,8 +175,7 @@ def train_one_epoch(
         if bidx % report_every == (report_every - 1):
             last_loss = running_loss / report_every  # average loss per batch
             if verbosity: 
-                print(f"\t[batch {bidx + 1}/{len(dataloader)}] loss: {last_loss}", 
-                      flush=True)
+                print(f"\t\t[batch {bidx+1}/{n}] loss: {last_loss}", flush=True)
             running_loss = 0.
 
     return model, last_loss, opt_state
