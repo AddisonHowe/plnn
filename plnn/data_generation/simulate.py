@@ -76,7 +76,7 @@ def get_landscape_func(landscape_name):
         raise NotImplementedError(f"Unknown landscape: {landscape_name}")
 
 def get_param_func(nparams, param_schedule, param_args):
-    if param_args.ndims == 1:
+    if param_args.ndim == 1:
         param_args = np.array(param_args).reshape([nparams, -1])
     nargs = param_args.shape[1]
     if param_schedule == 'binary':
