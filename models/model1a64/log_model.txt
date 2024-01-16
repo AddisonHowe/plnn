@@ -1,5 +1,5 @@
-__annotations__ : {'phi_nn': <class 'equinox._module.Module'>, 'tilt_nn': <class 'equinox._module.Module'>, 'logsigma': <class 'jax.Array'>, 'metric_nn': <class 'equinox._module.Module'>, 'ndim': <class 'int'>, 'nsig': <class 'int'>, 'ncells': <class 'int'>, 'signal_type': <class 'str'>, 'nsigparams': <class 'int'>, 'sigma_init': <class 'float'>, 'solver': <class 'str'>, 'dt0': <class 'float'>, 'sample_cells': <class 'bool'>, 'infer_metric': <class 'bool'>, 'include_phi_bias': <class 'bool'>, 'include_tilt_bias': <class 'bool'>, 'include_metric_bias': <class 'bool'>}
-__doc__ : "PLNN(key, ndim, nsig, ncells, signal_type='jump', nsigparams=5, sigma_init=0.01, solver='euler', dt0=0.01, sample_cells=True, infer_metric=True, include_phi_bias=True, include_tilt_bias=False, include_metric_bias=True, phi_hidden_dims=[16, 32, 32, 16], phi_hidden_acts='softplus', phi_final_act=None, phi_layer_normalize=False, tilt_hidden_dims=[], tilt_hidden_acts=None, tilt_final_act=None, tilt_layer_normalize=False, metric_hidden_dims=[8, 8, 8, 8], metric_hidden_acts='softplus', metric_final_act=None, metric_layer_normalize=False, dtype=<class 'jax.numpy.float32'>)"
+__annotations__ : {'phi_nn': <class 'equinox._module.Module'>, 'tilt_nn': <class 'equinox._module.Module'>, 'logsigma': <class 'jax.Array'>, 'metric_nn': <class 'equinox._module.Module'>, 'ndims': <class 'int'>, 'nsigs': <class 'int'>, 'ncells': <class 'int'>, 'signal_type': <class 'str'>, 'nsigparams': <class 'int'>, 'sigma_init': <class 'float'>, 'solver': <class 'str'>, 'dt0': <class 'float'>, 'sample_cells': <class 'bool'>, 'infer_metric': <class 'bool'>, 'include_phi_bias': <class 'bool'>, 'include_tilt_bias': <class 'bool'>, 'include_metric_bias': <class 'bool'>}
+__doc__ : "PLNN(key, ndims, nsigs, ncells, signal_type='jump', nsigparams=5, sigma_init=0.01, solver='euler', dt0=0.01, sample_cells=True, infer_metric=True, include_phi_bias=True, include_tilt_bias=False, include_metric_bias=True, phi_hidden_dims=[16, 32, 32, 16], phi_hidden_acts='softplus', phi_final_act=None, phi_layer_normalize=False, tilt_hidden_dims=[], tilt_hidden_acts=None, tilt_final_act=None, tilt_layer_normalize=False, metric_hidden_dims=[8, 8, 8, 8], metric_hidden_acts='softplus', metric_final_act=None, metric_layer_normalize=False, dtype=<class 'jax.numpy.float32'>)"
 __module__ : 'plnn.models.model'
 dt0 : 0.1
 include_metric_bias : True
@@ -51,8 +51,8 @@ metric_nn : Sequential(
   )
 )
 ncells : 100
-ndim : 2
-nsig : 2
+ndims : 2
+nsigs : 2
 nsigparams : 5
 phi_nn : Sequential(
   layers=(

@@ -26,14 +26,14 @@ class LandscapeSimulationDataset(Dataset):
 
     """
     
-    def __init__(self, datdir, nsims, dim, 
+    def __init__(self, datdir, nsims, ndims, 
                  transform=None, target_transform=None, **kwargs):
         #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
         simprefix = kwargs.get('simprefix', 'sim')
         dtype = kwargs.get('dtype', torch.float32)
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
         self.nsims = nsims
-        self.dim = dim
+        self.ndims = ndims
         self.transform = transform
         self.target_transform = target_transform
         self.dtype = dtype
@@ -44,16 +44,17 @@ class LandscapeSimulationDataset(Dataset):
     
     def __getitem__(self, idx):
         data = self.dataset[idx]
-        t0, x0, t1, x1, ps = data
+        t0, x0, t1, x1, p_params = data
+        
         # Transform input x
         if self.transform == 'tensor':
-            x = np.concatenate([[t0], [t1], x0.flatten(), ps])
-            # x = torch.tensor(x, dtype=self.dtype, requires_grad=True)
+            x = np.concatenate([[t0], [t1], x0.flatten(), p_params.flatten()])
             x = torch.tensor(x, dtype=self.dtype)
         elif self.transform:
             x = self.transform(*data)
         else:
-            x = t0, x0, t1, ps
+            x = t0, x0, t1, p_params
+        
         # Transform target y, the final distribution
         if self.target_transform == 'tensor':
             y = torch.tensor(x1, dtype=self.dtype)
@@ -75,7 +76,7 @@ class LandscapeSimulationDataset(Dataset):
         show = kwargs.get('show', True)
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
         data = self.dataset[idx]
-        t0, x0, t1, x1, ps = data
+        t0, x0, t1, x1, p_params = data
         if ax is None: fig, ax = plt.subplots(1, 1)
         ax.plot(x0[:,0], x0[:,1], '.', 
                 c=col1, markersize=size, label=f"$t={t0:.3g}$")
@@ -86,10 +87,12 @@ class LandscapeSimulationDataset(Dataset):
         ax.set_xlabel(f"$x$")
         ax.set_ylabel(f"$y$")
         ax.set_title(f"datapoint {idx}/{len(self)}")
-        s = f"$t:{t0:.4g}\\to{t1:.4g}$\
-            \n$t^*={ps[0]:.3g}$\
-            \n$p_0=[{ps[1]:.3g}, {ps[2]:.3g}]$\
-            \n$p_1=[{ps[3]:.3g}, {ps[4]:.3g}]$"
+        # s = f"$t:{t0:.4g}\\to{t1:.4g}$\
+        #     \n$t^*={p_params[0]:.3g}$\
+        #     \n$p_0=[{p_params[1]:.3g}, {p_params[2]:.3g}]$\
+        #     \n$p_1=[{p_params[3]:.3g}, {p_params[4]:.3g}]$"
+        s = f"$t:{t0:.4g}\\to{t1:.4g}$\n"
+        s += "\n".join([f"$s_{i+1}: {', '.join([f'{x:.3g}' for x in p])}$" for i, p in enumerate(p_params)])
         ax.text(0.02, 0.02, s, fontsize=8, transform=ax.transAxes)
         ax.legend()
         if show: plt.show()

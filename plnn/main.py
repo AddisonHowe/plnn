@@ -38,6 +38,8 @@ def parse_args(args):
     # Model simulation
     parser.add_argument('-nd', '--ndims', type=int, default=2,
                         help="Number of state space dimensions for the data.")
+    parser.add_argument('-np', '--nparams', type=int, default=2, 
+                        help="Number of landscape parameters.")
     parser.add_argument('-ns', '--nsigs', type=int, default=2, 
                         help="Number of signals in the system.")
     parser.add_argument('-nc', '--ncells', type=int, default=100, 
@@ -144,6 +146,7 @@ def main(args):
     nsims_train = args.nsims_training if args.nsims_training else read_nsims(datdir_train)
     nsims_valid = args.nsims_validation if args.nsims_validation else read_nsims(datdir_valid)
     ndims = args.ndims
+    nparams = args.nparams
     nsigs = args.nsigs
     dt = args.dt
     ncells = args.ncells
@@ -216,8 +219,9 @@ def main(args):
     else:
         model, hyperparams = make_model(
             key=modelkey,
-            ndim=ndims, 
-            nsig=nsigs, 
+            ndims=ndims, 
+            nparams=nparams, 
+            nsigs=nsigs, 
             ncells=ncells, 
             sigma_init=sigma,
             signal_type=signal_type,

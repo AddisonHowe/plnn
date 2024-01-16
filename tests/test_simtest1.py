@@ -76,8 +76,9 @@ class TestTwoStepSimulation:
     def _get_model(self, dtype):
         # Construct the model
         model = PLNN(
-            ndim=2, 
-            nsig=2, 
+            ndims=2, 
+            nparams=2, 
+            nsigs=2, 
             ncells=4, 
             sigma_init=0,
             solver='euler',
