@@ -76,6 +76,8 @@ def main(args):
 
     rng = np.random.default_rng(seed=seed)
     os.makedirs(outdir, exist_ok=True)
+    
+    np.savetxt(f"{outdir}/nsims.txt", [nsims], '%d')
                 
     for nsim in range(nsims):
         simdir = f"{outdir}/sim{nsim}"
