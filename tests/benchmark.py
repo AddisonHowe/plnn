@@ -6,7 +6,7 @@ pytest -s --benchmark tests/benchmark.py
 
 import pytest
 import numpy as np
-from plnn.model import PLNN
+from plnn.models import PLNN
 from plnn.dataset import get_dataloaders
 
 TRAINDIR = "data/benchmark_data/benchmark_data_train"
