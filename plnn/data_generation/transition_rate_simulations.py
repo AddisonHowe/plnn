@@ -15,6 +15,7 @@ def parse_args(args):
     parser.add_argument('-o', '--outdir', type=str, required=True)
     parser.add_argument('--landscape_name', type=str, required=True,
                         choices=['phi1', 'phi2'])
+    parser.add_argument('--index', type=int, default=None)
 
     parser.add_argument('--nsims', type=int, default=10,
                         help="Number of simulations for each rate value.")
@@ -52,6 +53,7 @@ def get_sampler2(p_initial_1, p_initial_2, p_final_1, p_final_2, prob):
 def main(args):
     outdir = args.outdir
     landscape_name = args.landscape_name
+    index = args.index
     nsims = args.nsims
     ncells = args.ncells
     x0 = args.x0
@@ -91,11 +93,22 @@ def main(args):
 
     os.makedirs(outdir, exist_ok=True)
     rng = np.random.default_rng(seed=seed)
+    subseeds = rng.integers(0, 2**32, num_rs)
 
-    np.save(f"{outdir}/log_rs.npy", log_rs)
+    if index is None or index == 0:
+        np.save(f"{outdir}/log_rs.npy", log_rs)
+
+    if index is not None:
+        log_rs = [log_rs[index]]
 
     for i, logr in enumerate(log_rs):
-        subdir = f"{outdir}/r{i}"
+        if index is None:
+            rng = np.random.default_rng(seed=subseeds[i])
+            subdir = f"{outdir}/r{i}"
+        else:
+            rng = np.random.default_rng(seed=subseeds[index])
+            subdir = f"{outdir}/r{index}"
+        
         os.makedirs(subdir, exist_ok=True)
         np.savetxt(f"{subdir}/logr.txt", [logr], '%f')
         
