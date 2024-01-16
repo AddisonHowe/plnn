@@ -45,8 +45,9 @@ class PLNN(eqx.Module):
     logsigma: Array        # learnable
     metric_nn: eqx.Module  # learnable
 
-    ndim: int
-    nsig: int
+    ndims: int
+    nparams: int
+    nsigs: int
     ncells: int
     signal_type: str
     nsigparams: int
@@ -62,11 +63,12 @@ class PLNN(eqx.Module):
     def __init__(
         self, 
         key,
-        ndim,
-        nsig,
+        ndims,
+        nparams,
+        nsigs,
         ncells,
         signal_type='jump',
-        nsigparams=5,
+        nsigparams=3,
         sigma_init=1e-2,
         solver='euler',
         dt0=1e-2,
@@ -93,8 +95,9 @@ class PLNN(eqx.Module):
         """
         super().__init__()
         
-        self.ndim = ndim
-        self.nsig = nsig
+        self.ndims = ndims
+        self.nparams = nparams
+        self.nsigs = nsigs
         self.ncells = ncells
         self.signal_type = signal_type
         self.nsigparams = nsigparams
@@ -109,7 +112,7 @@ class PLNN(eqx.Module):
 
         key, key1, key2, key3 = jax.random.split(key, 4)
 
-        # Potential Neural Network: Maps ndim to a scalar.
+        # Potential Neural Network: Maps ndims to a scalar.
         self.phi_nn = self._construct_phi_nn(
             key1, 
             phi_hidden_dims, 
@@ -120,7 +123,7 @@ class PLNN(eqx.Module):
             dtype=dtype
         )
         
-        # Tilt Neural Network: Linear tilt values. Maps nsigs to ndim.
+        # Tilt Neural Network: Linear tilt values. Maps nsigs to ndims.
         self.tilt_nn = self._construct_tilt_nn(
             key2, 
             tilt_hidden_dims,
@@ -131,7 +134,7 @@ class PLNN(eqx.Module):
             dtype=dtype
         )
 
-        # Metric Neural Network: Maps ndim to (ndim, ndim).
+        # Metric Neural Network: Maps ndims to (ndims, ndims).
         self.metric_nn = self._construct_metric_nn(
             key3, 
             metric_hidden_dims, 
@@ -149,10 +152,10 @@ class PLNN(eqx.Module):
         self, 
         t0: Float[Array, "b"],
         t1: Float[Array, "b"],
-        y0: Float[Array, "b ncells ndim"],
-        sigparams: Float[Array, "b nsigparams"],
+        y0: Float[Array, "b ncells ndims"],
+        sigparams: Float[Array, "b nsigs nsigparams"],
         key: Array,
-    ) -> Float[Array, "b ncells ndim"]:
+    ) -> Float[Array, "b ncells ndims"]:
         """Forward call. Acts on batched data.
 
         TODO
@@ -219,8 +222,9 @@ class PLNN(eqx.Module):
             dict: dictionary of hyperparameters.
         """
         return {
-            'ndim' : self.ndim,
-            'nsig' : self.nsig,
+            'ndims' : self.ndims,
+            'nparams' : self.nparams,
+            'nsigs' : self.nsigs,
             'ncells' : self.ncells,
             'signal_type' : self.signal_type,
             'nsigparams' : self.nsigparams,
@@ -267,10 +271,10 @@ class PLNN(eqx.Module):
         self,
         t0: Float,
         t1: Float,
-        y0: Float[Array, "ncells ndim"],
-        sigparams: Float[Array, "5"],
+        y0: Float[Array, "ncells ndims"],
+        sigparams: Float[Array, "nsigs nsigparams"],
         key: Array,
-    )->Float[Array, "ncells ndim"]:
+    )->Float[Array, "ncells ndims"]:
         """Evolve forward in time using the Euler-Maruyama method.
         
         Args:
@@ -287,8 +291,8 @@ class PLNN(eqx.Module):
         self,
         t0: Float,
         t1: Float,
-        y0: Float[Array, "ndim"],
-        sigparams: Float[Array, "5"],
+        y0: Float[Array, "ndims"],
+        sigparams: Float[Array, "nsigs nsigparams"],
         key: Array,
     ):
         """TODO
@@ -322,28 +326,28 @@ class PLNN(eqx.Module):
     def eval_f(
         self, 
         t: Float, 
-        y: Float[Array, "ndim"], 
-        sig_params: Float[Array, "nsigparams"],
-    ) -> Float[Array, "ndim"]:
+        y: Float[Array, "ndims"], 
+        sigparams: Float[Array, "nsigs nsigparams"],
+    ) -> Float[Array, "ndims"]:
         """Evaluate drift term. 
 
         Args:
             t (Scalar)         : Time.
             y (Array)          : State. Shape (d,).
-            sig_params (Array) : Signal parameters. Shape (nsigparams,).
+            sigparams (Array) : Signal parameters. Shape (nsigs, nsigparams).
         Returns:
             Array of shape (d,).
         """
         gphi = self.eval_grad_phi(t, y)
-        gtilt = self.grad_tilt(t, sig_params)
+        gtilt = self.grad_tilt(t, sigparams)
         return -(gphi + gtilt)
 
     @eqx.filter_jit
     def eval_g(
         self, 
         t: Float, 
-        y: Float[Array, "ndim"]
-    ) -> Float[Array, "ndim"]:
+        y: Float[Array, "ndims"]
+    ) -> Float[Array, "ndims"]:
         """Evaluate diffusion term. 
         
         Currently only implements scalar noise. (TODO: generalize noise.)
@@ -360,8 +364,8 @@ class PLNN(eqx.Module):
     def eval_metric(
         self,
         t: Float,
-        y: Float[Array, "ndim"]
-    ) -> Float[Array, "ndim ndim"]:
+        y: Float[Array, "ndims"]
+    ) -> Float[Array, "ndims ndims"]:
         """Evaluate metric tensor.
         
         Args:
@@ -373,18 +377,18 @@ class PLNN(eqx.Module):
         if self.infer_metric:
             # Get upper triangular values including diag.
             dm_vals = self.metric_nn(y)
-            dm = jnp.zeros([self.ndim, self.ndim])
-            dm = dm.at[jnp.triu_indices(self.ndim)].set(dm_vals) # array
+            dm = jnp.zeros([self.ndims, self.ndims])
+            dm = dm.at[jnp.triu_indices(self.ndims)].set(dm_vals) # array
             dm = dm + dm.T
-            dm = dm.at[jnp.diag_indices(self.ndim)].set(dm.diagonal() / 2)
+            dm = dm.at[jnp.diag_indices(self.ndims)].set(dm.diagonal() / 2)
         else:
             dm = 0
-        return jnp.eye(self.ndim) + dm
+        return jnp.eye(self.ndims) + dm
 
     @eqx.filter_jit
     def eval_phi(
         self, 
-        y: Float[Array, "ndim"]
+        y: Float[Array, "ndims"]
     ) -> Float:
         """Evaluate potential value without tilt.
 
@@ -399,8 +403,8 @@ class PLNN(eqx.Module):
     def eval_grad_phi(
         self, 
         t: Float, 
-        y: Float[Array, "ndim"]
-    ) -> Float[Array, "ndim"]:
+        y: Float[Array, "ndims"]
+    ) -> Float[Array, "ndims"]:
         """Evaluate gradient of potential without tilt.
 
         Args:
@@ -415,37 +419,40 @@ class PLNN(eqx.Module):
     def grad_tilt(
         self, 
         t: Float, 
-        sig_params: Float[Array, "nsigparams"]
-    ) -> Float[Array, "nsigs"]:
+        sigparams: Float[Array, "nsigs nsigparams"]
+    ) -> Float[Array, "ndims"]:
         """Evaluate gradient of linear tilt function. 
 
         Args:
             t (Scalar) : Time.
-            sig_params (Array) : Signal parameters. Shape (nsigparams,).
+            sigparams (Array) : Signal parameters. Shape (nsigs, nsigparams).
         Returns:
-            Array of shape (nsigs,).
+            Array of shape (ndims,).
         """
-        signal_vals = self.binary_signal_function(t, sig_params)
+        if self.signal_type == "jump":
+            signal_vals = self.binary_signal_function(t, sigparams)
+        elif self.signal_type == "sigmoid":
+            signal_vals = self.sigmoid_signal_function(t, sigparams)
         return self.tilt_nn(signal_vals)
     
     @eqx.filter_jit
     def eval_tilted_phi(
         self, 
         t: Float, 
-        y: Float[Array, "ndim"], 
-        sig_params: Float[Array, "nsigparams"],
+        y: Float[Array, "ndims"], 
+        sigparams: Float[Array, "nsigs nsigparams"],
     ) -> Float:
         """Evaluate tilted landscape level. 
 
         Args:
             t (Scalar)         : Time.
             y (Array)          : State. Shape (d,).
-            sig_params (Array) : Signal parameters. Shape (nsigparams,).
+            sigparams (Array) : Signal parameters. Shape (nsigs, nsigparams).
         Returns:
             Array of shape (1,).
         """
         phi = self.eval_phi(y)
-        gtilt = self.grad_tilt(t, sig_params)
+        gtilt = self.grad_tilt(t, sigparams)
         return phi + jnp.dot(gtilt, y)
     
     ####################################
@@ -456,26 +463,26 @@ class PLNN(eqx.Module):
     def f(
         self, 
         t: Float, 
-        y: Float[Array, "ncells ndim"], 
-        sig_params: Float[Array, "nsigparams"],
-    ) -> Float[Array, "ncells ndim"]:
+        y: Float[Array, "ncells ndims"], 
+        sigparams: Float[Array, "nsigs nsigparams"],
+    ) -> Float[Array, "ncells ndims"]:
         """Drift term vectorized across a set of cells.
 
         Args:
             t (Scalar)         : Time.
             y (Array)          : State. Shape (n,d).
-            sig_params (Array) : Signal parameters. Shape (nsigparams,).
+            sigparams (Array) : Signal parameters. Shape (nsigs, nsigparams).
         Returns:
             Array of shape (d,).
         """
-        return jax.vmap(self.eval_f, (None, 0, None))(t, y, sig_params)
+        return jax.vmap(self.eval_f, (None, 0, None))(t, y, sigparams)
 
     @eqx.filter_jit
     def g(
         self, 
         t: Float, 
-        y: Float[Array, "ncells ndim"]
-    ) -> Float[Array, "ncells ndim"]:
+        y: Float[Array, "ncells ndims"]
+    ) -> Float[Array, "ncells ndims"]:
         """Diffusion term vectorized across a set of cells. 
 
         Args:
@@ -489,7 +496,7 @@ class PLNN(eqx.Module):
     @eqx.filter_jit
     def phi(
         self, 
-        y: Float[Array, "ncells ndim"]
+        y: Float[Array, "ncells ndims"]
     ) -> Float[Array, "ncells"]:
         """Potential value without tilt, vectorized across a set of cells.
 
@@ -504,8 +511,8 @@ class PLNN(eqx.Module):
     def grad_phi(
         self, 
         t: Float, 
-        y: Float[Array, "ncells ndim"]
-    ) -> Float[Array, "ncells ndim"]:
+        y: Float[Array, "ncells ndims"]
+    ) -> Float[Array, "ncells ndims"]:
         """Gradient of potential without tilt, vectorized across a set of cells.
 
         Args:
@@ -520,32 +527,68 @@ class PLNN(eqx.Module):
     def tilted_phi(
         self, 
         t: Float, 
-        y: Float[Array, "ncells ndim"],
-        sig_params: Float[Array, "nsigparams"]
+        y: Float[Array, "ncells ndims"],
+        sigparams: Float[Array, "nsigs nsigparams"]
     ) -> Float[Array, "ncells"]:
         """Tilted landscape level. 
 
         Args:
             t (Scalar) : Time.
             y (Array)  : State. Shape (n,d).
-            sig_params (Array) : Signal parameters. Shape (nsigparams,).
+            sigparams (Array) : Signal parameters. Shape (nsigs, nsigparams).
         Returns:
             Array of shape (n,1).
         """
-        return jax.vmap(self.eval_tilted_phi, (None, 0, None))(t, y, sig_params)
+        return jax.vmap(self.eval_tilted_phi, (None, 0, None))(t, y, sigparams)
         
     ########################
     ##  Signal Functions  ##
     ########################
 
     @eqx.filter_jit
-    def binary_signal_function(self, t, sigparams):
-        """TODO
+    def binary_signal_function(
+        self, 
+        t: Float, 
+        sigparams: Float[Array, "nsigs nsigparams"]
+    ) -> Float[Array, "nsigs"]:
+        """Evaluates a binary signal defined by given parameters at time t.
+
+        Args:
+            t (Scalar) : Time.
+            sigparams (Array) : Signal parameters. Shape (nparams, nsigparams)
+        Returns:
+            Array of shape (nsigs,)
         """
+        print("sigparams:", sigparams.shape)
         tcrit = sigparams[...,0]
-        p0 = sigparams[...,1:3]
-        p1 = sigparams[...,3:5]
-        return (t < tcrit) * p0 + (t >= tcrit) * p1
+        p0 = sigparams[...,1]
+        p1 = sigparams[...,2]
+        val = (t < tcrit) * p0 + (t >= tcrit) * p1
+        print("val:", val.shape)
+        return val
+    
+    @eqx.filter_jit
+    def sigmoid_signal_function(
+        self, 
+        t: Float, 
+        sigparams: Float[Array, "nsigs nsigparams"]
+    ) -> Float[Array, "nsigs"]:
+        """Evaluates a sigmoidal signal defined by given parameters at time t.
+
+        Args:
+            t (Scalar) : Time.
+            sigparams (Array) : Signal parameters. Shape (nparams, nsigparams)
+        Returns:
+            Array of shape (nsigs,)
+        """
+        print("sigparams:", sigparams.shape)
+        tcrit = sigparams[...,0]
+        p0 = sigparams[...,1]
+        p1 = sigparams[...,2]
+        r = sigparams[...,3]
+        val = p0 + 0.5*(p1 - p0) * (1 + jnp.tanh(r * (t - tcrit)))
+        print("val:", val.shape)
+        return val
 
     #############################
     ##  Initialization Method  ##
@@ -637,21 +680,21 @@ class PLNN(eqx.Module):
     def _construct_phi_nn(self, key, hidden_dims, hidden_acts, final_act, 
                           layer_normalize, bias=True, dtype=jnp.float32):
         return self._construct_ffn(
-            key, self.ndim, 1,
+            key, self.ndims, 1,
             hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
         )
     
     def _construct_tilt_nn(self, key, hidden_dims, hidden_acts, final_act, 
                           layer_normalize, bias=False, dtype=jnp.float32):
         return self._construct_ffn(
-            key, self.nsig, self.ndim, 
+            key, self.nsigs, self.ndims, 
             hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
         )
     
     def _construct_metric_nn(self, key, hidden_dims, hidden_acts, final_act, 
                              layer_normalize, bias=True, dtype=jnp.float32):
         return self._construct_ffn(
-            key, self.ndim, int(self.ndim * (self.ndim + 1) / 2), 
+            key, self.ndims, int(self.ndims * (self.ndims + 1) / 2), 
             hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
         )
     
@@ -947,11 +990,12 @@ class PLNN(eqx.Module):
 
 def make_model(
     key, *, 
-    ndim=2, 
-    nsig=2, 
+    ndims=2, 
+    nparams=2,
+    nsigs=2, 
     ncells=100, 
     signal_type='jump', 
-    nsigparams=5, 
+    nsigparams=3, 
     sigma_init=1e-2, 
     solver='euler', 
     dt0=1e-2, 
@@ -978,8 +1022,9 @@ def make_model(
     
     Args:
         key
-        ndim
-        nsig
+        ndims
+        nparams
+        nsigs
         ncells
         signal_type
         nsigparams
@@ -1011,7 +1056,7 @@ def make_model(
     """
     model = PLNN(
         key=key,
-        ndim=ndim, nsig=nsig, ncells=ncells,
+        ndims=ndims, nparams=nparams, nsigs=nsigs, ncells=ncells,
         signal_type=signal_type, nsigparams=nsigparams,
         sigma_init=sigma_init,
         solver=solver, dt0=dt0, sample_cells=sample_cells,

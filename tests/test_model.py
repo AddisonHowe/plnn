@@ -38,8 +38,9 @@ def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1,
               sample_cells=False):
     # Construct the model
     model = PLNN(
-        ndim=2, 
-        nsig=2, 
+        ndims=2, 
+        nparams=2, 
+        nsigs=2, 
         ncells=ncells, 
         sigma_init=sigma,
         dt0=dt,
@@ -80,24 +81,6 @@ def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1,
     )
     return model
 
-# class BrownianTestPath(AbstractPath):
-    
-#     dw: jax.Array
-
-#     def __init__(self, t0, t1, dw):
-#         self.dw = dw
-
-#     @property
-#     def t0(self):
-#         return self.t0
-
-#     @property
-#     def t1(self):
-#         return self.t1
-
-#     def evaluate(self, t0, t1=None, left=True):
-#         return self.dw
-
 ###############################################################################
 ###############################   BEGIN TESTS   ###############################
 ###############################################################################
@@ -107,22 +90,22 @@ class TestBatchedCoreLandscapeMethods:
 
     @pytest.mark.parametrize('ws, wts, sigparams, t, x, f_exp, f_shape_exp', [
         [[W1, W2, W3], [WT1], 
-         [[5, 0, 1, 1, -1]], [0],  # 1 batch
+         [[[5, 0, 1],[5, 1, -1]]], [0],  # 1 batch
          [[[0, 1]]], 
          [[[-0.441403, -0.16003]]], (1, 1, 2)
         ],
         [[W1, W2, W3], [WT1], 
-         [[5, 0, 1, 1, -1]], [10],  # 1 batch
+         [[[5, 0, 1],[5, 1, -1]]], [10],  # 1 batch
          [[[0, 1]]], 
          [[[5.5586, 2.83997]]], (1, 1, 2)
         ],
         [[W1, W2, W3], [WT1], 
-         [[5, 0, 1, 1, -1],[5, 0, 1, 1, -1]], [0, 10],  # 2 batches
+         [[[5, 0, 1],[5, 1, -1]],[[5, 0, 1],[5, 1, -1]]], [0, 10],  # 2 batches
          [[[0, 1]], [[0, 1]]], 
          [[[-0.441403, -0.16003]], [[5.5586, 2.83997]]], (2, 1, 2)
         ],
         [[W1, W2, W3], [WT1], 
-         [[5, 0, 1, 1, -1],[5, 0, 1, 1, -1]], [0, 10],  # 2 batches of 3 cells
+         [[[5, 0, 1],[5, 1, -1]],[[5, 0, 1],[5, 1, -1]]], [0, 10],  # 2 batches of 3 cells
          [[[0, 1],[0, 1],[0, 1]], [[0, 1],[0, 1],[0, 1]]], 
          [3*[[-0.441403, -0.16003]], 3*[[5.5586, 2.83997]]], (2, 3, 2)
         ],
@@ -287,12 +270,12 @@ class TestBatchedCoreLandscapeMethods:
         assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
 
     @pytest.mark.parametrize('wts, sigparams, t, grad_tilt_exp, shape_exp', [
-        [[WT1], [[5, 0, 1, 1, -1]], [0], [[4, 1]], (1, 2)],
-        [[WT1], [[5, 0, 1, 1, -1]], [10], [[-2, -2]], (1, 2)],
+        [[WT1], [[[5, 0, 1],[5, 1, -1]]], [0], [[4, 1]], (1, 2)],
+        [[WT1], [[[5, 0, 1],[5, 1, -1]]], [10], [[-2, -2]], (1, 2)],
         [[WT1], 
-         [[5, 0, 1, 1, -1],  # 3 batches
-          [5, 0, 1, 1, -1],
-          [5, 0, 1, 1, -1]], 
+         [[[5, 0, 1],[5, 1, -1]],  # 3 batches
+          [[5, 0, 1],[5, 1, -1]],
+          [[5, 0, 1],[5, 1, -1]]], 
          [0, 10, 10], 
          [[4, 1], [-2, -2], [-2, -2]], 
          (3, 2)],
@@ -314,3 +297,37 @@ class TestBatchedCoreLandscapeMethods:
             errors.append(msg)
         assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
 
+
+# @pytest.mark.parametrize("dtype", [jnp.float32, jnp.float64])
+# class TestSignalFunctions:
+
+#     @pytest.mark.parametrize("tc, pi, pf, test_times, expected", [
+#         [
+#             [2, 5], 
+#             [0, 3], 
+#             [4, 2],
+#             [1, 2, 3, 5, 6], 
+#             [[0, 3], [4, 3], [4, 3], [4, 2], [4, 2]]
+#         ],
+#     ])
+#     def test_binary_signal(self, dtype, tc, pi, pf, test_times, expected):
+#         model = get_model([W1,W2,W3], [WT1], dtype)
+#         sigparams = jnp.array([])
+#         model.binary_signal_function(test_times, )
+
+#     @pytest.mark.parametrize("tc, pi, pf, r, test_times, expected", [
+#         [
+#             [2, 3], 
+#             [0, 3], 
+#             [4, 2],
+#             [1, 2],
+#             [1, 2, 3, 5, 6], 
+#             [[0.476811688088, 2.99966464987], 
+#              [2, 2.98201379004], 
+#              [3.52318831191, 2.5], 
+#              [3.99010950737, 2.00033535013], 
+#              [3.99865859948, 2.00000614417]]
+#         ],
+#     ])
+#     def test_sigmoid_signal(self, dtype, tc, pi, pf, r, test_times, expected):
+#         model = get_model([W1,W2,W3], [WT1], dtype)

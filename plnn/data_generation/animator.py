@@ -27,7 +27,7 @@ class SimulationAnimator:
     def __init__(self, ts, xys, **kwargs):
         """
         ts         : (nsaves,)
-        xys        : (nsaves, ncells, ndim)
+        xys        : (nsaves, ncells, ndims)
         ps (opt)   : (nsaves, [param_shape])
         """
         #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
@@ -62,7 +62,7 @@ class SimulationAnimator:
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
         if duration:
-            fps = int(self.nframes / duration)
+            fps = self.nframes / duration
         
         self.fig = plt.figure(dpi=self.dpi, figsize=figsize, 
                               constrained_layout=True,)

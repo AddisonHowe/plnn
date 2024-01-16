@@ -9,8 +9,8 @@ import numpy as np
 from plnn.model import PLNN
 from plnn.dataset import get_dataloaders
 
-TRAINDIR = "data/benchmark_data_train"
-VALIDDIR = "data/benchmark_data_valid"
+TRAINDIR = "data/benchmark_data/benchmark_data_train"
+VALIDDIR = "data/benchmark_data/benchmark_data_valid"
 NSIMS_TRAIN = 20
 NSIMS_VALID = 5
 
