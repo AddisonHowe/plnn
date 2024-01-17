@@ -44,6 +44,7 @@ def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1,
         ncells=ncells, 
         sigma_init=sigma,
         dt0=dt,
+        confine=False,
         include_phi_bias=False, 
         include_tilt_bias=False, 
         include_metric_bias=False, 
@@ -296,38 +297,3 @@ class TestBatchedCoreLandscapeMethods:
             msg += f"Expected {shape_exp}. Got {grad_tilt_act.shape}."
             errors.append(msg)
         assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
-
-
-# @pytest.mark.parametrize("dtype", [jnp.float32, jnp.float64])
-# class TestSignalFunctions:
-
-#     @pytest.mark.parametrize("tc, pi, pf, test_times, expected", [
-#         [
-#             [2, 5], 
-#             [0, 3], 
-#             [4, 2],
-#             [1, 2, 3, 5, 6], 
-#             [[0, 3], [4, 3], [4, 3], [4, 2], [4, 2]]
-#         ],
-#     ])
-#     def test_binary_signal(self, dtype, tc, pi, pf, test_times, expected):
-#         model = get_model([W1,W2,W3], [WT1], dtype)
-#         sigparams = jnp.array([])
-#         model.binary_signal_function(test_times, )
-
-#     @pytest.mark.parametrize("tc, pi, pf, r, test_times, expected", [
-#         [
-#             [2, 3], 
-#             [0, 3], 
-#             [4, 2],
-#             [1, 2],
-#             [1, 2, 3, 5, 6], 
-#             [[0.476811688088, 2.99966464987], 
-#              [2, 2.98201379004], 
-#              [3.52318831191, 2.5], 
-#              [3.99010950737, 2.00033535013], 
-#              [3.99865859948, 2.00000614417]]
-#         ],
-#     ])
-#     def test_sigmoid_signal(self, dtype, tc, pi, pf, r, test_times, expected):
-#         model = get_model([W1,W2,W3], [WT1], dtype)

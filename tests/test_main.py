@@ -16,6 +16,8 @@ def _remove_dir(dir):
 
 @pytest.mark.parametrize('argstring_fpath', [
     "tests/test_main_args/argstring1.txt",
+    "tests/test_main_args/argstring2.txt",
+    "tests/test_main_args/argstring3.txt",
 ])
 def test_main(argstring_fpath):
     argstring = get_args(argstring_fpath)

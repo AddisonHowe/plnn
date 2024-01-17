@@ -95,6 +95,7 @@ class TestTraining:
             sigma_init=0,
             solver='euler',
             dt0=0.1,
+            confine=False,
             sample_cells=False,
             infer_metric=False,
             include_phi_bias=False, 

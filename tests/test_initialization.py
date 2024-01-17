@@ -20,7 +20,10 @@ class TestMake:
         model, _ = make_model(key)
         assert isinstance(model, PLNN)
 
-    @pytest.mark.parametrize("signal_type, nsigparams", [['jump', 5]])
+    @pytest.mark.parametrize("signal_type, nsigparams", [
+        ['jump', 3],
+        ['sigmoid', 4],
+    ])
     def test_signal_args(self, signal_type, nsigparams):
         model, _ = self._make_model(
             signal_type=signal_type, nsigparams=nsigparams

@@ -111,6 +111,7 @@ def main(args):
         
         os.makedirs(subdir, exist_ok=True)
         np.savetxt(f"{subdir}/logr.txt", [logr], '%f')
+        np.savetxt(f"{subdir}/nsims.txt", [nsims], '%d')
         
         for nsim in range(nsims):
             simdir = f"{subdir}/sim{nsim}"
