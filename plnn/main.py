@@ -47,10 +47,11 @@ def parse_args(args):
     parser.add_argument('-dt', '--dt', type=float, default=1e-3,
                         help="Euler timestep to use internally.")
     parser.add_argument('--signal_function', type=str, default='jump',
-                        choices=['jump'], 
+                        choices=['jump', 'sigmoid'], 
                         help="Identifier for the signal function.")
 
     # Model architecture
+    parser.add_argument('--confine', action="store_true")
     parser.add_argument('--phi_hidden_dims', type=int, nargs='+', 
                         default=[16, 32, 32, 16])
     parser.add_argument('--phi_hidden_acts', type=str, nargs='+', 
@@ -65,6 +66,7 @@ def parse_args(args):
     parser.add_argument('--tilt_final_act', type=str, default=None)
     parser.add_argument('--tilt_layer_normalize', action='store_true')
 
+    parser.add_argument('--infer_metric', action="store_true")
     parser.add_argument('--metric_hidden_dims', type=int, nargs='+', 
                         default=[8, 8, 8, 8])
     parser.add_argument('--metric_hidden_acts', type=str, nargs='+', 
@@ -76,7 +78,7 @@ def parse_args(args):
                         help="If specified, infer the noise level.")
     parser.add_argument('--sigma', type=float, default=1e-3,
                         help="Noise level if not inferring sigma." + \
-                        "Otherwise, the initial value for the sigma parameter.")
+                        "Otherwise, the initial value for the sigma parameter.")    
 
     # Model initialization
     parser.add_argument('--init_phi_weights_method', type=str, 
@@ -125,7 +127,6 @@ def parse_args(args):
     parser.add_argument('--weight_decay', type=float, default=0.)
     
     # Misc. options
-    parser.add_argument('--infer_metric', action="store_true")
     parser.add_argument('--plot', action="store_true")
     parser.add_argument('--use_gpu', action="store_true")
     parser.add_argument('--dtype', type=str, default="float32", 
@@ -150,6 +151,7 @@ def main(args):
     nsigs = args.nsigs
     dt = args.dt
     ncells = args.ncells
+    confine = args.confine
     phi_hidden_dims = args.phi_hidden_dims
     phi_hidden_acts = args.phi_hidden_acts
     phi_final_act = args.phi_final_act
@@ -158,6 +160,7 @@ def main(args):
     tilt_hidden_acts = args.tilt_hidden_acts
     tilt_final_act = args.tilt_final_act
     tilt_layer_normalize = args.tilt_layer_normalize
+    infer_metric = args.infer_metric
     metric_hidden_dims = args.metric_hidden_dims
     metric_hidden_acts = args.metric_hidden_acts
     metric_final_act = args.metric_final_act
@@ -189,7 +192,6 @@ def main(args):
     seed = args.seed
     dtype = jnp.float32 if args.dtype == 'float32' else jnp.float64
     do_plot = args.plot
-    infer_metric = args.infer_metric
     
     seed = seed if seed else np.random.randint(2**32)
     rng = np.random.default_rng(seed=seed)
@@ -226,6 +228,7 @@ def main(args):
             sigma_init=sigma,
             signal_type=signal_type,
             nsigparams=nsigparams,
+            confine=confine,
             phi_hidden_dims=phi_hidden_dims,
             phi_hidden_acts=phi_hidden_acts,
             phi_final_act=phi_final_act,
@@ -295,7 +298,9 @@ def main(args):
 
 def get_signal_spec(key):
     if key == 'jump':
-        nsigparams = 5
+        nsigparams = 3
+    elif key == 'sigmoid':
+        nsigparams = 4
     else:
         msg = f"Unknown signal function identifier {key}."
         raise RuntimeError(msg)

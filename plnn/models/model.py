@@ -54,6 +54,7 @@ class PLNN(eqx.Module):
     sigma_init: float
     solver: str
     dt0: float
+    confine: bool
     sample_cells: bool
     infer_metric: bool
     include_phi_bias: bool
@@ -72,6 +73,7 @@ class PLNN(eqx.Module):
         sigma_init=1e-2,
         solver='euler',
         dt0=1e-2,
+        confine=False,
         sample_cells=True,
         infer_metric=True,
         include_phi_bias=True,
@@ -104,6 +106,7 @@ class PLNN(eqx.Module):
         self.sigma_init = sigma_init
         self.solver = solver
         self.dt0 = dt0
+        self.confine = confine
         self.sample_cells = sample_cells
         self.infer_metric = infer_metric
         self.include_phi_bias = include_phi_bias
@@ -231,6 +234,7 @@ class PLNN(eqx.Module):
             'sigma_init' : self.sigma_init,
             'solver' : self.solver,
             'dt0' : self.dt0,
+            'confine' : self.confine,
             'sample_cells' : self.sample_cells,
             'infer_metric' : self.infer_metric,
             'include_phi_bias' : self.include_phi_bias,
@@ -384,6 +388,38 @@ class PLNN(eqx.Module):
         else:
             dm = 0
         return jnp.eye(self.ndims) + dm
+    
+    @eqx.filter_jit
+    def eval_confinement(
+        self,
+        y: Float[Array, "ndims"]
+    ) -> Float:
+        """Evaluate confinement term.
+        
+        Args:
+            y (Array) : State. Shape (d,).
+        Returns:
+            Array of shape (1,).
+        """
+        if self.confine:
+            return jnp.sum(jnp.power(y, 4))
+        return 0.
+
+    @eqx.filter_jit
+    def eval_grad_confinement(
+        self,
+        y: Float[Array, "ndims"]
+    ) -> Float[Array, "ndims"]:
+        """Evaluate the gradient of the confinement term.
+        
+        Args:
+            y (Array) : State. Shape (d,).
+        Returns:
+            Array of shape (d,).
+        """
+        if self.confine:
+            return 4 * jnp.power(y, 3)
+        return y * 0.
 
     @eqx.filter_jit
     def eval_phi(
@@ -397,7 +433,7 @@ class PLNN(eqx.Module):
         Returns:
             Array of shape (1,).
         """
-        return self.phi_nn(y).squeeze(-1)
+        return self.eval_confinement(y) + self.phi_nn(y).squeeze(-1)
 
     @eqx.filter_jit
     def eval_grad_phi(
@@ -413,7 +449,8 @@ class PLNN(eqx.Module):
         Returns:
             Array of shape (d,).
         """
-        return jax.jacrev(self.phi_nn)(y).squeeze(0)
+        return self.eval_grad_confinement(y) + \
+               jax.jacrev(self.phi_nn)(y).squeeze(0)
     
     @eqx.filter_jit
     def grad_tilt(
@@ -559,12 +596,10 @@ class PLNN(eqx.Module):
         Returns:
             Array of shape (nsigs,)
         """
-        print("sigparams:", sigparams.shape)
         tcrit = sigparams[...,0]
         p0 = sigparams[...,1]
         p1 = sigparams[...,2]
         val = (t < tcrit) * p0 + (t >= tcrit) * p1
-        print("val:", val.shape)
         return val
     
     @eqx.filter_jit
@@ -581,13 +616,11 @@ class PLNN(eqx.Module):
         Returns:
             Array of shape (nsigs,)
         """
-        print("sigparams:", sigparams.shape)
         tcrit = sigparams[...,0]
         p0 = sigparams[...,1]
         p1 = sigparams[...,2]
         r = sigparams[...,3]
         val = p0 + 0.5*(p1 - p0) * (1 + jnp.tanh(r * (t - tcrit)))
-        print("val:", val.shape)
         return val
 
     #############################
@@ -812,10 +845,13 @@ class PLNN(eqx.Module):
         
         # Compute phi
         if signal is None:
-            signal = [0, 0]
-        
-        # Initialize signal parameters TODO: don't hard-code the parameters
-        signal_params = jnp.array([1, *signal, *signal])
+            if self.signal_type == 'jump':
+                signal = [1, 0, 0]
+            elif self.signal_type == 'sigmoid':
+                signal = [1, 0, 0, 0]
+
+        signal_params = jnp.tile(jnp.array(signal), (self.nsigs, 1))
+
         eval_time = 0.
 
         x = np.linspace(-r, r, res)
@@ -832,7 +868,7 @@ class PLNN(eqx.Module):
             phi = np.log(phi)
 
         # Clipping
-        clip = phi.max() if clip is None else clip
+        clip = 1 + phi.max() if clip is None else clip
         if clip < phi.min():
             warnings.warn(f"Clip value {clip} is below minimum value to plot.")
             clip = phi.max()
@@ -999,6 +1035,7 @@ def make_model(
     sigma_init=1e-2, 
     solver='euler', 
     dt0=1e-2, 
+    confine=False,
     sample_cells=True, 
     infer_metric=True,
     include_phi_bias=True, 
@@ -1031,6 +1068,7 @@ def make_model(
         sigma_init
         solver
         dt0
+        confine
         sample_cells
         infer_metric
         include_phi_bias
@@ -1059,7 +1097,7 @@ def make_model(
         ndims=ndims, nparams=nparams, nsigs=nsigs, ncells=ncells,
         signal_type=signal_type, nsigparams=nsigparams,
         sigma_init=sigma_init,
-        solver=solver, dt0=dt0, sample_cells=sample_cells,
+        solver=solver, dt0=dt0, confine=confine, sample_cells=sample_cells,
         infer_metric=infer_metric,
         include_phi_bias=include_phi_bias,
         include_tilt_bias=include_tilt_bias,
