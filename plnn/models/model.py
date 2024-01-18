@@ -843,17 +843,16 @@ class PLNN(eqx.Module):
         elif ax is None and (not plot3d):
             fig, ax = plt.subplots(1, 1, figsize=figsize)
         
-        # Compute phi
+        # Handle signal value
+        eval_time = 0.
         if signal is None:
             if self.signal_type == 'jump':
                 signal = [1, 0, 0]
             elif self.signal_type == 'sigmoid':
                 signal = [1, 0, 0, 0]
-
         signal_params = jnp.tile(jnp.array(signal), (self.nsigs, 1))
 
-        eval_time = 0.
-
+        # Compute phi
         x = np.linspace(-r, r, res)
         y = np.linspace(-r, r, res)
         xs, ys = np.meshgrid(x, y)
@@ -955,9 +954,14 @@ class PLNN(eqx.Module):
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
         if ax is None: fig, ax = plt.subplots(1, 1, figsize=figsize)
         
-        # Initialize signal parameters TODO: don't hard-code the parameters
-        signal_params = jnp.array([1, *signal, *signal])
-        eval_time = 1.
+        # Handle signal value
+        eval_time = 0.
+        if signal is None:
+            if self.signal_type == 'jump':
+                signal = [1, 0, 0]
+            elif self.signal_type == 'sigmoid':
+                signal = [1, 0, 0, 0]
+        signal_params = jnp.tile(jnp.array(signal), (self.nsigs, 1))
         
         # Compute f
         x = np.linspace(-r, r, res)
