@@ -244,7 +244,7 @@ def make_plots(epoch, model, outdir, plotting_opts):
     """
     plot_radius = plotting_opts.get('plot_radius', 4)
     plot_res = plotting_opts.get('plot_res', 50)
-    plot_phi_heatmap = plotting_opts.get('plot_phi_heatmap', True)
+    plot_phi_heatmap = plotting_opts.get('plot_phi_heatmap', False)
     plot_phi_landscape = plotting_opts.get('plot_phi_landscape', False)
     plot_phi_heatmap_norm = plotting_opts.get('plot_phi_heatmap_norm', False)
     plot_phi_landscape_norm = plotting_opts.get('plot_phi_landscape_norm', False)
