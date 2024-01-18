@@ -136,6 +136,7 @@ def parse_args(args):
     parser.add_argument('--timestamp', action="store_true",
                         help="Add timestamp to out directory.")
     parser.add_argument('--save_all', action="store_true")
+    parser.add_argument('--jax_debug_nans', action="store_true")
 
     return parser.parse_args(args)
 
@@ -193,6 +194,8 @@ def main(args):
     seed = args.seed
     dtype = jnp.float32 if args.dtype == 'float32' else jnp.float64
     do_plot = args.plot
+    
+    config.update("jax_debug_nans", args.jax_debug_nans)
     
     seed = seed if seed else np.random.randint(2**32)
     rng = np.random.default_rng(seed=seed)
