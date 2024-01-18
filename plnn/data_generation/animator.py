@@ -24,27 +24,49 @@ class SimulationAnimator:
     main_scatter_color = 'k'
     axlimbuffer = 0.05  # percent buffer on axis lims
 
-    def __init__(self, ts, xys, **kwargs):
+    def __init__(
+            self, 
+            ts, 
+            xys, 
+            ps=None,
+            ts_saved=None, 
+            xys_saved=None, 
+            ps_saved=None, 
+            xlims=None,
+            ylims=None,
+            grads=None,
+            grad_func=None,
+    ):
         """
-        ts         : (nsaves,)
-        xys        : (nsaves, ncells, ndims)
-        ps (opt)   : (nsaves, [param_shape])
+        ts         : (nts,)
+        xys        : (nts, ncells, ndims)
+        ps         : (nsaves, [param_shape])
+        ts_saved   : (nsaves)
+        xys_saved  : (nsaves, ncells, ndims)
+        ps_saved   : (nsaves, [param_shape])
+        xlims : TODO
+        ylims : TODO
+        grads : TODO
+        grad_func : TODO
         """
-        #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
-        ps = kwargs.get('ps', None)
-        xlims = kwargs.get('xlims', None)
-        ylims = kwargs.get('ylims', None)
-        grads = kwargs.get('grads', None)
-        grad_func = kwargs.get('grad_func', None)
-        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
         self.ts = ts
         self.xys = xys
         self.xs = xys[:,:,0]
         self.ys = xys[:,:,1]
         self.ps = ps
+
+        self.ts_saved = ts_saved
+        self.xys_saved = xys_saved
+        self.xs_saved = None if self.xys_saved is None else xys_saved[:,:,0]
+        self.ys_saved = None if self.xys_saved is None else xys_saved[:,:,1]
+        self.ps_saved = ps_saved        
+
         self.grads = grads
         self.grad_func = grad_func
+        
         self.nframes = len(self.ts)
+        self.nsaves = 0 if self.ts_saved is None else len(self.ts_saved)
+
         self.xlims = xlims if xlims else self.buffer_lims([np.min(self.xs), 
                                                            np.max(self.xs)])
         self.ylims = ylims if ylims else self.buffer_lims([np.min(self.ys), 
@@ -63,8 +85,9 @@ class SimulationAnimator:
 
         if duration:
             fps = self.nframes / duration
+            interval = 1000/fps
         
-        self.fig = plt.figure(dpi=self.dpi, figsize=figsize, 
+        self.fig = plt.figure(dpi=dpi, figsize=figsize, 
                               constrained_layout=True,)
         
         self.ax_main = plt.subplot2grid((4, 5), (0, 0), colspan=2, rowspan=2)
@@ -101,6 +124,7 @@ class SimulationAnimator:
             else:
                 fpath = savepath+'.mp4'
                 self.ani.save(fpath, fps=fps)
+        return self.ani
 
     def setup(self):
         """Initialize each axis and text."""
@@ -160,6 +184,13 @@ class SimulationAnimator:
 
     def _setup_clst(self):
         ax = self.ax_clst
+        self.scat_clst, = ax.plot(
+            [], [], marker='.', markersize=4, 
+            color=self.main_scatter_color, 
+            alpha=0.75, linestyle='None', 
+            animated=True
+        )
+        self.clst_index = 0
         ax.set_xlabel(f"$x$")
         ax.set_ylabel(f"$y$")
         ax.axis([*self.xlims, *self.ylims])
@@ -169,13 +200,45 @@ class SimulationAnimator:
         self.clsttext = ax.text(*pos, "", fontsize='small')
 
     def _setup_rsig(self):
-        pass
+        ax = self.ax_rsig
+        ax.set_xlabel(f"$t$")
+        ax.set_ylabel(f"$s$")
+        if self.ps is None:
+            return
+        # Plot signals
+        for i in range(self.ps.shape[1]):
+            ax.plot(self.ts, self.ps[:,i], label=f"$s_{i}$")
+        ax.legend()
+        # Add marker placeholders
+        self._signal_markers = []
+        for i in range(self.ps.shape[1]):
+            marker, = ax.plot(
+                [], [], 
+                marker='*', 
+                markersize=6, color='k', alpha=0.9, 
+                linestyle='None', animated=True
+            )
+            self._signal_markers.append(marker)
 
     def _setup_esig(self):
         pass
 
     def _setup_dist(self):
-        pass
+        ax = self.ax_dist
+        # self.scat_dist, = ax.plot(
+        #     [], [], marker='.', markersize=4, 
+        #     color=self.main_scatter_color, 
+        #     alpha=0.75, linestyle='None', 
+        #     animated=True
+        # )
+        self.dist_index = 0
+        ax.set_xlabel(f"$x$")
+        ax.set_ylabel(f"$y$")
+        ax.axis([*self.xlims, *self.ylims])
+        # Text
+        pos = [self.xlims[0] + (self.xlims[1]-self.xlims[0])*.5, 
+               self.ylims[0] + (self.ylims[1]-self.ylims[0])*.95]
+        self.disttext = ax.text(*pos, "", fontsize='small')
 
     def _setup_text(self):
         ax = self.ax_text
@@ -210,16 +273,41 @@ class SimulationAnimator:
             self.mesh_gradient.set_color(pcm(cnorm(norms).flatten()))
 
     def _update_clst(self, i):
-        pass
+        ax = self.ax_clst
+        if self.ts_saved is None:
+            return 
+        t = self.get_t(i)
+        clst_t = self.ts_saved[self.clst_index]
+        if t == clst_t:
+            xy_saved = self.get_xy_saved(self.clst_index)
+            self.clst_index += 1
+            self.scat_clst.set_data(xy_saved)
 
     def _update_rsig(self, i):
-        pass
+        if self.ps is None:
+            return
+        t = self.get_t(i)
+        sigs = self.get_ps(i)
+        for j, sig in enumerate(sigs):
+            self._signal_markers[j].set_data([t, sig])
 
     def _update_esig(self, i):
         pass
 
     def _update_dist(self, i):
-        pass
+        ax = self.ax_dist
+        if self.ts_saved is None:
+            return 
+        t = self.get_t(i)
+        dist_t = self.ts_saved[self.dist_index]
+        if t == dist_t:
+            xy_saved = self.get_xy_saved(self.dist_index)
+            self.dist_index += 1
+            ax.plot(
+                *xy_saved,
+                marker='.', markersize=4, 
+                alpha=0.75, linestyle='None',
+            )
 
     def _update_text(self, i):
         t = self.get_t(i)
@@ -235,6 +323,11 @@ class SimulationAnimator:
     
     def get_xy(self, i):
         return self.xys[i, :].T
+    
+    def get_xy_saved(self, i):
+        if self.xys_saved is None:
+            return None
+        return self.xys_saved[i, :].T
     
     def get_ps(self, i):
         if self.ps is None:
