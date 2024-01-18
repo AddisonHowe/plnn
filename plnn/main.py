@@ -34,6 +34,7 @@ def parse_args(args):
     parser.add_argument('-nv', '--nsims_validation', type=int, default=None)
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
     parser.add_argument('-b', '--batch_size', type=int, default=25)
+    parser.add_argument('--report_every', type=int, default=10)
 
     # Model simulation
     parser.add_argument('-nd', '--ndims', type=int, default=2,
@@ -293,6 +294,7 @@ def main(args):
         save_all=args.save_all,
         plotting=do_plot,
         plotting_opts={},  # Default plotting options
+        report_every=args.report_every,
     )
     
 
