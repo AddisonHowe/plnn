@@ -153,12 +153,12 @@ def train_one_epoch(
 
     Returns:
         PLNN: updated model.
-        float: training loss with respect to the last batch.
+        float: average training loss across all batches.
         PyTree: optimizer state
     """
 
-    running_loss = 0.
-    last_loss = 0.
+    epoch_running_loss = 0.
+    batch_running_loss = 0.
     n = len(dataloader)
     if report_every <= 0 or report_every > n:
         report_every = n
@@ -173,14 +173,17 @@ def train_one_epoch(
             model, inputs, y1, optimizer, opt_state, loss_fn, subkey
         )
         
-        running_loss += loss.item()
+        epoch_running_loss += loss.item()
+        batch_running_loss += loss.item()
         if bidx % report_every == (report_every - 1):
-            last_loss = running_loss / report_every  # average loss per batch
+            avg_batch_loss = batch_running_loss / report_every
             if verbosity: 
-                print(f"\t\t[batch {bidx+1}/{n}] loss: {last_loss}", flush=True)
-            running_loss = 0.
+                msg = f"\t\t[batch {bidx+1}/{n}] avg loss: {avg_batch_loss}"
+                print(msg, flush=True)
+            batch_running_loss = 0.
 
-    return model, last_loss, opt_state
+    avg_epoch_loss = epoch_running_loss / n
+    return model, avg_epoch_loss, opt_state
 
 
 def validate_post_epoch(
@@ -197,6 +200,7 @@ def validate_post_epoch(
     Returns:
         _type_: _description_
     """
+    n = len(validation_dataloader)
     running_vloss = 0.0
     for i, data in enumerate(validation_dataloader):
         inputs, y1 = data
@@ -204,7 +208,7 @@ def validate_post_epoch(
         loss = validation_step(model, inputs, y1, loss_fn, subkey)
         running_vloss += loss.item()
     
-    avg_vloss = running_vloss / (i + 1)
+    avg_vloss = running_vloss / n
     return avg_vloss
 
 
@@ -244,7 +248,7 @@ def make_plots(epoch, model, outdir, plotting_opts):
     plot_phi_landscape = plotting_opts.get('plot_phi_landscape', False)
     plot_phi_heatmap_norm = plotting_opts.get('plot_phi_heatmap_norm', False)
     plot_phi_landscape_norm = plotting_opts.get('plot_phi_landscape_norm', False)
-    plot_phi_heatmap_lognorm = plotting_opts.get('plot_phi_heatmap_lognorm', False)
+    plot_phi_heatmap_lognorm = plotting_opts.get('plot_phi_heatmap_lognorm', True)
     plot_phi_landscape_lognorm = plotting_opts.get('plot_phi_landscape_lognorm', False)
 
     if plot_phi_heatmap: 
