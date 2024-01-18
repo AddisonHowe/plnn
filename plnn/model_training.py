@@ -42,6 +42,7 @@ def train_model(
     save_all = kwargs.get('save_all', False)
     plotting = kwargs.get('plotting', False)
     plotting_opts = kwargs.get('plotting_opts', {})
+    report_every = kwargs.get('report_every', 10)
     verbosity = kwargs.get('verbosity', 1)
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -81,6 +82,7 @@ def train_model(
             train_dataloader,
             trainkey,
             batch_size=batch_size,
+            report_every=report_every,
             verbosity=verbosity,
         )
 
@@ -133,7 +135,7 @@ def train_one_epoch(
         dataloader, 
         key,
         batch_size=1,
-        report_every=100,  # print running loss every 10 batches.
+        report_every=10,  # print running loss every 10 batches.
         verbosity=1,  # 0: none. 1: default. 2: debug.
     ):
     """One epoch of training.
