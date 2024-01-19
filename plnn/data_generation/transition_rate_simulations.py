@@ -29,18 +29,25 @@ def parse_args(args):
 
     parser.add_argument('--sigma', type=float, default=0.01,
                         help="Noise parameter (constant)")
+    
     parser.add_argument('--animate', action='store_true')
     parser.add_argument('--duration', type=int, default=10, 
                         help="Duration of animation in seconds")
+    parser.add_argument('--animation_dt', type=float, default=None, 
+                        help="Timestep between frames in animation")
+    parser.add_argument('--sims_to_animate', type=int, nargs='+', default=[0],
+                        help="Indices of the simulations to animate.")
     
     parser.add_argument('--seed', type=int, default=None)
     return parser.parse_args(args)
+
 
 def get_sampler1(p_initial, p_final_1, p_final_2, prob):
     def sampler_func(rng):
         p_final = p_final_1 if rng.random() < prob else p_final_2
         return p_initial, p_final
     return sampler_func
+
 
 def get_sampler2(p_initial_1, p_initial_2, p_final_1, p_final_2, prob):
     def sampler_func(rng):
@@ -49,6 +56,7 @@ def get_sampler2(p_initial_1, p_initial_2, p_final_1, p_final_2, prob):
         p_final   = p_final_1   if rng.random() < p else p_final_2
         return p_initial, p_final
     return sampler_func
+
 
 def main(args):
     outdir = args.outdir
@@ -64,7 +72,7 @@ def main(args):
     sigma = args.sigma
     do_animate = args.animate
     ani_duration = args.duration
-    seed = args.seed
+    seed = args.seed if args.seed else np.random.randint(2**32)
     
     nparams = 2
     tcrit = 5.

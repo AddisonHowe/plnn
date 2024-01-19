@@ -1,7 +1,8 @@
 import sys, os, argparse
+import warnings
 import numpy as np
 from plnn.data_generation.simulator import Simulator
-from plnn.data_generation.animator import SimulationAnimator
+from plnn.data_generation.phi_animator import PhiSimulationAnimator
 from plnn.data_generation.signals import get_binary_function
 from plnn.data_generation.signals import get_sigmoid_function
 
@@ -17,9 +18,10 @@ def simulate_landscape(
         dt,
         dt_save,
         burnin,
-        nparams,
-        param_schedule,
-        param_args,
+        nsignals,
+        signal_schedule,
+        sigparams,
+        param_func_name,
         noise_schedule,
         noise_args,
         seed=None,
@@ -35,33 +37,35 @@ def simulate_landscape(
         dt (float) : Step size.
         dt_save (float) : Interval at which to save state.
         burnin (int) : Number of initial burnin steps to take.
-        nparams (int) : Number of landscape parameters.
-        param_schedule (str) : Parameter schedule identifier.
-        param_args (list) : Arguments for each parameter.
+        nsignals (int) : Number of signals.
+        signal_schedule (str) : Signal schedule identifier.
+        sigparams (list) : Parameters defining each signal profile.
+        param_func_name (str) : Parameter function identifier.
         noise_schedule (str) : Noise schedule identifier.
         noise_args (list) : Arguments for noise function.
         seed (int) : Random number generator seed. Default None.
         rng (Generator) : Random number generator object. Default None.
 
     Returns:
-        ts (ndarray): Saved timepoints.
-        xs (ndarray): Saved state values.
-        ps (ndarray): Saved parameter values.
+        ts (ndarray)  : Saved timepoints.
+        xs (ndarray)  : Saved state values.
+        sigs (ndarray): Saved signal values.
+        ps (ndarray)  : Saved parameter values.
     """
     if rng is None:
         rng = np.random.default_rng(seed=seed)
 
     # Construct the simulator
     f = get_landscape_func(landscape_name)
-    param_func = get_param_func(nparams, param_schedule, param_args)
+    signal_func = get_signal_func(nsignals, signal_schedule, sigparams)
+    param_func = get_param_func(param_func_name)
     noise_func = get_noise_func(noise_schedule, noise_args)
-    simulator = Simulator(f, param_func, noise_func)
+    simulator = Simulator(f, signal_func, param_func, noise_func)
     # Run the simulation
-    ts, xs, ps = simulator.simulate(
-        ncells, x0, tfin, dt=dt, t0=0,
-        burnin=burnin, dt_save=dt_save, rng=rng
+    ts, xs, sigs, ps = simulator.simulate(
+        ncells, x0, tfin, dt=dt, t0=0,burnin=burnin, dt_save=dt_save, rng=rng
     )
-    return ts, xs, ps
+    return ts, xs, sigs, ps
 
 ##########################
 ##  Simulation Getters  ##
@@ -75,24 +79,31 @@ def get_landscape_func(landscape_name):
     else:
         raise NotImplementedError(f"Unknown landscape: {landscape_name}")
 
-def get_param_func(nparams, param_schedule, param_args):
-    if param_args.ndim == 1:
-        param_args = np.array(param_args).reshape([nparams, -1])
-    nargs = param_args.shape[1]
-    if param_schedule == 'binary':
-        assert nargs == 3, f"Got {nargs} args instead of 3."
-        tcrit = param_args[:,0]  # change times
-        p0 = param_args[:,1]     # initial values
-        p1 = param_args[:,2]     # final values
-        param_func = get_binary_function(tcrit, p0, p1)
-    elif param_schedule == 'sigmoid':
-        assert nargs == 4, f"Got {nargs} args instead of 4."
-        tcrit = param_args[:,0]  # change times
-        p0 = param_args[:,1]     # initial values
-        p1 = param_args[:,2]     # final values
-        r = param_args[:,3]      # transition rates
-        param_func = get_sigmoid_function(tcrit, p0, p1, r)
-    return param_func
+def get_signal_func(nsignals, signal_schedule, sigparams):
+    if sigparams.ndim == 1:
+        sigparams = np.array(sigparams).reshape([nsignals, -1])
+    nsigparams = sigparams.shape[1]
+    if signal_schedule == 'binary':
+        assert nsigparams == 3, f"Got {nsigparams} args instead of 3."
+        tcrit = sigparams[:,0]  # change times
+        s0 = sigparams[:,1]     # initial values
+        s1 = sigparams[:,2]     # final values
+        signal_func = get_binary_function(tcrit, s0, s1)
+    elif signal_schedule == 'sigmoid':
+        assert nsigparams == 4, f"Got {nsigparams} args instead of 4."
+        tcrit = sigparams[:,0]  # change times
+        s0 = sigparams[:,1]     # initial values
+        s1 = sigparams[:,2]     # final values
+        r = sigparams[:,3]      # transition rates
+        signal_func = get_sigmoid_function(tcrit, s0, s1, r)
+    return signal_func
+
+def get_param_func(param_func_name):
+    if param_func_name.lower() == "identity":
+        return lambda x: x
+    else:
+        msg = f"Unknown parameter function identifer: {param_func_name}"
+        raise NotImplementedError(msg)
 
 def get_noise_func(noise_schedule, noise_args):
     if noise_schedule == 'constant':
@@ -133,31 +144,36 @@ def parse_args(args):
     parser.add_argument('-n', '--ncells', type=int, default=100)
     parser.add_argument('--burnin', type=int, default=50)
     parser.add_argument('--landscape_name', type=str, default='phi1')
-    parser.add_argument('--nparams', type=int, default=2)
-    parser.add_argument('--param_schedule', type=str, default='binary')
-    parser.add_argument('--param_args', type=float, nargs='+', 
+    parser.add_argument('--nsignals', type=int, default=2)
+    parser.add_argument('--signal_schedule', type=str, default='binary',
+                        choices=['binary', 'sigmoid'])
+    parser.add_argument('--sigparams', type=float, nargs='+', 
                         default=[5, 0, 1, -1, 0])
     parser.add_argument('--noise_schedule', type=str, default='constant')
     parser.add_argument('--noise_args', type=float, nargs='+',
                         default=[0.01])
     parser.add_argument('--x0', type=float, nargs='+', default=(0, -0.5))
-    parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--seed', type=int, default=None)
+    
     parser.add_argument('--animate', action='store_true')
     parser.add_argument('--duration', type=int, default=10, 
                         help="Duration of animation in seconds")
+    parser.add_argument('--animation_dt', type=float, default=None, 
+                        help="Timestep between frames in animation")
     return parser.parse_args(args)
 
 
 def main(args):
     outdir = args.outdir
     duration = args.duration
+    seed = args.seed if args.seed else np.random.randint(2**32)
 
     os.makedirs(outdir, exist_ok=True)
     with open(f"{outdir}/params.txt", 'w') as f:
         f.write(str(args))
 
     # Run simulation
-    ts, xs = simulate_landscape(
+    ts_saved, xs_saved, sigs_saved, ps_saved = simulate_landscape(
         landscape_name=args.landscape_name,
         ncells=args.ncells, 
         x0=args.x0,
@@ -165,22 +181,56 @@ def main(args):
         dt=args.dt, 
         dt_save=args.dt_save, 
         burnin=args.burnin,
-        nparams=args.nparams,
-        param_schedule=args.param_schedule, 
-        param_args=args.param_args,
+        nsignals=args.nsignals,
+        signal_schedule=args.signal_schedule, 
+        sigparams=args.sigparams,
         noise_schedule=args.noise_schedule, 
         noise_args=args.noise_args,
-        seed=args.seed,
+        seed=seed,
     )
     
     # Save output
-    np.save(f"{outdir}/ts.npy", ts)
-    np.save(f"{outdir}/xs.npy", xs)
+    np.save(f"{outdir}/ts.npy", ts_saved)
+    np.save(f"{outdir}/xs.npy", xs_saved)
+    np.save(f"{outdir}/sigs.npy", sigs_saved)
+    np.save(f"{outdir}/ps.npy", ps_saved)
 
     # Animate simulation
     if args.animate:
-        animator = SimulationAnimator(ts, xs)
-        animator.animate(savepath=f"{outdir}/animation", duration=duration)
+        if args.animation_dt is None:
+            ts = ts_saved
+            xs = xs_saved
+            sigs = sigs_saved
+            ps = ps_saved
+        else:
+            # Process given animation_dt here...
+            ani_dt = args.animation_dt
+
+            # Rerun simulation with finer saverate
+            ts, xs, sigs, ps = simulate_landscape(
+                landscape_name=args.landscape_name,
+                ncells=args.ncells, 
+                x0=args.x0,
+                tfin=args.tfin, 
+                dt=args.dt, 
+                dt_save=ani_dt, 
+                burnin=args.burnin,
+                nsignals=args.nsignals,
+                signal_schedule=args.signal_schedule, 
+                sigparams=args.sigparams,
+                noise_schedule=args.noise_schedule, 
+                noise_args=args.noise_args,
+                seed=seed,
+            )
+
+        animator = PhiSimulationAnimator(
+            ts, xs, sigs, ps, 
+            ts_saved, xs_saved, sigs_saved, ps_saved,
+        )
+        animator.animate(
+            savepath=f"{outdir}/animation", 
+            duration=duration
+        )
 
 
 if __name__ == "__main__":
