@@ -847,10 +847,10 @@ class PLNN(eqx.Module):
         eval_time = 0.
         if signal is None:
             if self.signal_type == 'jump':
-                signal = [1, 0, 0]
+                signal = self.nsigs * [[1, 0, 0]]
             elif self.signal_type == 'sigmoid':
-                signal = [1, 0, 0, 0]
-        signal_params = jnp.tile(jnp.array(signal), (self.nsigs, 1))
+                signal = self.nsigs * [[1, 0, 0, 0]]
+        signal_params = jnp.array(signal)
 
         # Compute phi
         x = np.linspace(-r, r, res)

@@ -75,8 +75,8 @@ def parse_args(args):
     parser.add_argument('--metric_final_act', type=str, default=None)
     parser.add_argument('--metric_layer_normalize', action='store_true')
 
-    parser.add_argument('--infer_noise', action="store_true",
-                        help="If specified, infer the noise level.")
+    parser.add_argument('--fix_noise', action="store_false",
+                        help="NOT IMPLEMENTED! Fix the model noise parameter.")
     parser.add_argument('--sigma', type=float, default=1e-3,
                         help="Noise level if not inferring sigma." + \
                         "Otherwise, the initial value for the sigma parameter.")    
@@ -129,7 +129,6 @@ def parse_args(args):
     
     # Misc. options
     parser.add_argument('--plot', action="store_true")
-    parser.add_argument('--use_gpu', action="store_true")
     parser.add_argument('--dtype', type=str, default="float32", 
                         choices=['float32', 'float64'])
     parser.add_argument('--seed', type=int, default=0)
@@ -179,9 +178,8 @@ def main(args):
     init_metric_weights_args = args.init_metric_weights_args
     init_metric_bias_method = args.init_metric_bias_method
     init_metric_bias_args = args.init_metric_bias_args
-    # infer_noise = args.infer_noise
+    fix_noise = args.fix_noise  # not implemented
     sigma = args.sigma
-    # use_gpu = args.use_gpu
     batch_size = args.batch_size
     num_epochs = args.num_epochs
     optimization_method = args.optimizer
@@ -358,6 +356,7 @@ def log_model(outdir, model):
     with open(f"{outdir}/log_model.txt", 'w') as f:
         for arg, value in sorted(vars(model).items()):
             f.write(str(arg) + " : " + "%r" % value + "\n")
+
 
 def read_nsims(datdir):
     return np.genfromtxt(f"{datdir}/nsims.txt", dtype=int)

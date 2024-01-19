@@ -26,10 +26,9 @@ class TestBinarySignal:
     ])
     def test_binary_signal_direct(self, tc, pi, pf, test_times, expected):
         f = get_binary_function(tc, pi, pf)
-        ts = np.array(test_times)
-        ps = np.array([f(t) for t in ts])
+        ps = f(test_times)
         errors = []
-        for i, t in enumerate(ts):
+        for i, t in enumerate(test_times):
             if not np.allclose(expected[i], ps[i]):
                 msg = f"f(t={t:.5f}) =/= {expected[i]}. Got {ps[i]}"
                 errors.append(msg)
@@ -54,10 +53,9 @@ class TestSigmoidSignal:
     ])
     def test_sigmoid_signal_direct(self, tc, pi, pf, r, test_times, expected):
         f = get_sigmoid_function(*[np.array(xx) for xx in [tc, pi, pf, r]])
-        ts = np.array(test_times)
-        ps = np.array([f(t) for t in ts])
+        ps = f(test_times)
         errors = []
-        for i, t in enumerate(ts):
+        for i, t in enumerate(test_times):
             if not np.allclose(expected[i], ps[i]):
                 msg = f"f(t={t:.5f}) =/= {expected[i]}. Got {ps[i]}"
                 errors.append(msg)

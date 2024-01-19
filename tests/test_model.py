@@ -139,9 +139,8 @@ class TestBatchedCoreLandscapeMethods:
          [3*[[0.01, 0.01]], 3*[[0.01, 0.01]]], (2, 3, 2)
         ],
     ])
-    @pytest.mark.parametrize('infer_noise', [True, False])
     def test_g(self, dtype, ws, wts, t, x, 
-               sigma, infer_noise, g_exp, g_shape_exp):
+               sigma, g_exp, g_shape_exp):
         model = get_model(ws, wts, dtype, sigma)
         t = jnp.array(t, dtype=dtype)
         x = jnp.array(x, dtype=dtype)

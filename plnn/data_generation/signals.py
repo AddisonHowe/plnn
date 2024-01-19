@@ -1,9 +1,27 @@
 import numpy as np
 
-def get_binary_function(tcrit, p0, p1):
-    """Return a binary function that changes from p0 to p1 at time tcrit."""
-    return lambda t: p0 * (t < tcrit) + p1 * (t >= tcrit)
+def get_binary_function(tcrit, s0, s1):
+    """Return a binary function that changes from s0 to s1 at time tcrit."""
+    return np.vectorize(
+        lambda t: s0 * (t < tcrit) + s1 * (t >= tcrit),
+        signature='()->(n)',
+    )
 
-def get_sigmoid_function(tcrit, p0, p1, r):
-    """Return a sigmoid function that changes from p0 to p1 at time tcrit."""
-    return lambda t: p0 + 0.5*(p1 - p0) * (1 + np.tanh(r*(t-tcrit)))
+def get_sigmoid_function(tcrit, s0, s1, r):
+    """A sigmoid signal function.
+    Args:
+        tcrit (Array[float]) : Critical times of each signal. At time tcrit[i] 
+            the ith signal is the average of s0[i] and s1[i]. Shape (nsignals,)
+        s0 (Array[float]) : Inititial values of each signal. Shape (nsignals,)
+        s1 (Array[float]) : Final values of each signal. Shape (nsignals,)
+        r (Array[float]) : Change rate of each signal. Shape (nsignals,)
+    Returns:
+        (callable) : A function taking a scalar input, time, and returning 
+            an array of shape (nsignals,) containing the signal value at that 
+            time. If the input is an ndarray of shape (*), the signal is 
+            computed in a vectorized fashion, with output shape (*, nsignals).
+    """
+    return np.vectorize(
+        lambda t: s0 + 0.5*(s1 - s0) * (1 + np.tanh(r*(t-tcrit))), 
+        signature='()->(n)',
+    )
