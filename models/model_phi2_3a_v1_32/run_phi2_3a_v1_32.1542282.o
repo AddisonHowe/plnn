@@ -1,0 +1,1047 @@
+Slurm job ID: 1542282
+argfile: scripts/training_run_args/run_phi2_3a_v1_32.csv
+args: Namespace(name='model_phi2_3a_v1_32', outdir='out/model_training/model_phi2_3a_v1_32', training_data='data/training_data/data_phi2_3a_training', validation_data='data/training_data/data_phi2_3a_validation', nsims_training=None, nsims_validation=None, num_epochs=100, batch_size=100, report_every=10, ndims=2, nparams=2, nsigs=2, ncells=100, dt=0.05, signal_function='jump', confine=True, phi_hidden_dims=[16, 32, 32, 16], phi_hidden_acts=['softplus'], phi_final_act='None', phi_layer_normalize=False, tilt_hidden_dims=[0], tilt_hidden_acts=['None'], tilt_final_act='None', tilt_layer_normalize=False, infer_metric=False, metric_hidden_dims=[8, 8, 8, 8], metric_hidden_acts=['softplus'], metric_final_act='None', metric_layer_normalize=False, infer_noise=True, sigma=0.01, init_phi_weights_method='xavier_uniform', init_phi_weights_args=[], init_phi_bias_method='constant', init_phi_bias_args=[0.0], init_tilt_weights_method='xavier_uniform', init_tilt_weights_args=[], init_tilt_bias_method='constant', init_tilt_bias_args=[0.0], init_metric_weights_method='xavier_uniform', init_metric_weights_args=[], init_metric_bias_method='constant', init_metric_bias_args=[0.0], loss='mcd', continuation=None, optimizer='rms', learning_rate=0.001, momentum=0.5, weight_decay=0.9, plot=True, use_gpu=True, dtype='float32', seed=1311, timestamp=False, save_all=True, jax_debug_nans=False)
+Using seed: 1311
+
+Training model...
+
+Saving initial model state to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_0.pth
+EPOCH 1/100:
+	Training over batches...
+		[batch 10/50] avg loss: 1.7951774294895635
+		[batch 20/50] avg loss: 1.3105209916024574
+		[batch 30/50] avg loss: 1.135292481117896
+		[batch 40/50] avg loss: 1.0889764479680772
+		[batch 50/50] avg loss: 0.9875546408391758
+	LOSS [training: 1.2635043982034337 | validation: 0.9702014661188464]
+	TIME [epoch: 58.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_1.pth
+	Model improved!!!
+EPOCH 2/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.9139891777920888
+		[batch 20/50] avg loss: 0.8332417561955662
+		[batch 30/50] avg loss: 0.7553273578038227
+		[batch 40/50] avg loss: 0.735088960565699
+		[batch 50/50] avg loss: 0.7121177344975127
+	LOSS [training: 0.7899529973709378 | validation: 0.7697353181374422]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_2.pth
+	Model improved!!!
+EPOCH 3/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.7110709799791685
+		[batch 20/50] avg loss: 0.6963519822215727
+		[batch 30/50] avg loss: 0.6924240427681669
+		[batch 40/50] avg loss: 0.7002727442226727
+		[batch 50/50] avg loss: 0.6898975191743866
+	LOSS [training: 0.6980034536731934 | validation: 0.7131427984552695]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_3.pth
+	Model improved!!!
+EPOCH 4/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.651448491840495
+		[batch 20/50] avg loss: 0.6815852769968415
+		[batch 30/50] avg loss: 0.6784763282042018
+		[batch 40/50] avg loss: 0.662820683195511
+		[batch 50/50] avg loss: 0.676093273690481
+	LOSS [training: 0.670084810785506 | validation: 0.6715212361970841]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_4.pth
+	Model improved!!!
+EPOCH 5/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.6678712366217907
+		[batch 20/50] avg loss: 0.6413278946800318
+		[batch 30/50] avg loss: 0.6580585269881531
+		[batch 40/50] avg loss: 0.6111491451759585
+		[batch 50/50] avg loss: 0.6219444579506723
+	LOSS [training: 0.6400702522833214 | validation: 0.6895907997024807]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_5.pth
+EPOCH 6/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.6643748722566165
+		[batch 20/50] avg loss: 0.5942790886638148
+		[batch 30/50] avg loss: 0.6043347217943275
+		[batch 40/50] avg loss: 0.5731847460029943
+		[batch 50/50] avg loss: 0.5869533875616116
+	LOSS [training: 0.604625363255873 | validation: 0.5934784506667148]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_6.pth
+	Model improved!!!
+EPOCH 7/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.5809339178645342
+		[batch 20/50] avg loss: 0.5739935645244485
+		[batch 30/50] avg loss: 0.558653164268628
+		[batch 40/50] avg loss: 0.5616601274994575
+		[batch 50/50] avg loss: 0.5550731305653833
+	LOSS [training: 0.5660627809444904 | validation: 0.5535395241655465]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_7.pth
+	Model improved!!!
+EPOCH 8/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.538261050211759
+		[batch 20/50] avg loss: 0.5303185444965711
+		[batch 30/50] avg loss: 0.5377234115374037
+		[batch 40/50] avg loss: 0.5291116370403215
+		[batch 50/50] avg loss: 0.52788127173835
+	LOSS [training: 0.5326591830048811 | validation: 0.5499251607899904]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_8.pth
+	Model improved!!!
+EPOCH 9/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.5294641834481396
+		[batch 20/50] avg loss: 0.5119260682636979
+		[batch 30/50] avg loss: 0.4839261670689359
+		[batch 40/50] avg loss: 0.502074775578029
+		[batch 50/50] avg loss: 0.5066759622975207
+	LOSS [training: 0.5068134313312648 | validation: 0.5012089599700795]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_9.pth
+	Model improved!!!
+EPOCH 10/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.48481663353251525
+		[batch 20/50] avg loss: 0.6028396579741186
+		[batch 30/50] avg loss: 0.5056267454267425
+		[batch 40/50] avg loss: 0.5014098533989853
+		[batch 50/50] avg loss: 0.47988036766426323
+	LOSS [training: 0.5149146515993247 | validation: 0.4943438226346988]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_10.pth
+	Model improved!!!
+EPOCH 11/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.47551819592419686
+		[batch 20/50] avg loss: 0.481189037475818
+		[batch 30/50] avg loss: 0.4826549510194772
+		[batch 40/50] avg loss: 0.5226713664403234
+		[batch 50/50] avg loss: 0.5054310498701824
+	LOSS [training: 0.4934929201459996 | validation: 0.502761010336571]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_11.pth
+EPOCH 12/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.49008426002454797
+		[batch 20/50] avg loss: 0.47564187773529565
+		[batch 30/50] avg loss: 0.47688414578345995
+		[batch 40/50] avg loss: 0.45050541948650763
+		[batch 50/50] avg loss: 0.5057502476917377
+	LOSS [training: 0.4797731901443098 | validation: 0.4927302827534218]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_12.pth
+	Model improved!!!
+EPOCH 13/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.4886003792086708
+		[batch 20/50] avg loss: 0.48895601133251565
+		[batch 30/50] avg loss: 0.47836960999511036
+		[batch 40/50] avg loss: 0.44716977003087094
+		[batch 50/50] avg loss: 0.46049841290965
+	LOSS [training: 0.4727188366953635 | validation: 0.4480642048386619]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_13.pth
+	Model improved!!!
+EPOCH 14/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.5764295347773135
+		[batch 20/50] avg loss: 0.47819740017362394
+		[batch 30/50] avg loss: 0.43679664112909516
+		[batch 40/50] avg loss: 0.4381905717233788
+		[batch 50/50] avg loss: 0.47202125293282843
+	LOSS [training: 0.4803270801472482 | validation: 0.4779615993697407]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_14.pth
+EPOCH 15/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.43028996241539363
+		[batch 20/50] avg loss: 0.44674564190300525
+		[batch 30/50] avg loss: 0.4754495363410417
+		[batch 40/50] avg loss: 0.4378725170845278
+		[batch 50/50] avg loss: 0.49928152732209147
+	LOSS [training: 0.45792783701321194 | validation: 0.4654579954122716]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_15.pth
+EPOCH 16/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.4633692772102417
+		[batch 20/50] avg loss: 0.41943256910481147
+		[batch 30/50] avg loss: 0.42043583823620717
+		[batch 40/50] avg loss: 0.47206759558240635
+		[batch 50/50] avg loss: 0.43681242418209487
+	LOSS [training: 0.44242354086315216 | validation: 0.4012566337171263]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_16.pth
+	Model improved!!!
+EPOCH 17/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.4529734025850945
+		[batch 20/50] avg loss: 0.45782008484275505
+		[batch 30/50] avg loss: 0.40684484046157765
+		[batch 40/50] avg loss: 0.423416427037907
+		[batch 50/50] avg loss: 0.47093517663501777
+	LOSS [training: 0.44239798631247046 | validation: 0.4483503580162963]
+	TIME [epoch: 15.3 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_17.pth
+EPOCH 18/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.396132407079051
+		[batch 20/50] avg loss: 0.41346267504317175
+		[batch 30/50] avg loss: 0.40316497637041027
+		[batch 40/50] avg loss: 0.38699981745753276
+		[batch 50/50] avg loss: 0.4239998033490952
+	LOSS [training: 0.40475193585985225 | validation: 0.3893780360259215]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_18.pth
+	Model improved!!!
+EPOCH 19/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.4774461532930361
+		[batch 20/50] avg loss: 0.40891694314199845
+		[batch 30/50] avg loss: 0.3944099778960612
+		[batch 40/50] avg loss: 0.3757977269593723
+		[batch 50/50] avg loss: 0.4263454443973932
+	LOSS [training: 0.41658324913757233 | validation: 0.417509758376123]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_19.pth
+EPOCH 20/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.39315343446591083
+		[batch 20/50] avg loss: 0.38959572600708536
+		[batch 30/50] avg loss: 0.4667241033165723
+		[batch 40/50] avg loss: 0.37897462068038695
+		[batch 50/50] avg loss: 0.35471675622684906
+	LOSS [training: 0.396632928139361 | validation: 0.39564271178956095]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_20.pth
+EPOCH 21/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.41637614094363684
+		[batch 20/50] avg loss: 0.4090657085155091
+		[batch 30/50] avg loss: 0.37096223168715897
+		[batch 40/50] avg loss: 0.38051826709245457
+		[batch 50/50] avg loss: 0.3868880098370099
+	LOSS [training: 0.39276207161515403 | validation: 0.3907318369492582]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_21.pth
+EPOCH 22/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.3834819003032517
+		[batch 20/50] avg loss: 0.4117692446945502
+		[batch 30/50] avg loss: 0.4046313657424478
+		[batch 40/50] avg loss: 0.39199231674517837
+		[batch 50/50] avg loss: 0.3595503221424344
+	LOSS [training: 0.39028502992557246 | validation: 0.38960722865017294]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_22.pth
+EPOCH 23/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.3741482248233006
+		[batch 20/50] avg loss: 0.381766362380336
+		[batch 30/50] avg loss: 0.3810972476534486
+		[batch 40/50] avg loss: 0.38886932211160624
+		[batch 50/50] avg loss: 0.3539437132728203
+	LOSS [training: 0.37596497404830237 | validation: 0.3365781290074271]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_23.pth
+	Model improved!!!
+EPOCH 24/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.3630518919409267
+		[batch 20/50] avg loss: 0.3562816240742911
+		[batch 30/50] avg loss: 0.36466963882907655
+		[batch 40/50] avg loss: 0.3675892448164114
+		[batch 50/50] avg loss: 0.3849404060182147
+	LOSS [training: 0.36730656113578414 | validation: 0.3483824263842289]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_24.pth
+EPOCH 25/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.3446772849857564
+		[batch 20/50] avg loss: 0.3693248263359628
+		[batch 30/50] avg loss: 0.35572582518332374
+		[batch 40/50] avg loss: 0.3351335519422644
+		[batch 50/50] avg loss: 0.3967254478044369
+	LOSS [training: 0.36031738725034884 | validation: 0.3870894542276479]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_25.pth
+EPOCH 26/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.3458619766772221
+		[batch 20/50] avg loss: 0.3096849137936269
+		[batch 30/50] avg loss: 0.3640529333538015
+		[batch 40/50] avg loss: 0.3292857629280329
+		[batch 50/50] avg loss: 0.3903982298074895
+	LOSS [training: 0.3478567633120347 | validation: 0.37601774595305393]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_26.pth
+EPOCH 27/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.3579324299017076
+		[batch 20/50] avg loss: 0.3115791116716082
+		[batch 30/50] avg loss: 0.3052334376903267
+		[batch 40/50] avg loss: 0.33803070644530997
+		[batch 50/50] avg loss: 0.3722574072840503
+	LOSS [training: 0.3370066185986005 | validation: 0.3041383128224614]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_27.pth
+	Model improved!!!
+EPOCH 28/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.31638980102747466
+		[batch 20/50] avg loss: 0.3043900519714836
+		[batch 30/50] avg loss: 0.36012113323097056
+		[batch 40/50] avg loss: 0.3258866804398841
+		[batch 50/50] avg loss: 0.31481043178296714
+	LOSS [training: 0.32431961969055606 | validation: 0.2911655392524396]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_28.pth
+	Model improved!!!
+EPOCH 29/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.30727991436025504
+		[batch 20/50] avg loss: 0.3082346741528833
+		[batch 30/50] avg loss: 0.30243082162005763
+		[batch 40/50] avg loss: 0.3374695326256699
+		[batch 50/50] avg loss: 0.3388651919883554
+	LOSS [training: 0.31885602694944415 | validation: 0.32409147230235946]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_29.pth
+EPOCH 30/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.31078210544731333
+		[batch 20/50] avg loss: 0.3165209993037684
+		[batch 30/50] avg loss: 0.3108445437746745
+		[batch 40/50] avg loss: 0.33003565473041196
+		[batch 50/50] avg loss: 0.2910976766411123
+	LOSS [training: 0.31185619597945613 | validation: 0.2767958926383717]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_30.pth
+	Model improved!!!
+EPOCH 31/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.33403740148210775
+		[batch 20/50] avg loss: 0.286425658074818
+		[batch 30/50] avg loss: 0.2827036046952068
+		[batch 40/50] avg loss: 0.32336450173347486
+		[batch 50/50] avg loss: 0.27858511053648016
+	LOSS [training: 0.3010232553044175 | validation: 0.2776945232421061]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_31.pth
+EPOCH 32/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.28992778812560055
+		[batch 20/50] avg loss: 0.27665117537154227
+		[batch 30/50] avg loss: 0.32008279523637306
+		[batch 40/50] avg loss: 0.2645196719327754
+		[batch 50/50] avg loss: 0.28037143309688534
+	LOSS [training: 0.2863105727526353 | validation: 0.2500340230457881]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_32.pth
+	Model improved!!!
+EPOCH 33/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.27481974979084844
+		[batch 20/50] avg loss: 0.28144264194864094
+		[batch 30/50] avg loss: 0.237602586909532
+		[batch 40/50] avg loss: 0.23437891794201288
+		[batch 50/50] avg loss: 0.25710164424173876
+	LOSS [training: 0.2570691081665546 | validation: 0.19690610973173908]
+	TIME [epoch: 15.7 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_33.pth
+	Model improved!!!
+EPOCH 34/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.22765987724967207
+		[batch 20/50] avg loss: 0.21994566972752178
+		[batch 30/50] avg loss: 0.24625650675828106
+		[batch 40/50] avg loss: 0.2058594399965222
+		[batch 50/50] avg loss: 0.20411263703747942
+	LOSS [training: 0.22076682615389534 | validation: 0.19157459303524152]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_34.pth
+	Model improved!!!
+EPOCH 35/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.1630019677543234
+		[batch 20/50] avg loss: 0.1714096812990176
+		[batch 30/50] avg loss: 0.17143123136193372
+		[batch 40/50] avg loss: 0.1959256242962119
+		[batch 50/50] avg loss: 0.1856156471365074
+	LOSS [training: 0.17747683036959885 | validation: 0.12844119972357168]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_35.pth
+	Model improved!!!
+EPOCH 36/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.18817332250553911
+		[batch 20/50] avg loss: 0.18049103796598023
+		[batch 30/50] avg loss: 0.14462851025228463
+		[batch 40/50] avg loss: 0.1585608921379468
+		[batch 50/50] avg loss: 0.15900721901880324
+	LOSS [training: 0.1661721963761108 | validation: 0.1506046665471189]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_36.pth
+EPOCH 37/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.16121814783431992
+		[batch 20/50] avg loss: 0.16846221619163165
+		[batch 30/50] avg loss: 0.1426504819539722
+		[batch 40/50] avg loss: 0.14209273317624535
+		[batch 50/50] avg loss: 0.18658434499079196
+	LOSS [training: 0.16020158482939226 | validation: 0.12836063591133134]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_37.pth
+	Model improved!!!
+EPOCH 38/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.1231804064006006
+		[batch 20/50] avg loss: 0.1828661444824139
+		[batch 30/50] avg loss: 0.13347452872152188
+		[batch 40/50] avg loss: 0.1330675585090749
+		[batch 50/50] avg loss: 0.13981354627605558
+	LOSS [training: 0.14248043687793335 | validation: 0.20100868589154222]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_38.pth
+EPOCH 39/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.15827617915597786
+		[batch 20/50] avg loss: 0.12646046014644738
+		[batch 30/50] avg loss: 0.1722059578215837
+		[batch 40/50] avg loss: 0.1458545532055055
+		[batch 50/50] avg loss: 0.12200785379101649
+	LOSS [training: 0.14496100082410618 | validation: 0.15339491698224708]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_39.pth
+EPOCH 40/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.13167230717006406
+		[batch 20/50] avg loss: 0.14234384917595616
+		[batch 30/50] avg loss: 0.13667806693021187
+		[batch 40/50] avg loss: 0.15841184591932883
+		[batch 50/50] avg loss: 0.11928900931829459
+	LOSS [training: 0.13767901570277108 | validation: 0.12176874122358086]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_40.pth
+	Model improved!!!
+EPOCH 41/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.14563200592844844
+		[batch 20/50] avg loss: 0.1468851817261168
+		[batch 30/50] avg loss: 0.12442494671023643
+		[batch 40/50] avg loss: 0.14261940358253747
+		[batch 50/50] avg loss: 0.12459703903474781
+	LOSS [training: 0.13683171539641736 | validation: 0.15964018783109757]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_41.pth
+EPOCH 42/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.16055373815577192
+		[batch 20/50] avg loss: 0.10999749911587749
+		[batch 30/50] avg loss: 0.11873790967304873
+		[batch 40/50] avg loss: 0.1594861748221924
+		[batch 50/50] avg loss: 0.17609474238985381
+	LOSS [training: 0.14497401283134892 | validation: 0.11335422535875084]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_42.pth
+	Model improved!!!
+EPOCH 43/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.11352940015677834
+		[batch 20/50] avg loss: 0.11920074609542275
+		[batch 30/50] avg loss: 0.1274605583468491
+		[batch 40/50] avg loss: 0.13640796797464627
+		[batch 50/50] avg loss: 0.1278412659907639
+	LOSS [training: 0.1248879877128921 | validation: 0.13396048967674015]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_43.pth
+EPOCH 44/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.13294068318078855
+		[batch 20/50] avg loss: 0.1128928995632846
+		[batch 30/50] avg loss: 0.11492797462179564
+		[batch 40/50] avg loss: 0.13234478776501532
+		[batch 50/50] avg loss: 0.1156259145310877
+	LOSS [training: 0.12174645193239435 | validation: 0.13156973103721217]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_44.pth
+EPOCH 45/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.12023963487645409
+		[batch 20/50] avg loss: 0.14627148161802228
+		[batch 30/50] avg loss: 0.11431426989304441
+		[batch 40/50] avg loss: 0.11610497696422743
+		[batch 50/50] avg loss: 0.12832352032448585
+	LOSS [training: 0.12505077673524678 | validation: 0.11158944849198563]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_45.pth
+	Model improved!!!
+EPOCH 46/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.12806440281990916
+		[batch 20/50] avg loss: 0.12085696408223257
+		[batch 30/50] avg loss: 0.11250556594231416
+		[batch 40/50] avg loss: 0.13080483497450915
+		[batch 50/50] avg loss: 0.10277025073141732
+	LOSS [training: 0.11900040371007652 | validation: 0.10374788553093768]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_46.pth
+	Model improved!!!
+EPOCH 47/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.13504637742057626
+		[batch 20/50] avg loss: 0.10926177490925651
+		[batch 30/50] avg loss: 0.12075613792723212
+		[batch 40/50] avg loss: 0.13392118136539927
+		[batch 50/50] avg loss: 0.11341237683723245
+	LOSS [training: 0.12247956969193936 | validation: 0.085612921467461]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_47.pth
+	Model improved!!!
+EPOCH 48/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.1140680109682655
+		[batch 20/50] avg loss: 0.12390420723435887
+		[batch 30/50] avg loss: 0.11169204283027849
+		[batch 40/50] avg loss: 0.10241068296102265
+		[batch 50/50] avg loss: 0.12019413671596031
+	LOSS [training: 0.11445381614197714 | validation: 0.0953985535160667]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_48.pth
+EPOCH 49/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.09338956521536627
+		[batch 20/50] avg loss: 0.11268260367695977
+		[batch 30/50] avg loss: 0.10828776660820119
+		[batch 40/50] avg loss: 0.11074888487491723
+		[batch 50/50] avg loss: 0.10598228049156848
+	LOSS [training: 0.10621822017340263 | validation: 0.09769159334949028]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_49.pth
+EPOCH 50/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.12306407054170332
+		[batch 20/50] avg loss: 0.10905668794609566
+		[batch 30/50] avg loss: 0.1148357252385439
+		[batch 40/50] avg loss: 0.10969242912067279
+		[batch 50/50] avg loss: 0.09216550561920199
+	LOSS [training: 0.10976288369324355 | validation: 0.14929681681266363]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_50.pth
+EPOCH 51/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.12275668161727049
+		[batch 20/50] avg loss: 0.12163566794016183
+		[batch 30/50] avg loss: 0.10858243961379274
+		[batch 40/50] avg loss: 0.11741448623911895
+		[batch 50/50] avg loss: 0.10274074956528578
+	LOSS [training: 0.11462600499512599 | validation: 0.08601189885109674]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_51.pth
+EPOCH 52/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.11798030307932476
+		[batch 20/50] avg loss: 0.12966391493477436
+		[batch 30/50] avg loss: 0.0935263427156008
+		[batch 40/50] avg loss: 0.11971834123379996
+		[batch 50/50] avg loss: 0.09862025513434033
+	LOSS [training: 0.11190183141956803 | validation: 0.11551883336763251]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_52.pth
+EPOCH 53/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.10282238611283208
+		[batch 20/50] avg loss: 0.1053444549486338
+		[batch 30/50] avg loss: 0.10575386536148912
+		[batch 40/50] avg loss: 0.10620612812047706
+		[batch 50/50] avg loss: 0.10673787814252553
+	LOSS [training: 0.1053729425371915 | validation: 0.09398096308045487]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_53.pth
+EPOCH 54/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.10142865045510138
+		[batch 20/50] avg loss: 0.09934469200141341
+		[batch 30/50] avg loss: 0.09935658630716061
+		[batch 40/50] avg loss: 0.10260596111307932
+		[batch 50/50] avg loss: 0.12573290328996062
+	LOSS [training: 0.10569375863334302 | validation: 0.13235115604219266]
+	TIME [epoch: 15.3 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_54.pth
+EPOCH 55/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.11556583256937103
+		[batch 20/50] avg loss: 0.10428567125962414
+		[batch 30/50] avg loss: 0.12136203472500307
+		[batch 40/50] avg loss: 0.1094669966227344
+		[batch 50/50] avg loss: 0.09645776187425767
+	LOSS [training: 0.1094276594101981 | validation: 0.09096908918036373]
+	TIME [epoch: 15.3 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_55.pth
+EPOCH 56/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.10126583650790366
+		[batch 20/50] avg loss: 0.10345995418071008
+		[batch 30/50] avg loss: 0.10869294978033668
+		[batch 40/50] avg loss: 0.09369064908154913
+		[batch 50/50] avg loss: 0.10704321733405682
+	LOSS [training: 0.10283052137691126 | validation: 0.09154026425454355]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_56.pth
+EPOCH 57/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.09033599699658335
+		[batch 20/50] avg loss: 0.11233948066189199
+		[batch 30/50] avg loss: 0.09279121870807008
+		[batch 40/50] avg loss: 0.10149693780177393
+		[batch 50/50] avg loss: 0.11260274040982454
+	LOSS [training: 0.10191327491562875 | validation: 0.09426102695761798]
+	TIME [epoch: 15.3 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_57.pth
+EPOCH 58/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.08496126864186497
+		[batch 20/50] avg loss: 0.08784884147265715
+		[batch 30/50] avg loss: 0.12351889289711149
+		[batch 40/50] avg loss: 0.11584174774430807
+		[batch 50/50] avg loss: 0.08595928752866208
+	LOSS [training: 0.09962600765692076 | validation: 0.0853704214994446]
+	TIME [epoch: 15.3 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_58.pth
+	Model improved!!!
+EPOCH 59/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.10105028697414417
+		[batch 20/50] avg loss: 0.10628122523011704
+		[batch 30/50] avg loss: 0.12660138803233023
+		[batch 40/50] avg loss: 0.09226857795924233
+		[batch 50/50] avg loss: 0.09502870494130532
+	LOSS [training: 0.10424603662742783 | validation: 0.08754213377326361]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_59.pth
+EPOCH 60/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.10789854293469203
+		[batch 20/50] avg loss: 0.10338126452096315
+		[batch 30/50] avg loss: 0.09594885905985948
+		[batch 40/50] avg loss: 0.07680639246539997
+		[batch 50/50] avg loss: 0.13465004046784387
+	LOSS [training: 0.1037370198897517 | validation: 0.07955248602694284]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_60.pth
+	Model improved!!!
+EPOCH 61/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.08266479695810908
+		[batch 20/50] avg loss: 0.09787705286358145
+		[batch 30/50] avg loss: 0.10384909173393317
+		[batch 40/50] avg loss: 0.08690400783729142
+		[batch 50/50] avg loss: 0.09234565211157979
+	LOSS [training: 0.09272812030089903 | validation: 0.1196742617233775]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_61.pth
+EPOCH 62/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.11012004501668413
+		[batch 20/50] avg loss: 0.09327768474131762
+		[batch 30/50] avg loss: 0.10260651459387822
+		[batch 40/50] avg loss: 0.07809191953309016
+		[batch 50/50] avg loss: 0.0856345765737995
+	LOSS [training: 0.09394614809175392 | validation: 0.12909484779183908]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_62.pth
+EPOCH 63/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.11012254478041976
+		[batch 20/50] avg loss: 0.08872011481724865
+		[batch 30/50] avg loss: 0.10193910063575433
+		[batch 40/50] avg loss: 0.0959718985723188
+		[batch 50/50] avg loss: 0.08041537472719687
+	LOSS [training: 0.0954338067065877 | validation: 0.06792339730634898]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_63.pth
+	Model improved!!!
+EPOCH 64/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.08535210714250548
+		[batch 20/50] avg loss: 0.09648275358602466
+		[batch 30/50] avg loss: 0.10036111795662739
+		[batch 40/50] avg loss: 0.10091840190254295
+		[batch 50/50] avg loss: 0.07806340552601079
+	LOSS [training: 0.09223555722274225 | validation: 0.08880188913071754]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_64.pth
+EPOCH 65/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.09159638964816483
+		[batch 20/50] avg loss: 0.09519541636992034
+		[batch 30/50] avg loss: 0.1013474508936401
+		[batch 40/50] avg loss: 0.0837596854508635
+		[batch 50/50] avg loss: 0.08909332859765151
+	LOSS [training: 0.09219845419204807 | validation: 0.08379655252842894]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_65.pth
+EPOCH 66/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.09409316636914505
+		[batch 20/50] avg loss: 0.07741309060342522
+		[batch 30/50] avg loss: 0.09786465136644174
+		[batch 40/50] avg loss: 0.09917876269400042
+		[batch 50/50] avg loss: 0.09583819659174385
+	LOSS [training: 0.09287757352495124 | validation: 0.07550986288225199]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_66.pth
+EPOCH 67/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.08849124961775826
+		[batch 20/50] avg loss: 0.08058369888742234
+		[batch 30/50] avg loss: 0.079160279008165
+		[batch 40/50] avg loss: 0.0913935644926609
+		[batch 50/50] avg loss: 0.08763387724324749
+	LOSS [training: 0.08545253384985077 | validation: 0.07165950279089368]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_67.pth
+EPOCH 68/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.10201072194736882
+		[batch 20/50] avg loss: 0.07958190419541558
+		[batch 30/50] avg loss: 0.07824347317304314
+		[batch 40/50] avg loss: 0.09017774209802687
+		[batch 50/50] avg loss: 0.08528742250245344
+	LOSS [training: 0.08706025278326157 | validation: 0.06808296371808678]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_68.pth
+EPOCH 69/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.07399835051670521
+		[batch 20/50] avg loss: 0.11183247127193877
+		[batch 30/50] avg loss: 0.07562999173880429
+		[batch 40/50] avg loss: 0.09025423536150373
+		[batch 50/50] avg loss: 0.08122489255240088
+	LOSS [training: 0.08658798828827058 | validation: 0.08283209517663406]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_69.pth
+EPOCH 70/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.08230175931484737
+		[batch 20/50] avg loss: 0.06876735671252986
+		[batch 30/50] avg loss: 0.0983735680973222
+		[batch 40/50] avg loss: 0.09393381966470901
+		[batch 50/50] avg loss: 0.07432839371444355
+	LOSS [training: 0.08354097950077043 | validation: 0.06626700134233379]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_70.pth
+	Model improved!!!
+EPOCH 71/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.08044494144371298
+		[batch 20/50] avg loss: 0.06588102304575214
+		[batch 30/50] avg loss: 0.09248490805297324
+		[batch 40/50] avg loss: 0.0808074649060939
+		[batch 50/50] avg loss: 0.08998451090531859
+	LOSS [training: 0.08192056967077013 | validation: 0.07536748788972562]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_71.pth
+EPOCH 72/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.06973429386983163
+		[batch 20/50] avg loss: 0.09269859946834778
+		[batch 30/50] avg loss: 0.0835204453820756
+		[batch 40/50] avg loss: 0.09000031501502823
+		[batch 50/50] avg loss: 0.06432150574532147
+	LOSS [training: 0.08005503189612094 | validation: 0.06390994276085385]
+	TIME [epoch: 15.3 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_72.pth
+	Model improved!!!
+EPOCH 73/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.07648246117497504
+		[batch 20/50] avg loss: 0.06646479110349407
+		[batch 30/50] avg loss: 0.0641620171826223
+		[batch 40/50] avg loss: 0.0918196789947494
+		[batch 50/50] avg loss: 0.07916260132134285
+	LOSS [training: 0.07561830995543675 | validation: 0.09843189209574084]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_73.pth
+EPOCH 74/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.07961958408428763
+		[batch 20/50] avg loss: 0.07585253637733719
+		[batch 30/50] avg loss: 0.07957901716308668
+		[batch 40/50] avg loss: 0.07574624893075471
+		[batch 50/50] avg loss: 0.08102127090316977
+	LOSS [training: 0.0783637314917272 | validation: 0.05812639666478314]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_74.pth
+	Model improved!!!
+EPOCH 75/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.07391250470864313
+		[batch 20/50] avg loss: 0.0871074072907627
+		[batch 30/50] avg loss: 0.07685845859244059
+		[batch 40/50] avg loss: 0.06699764750699522
+		[batch 50/50] avg loss: 0.07499404208931096
+	LOSS [training: 0.07597401203763053 | validation: 0.07846090357426357]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_75.pth
+EPOCH 76/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.07101390995644072
+		[batch 20/50] avg loss: 0.06095975339816186
+		[batch 30/50] avg loss: 0.08963098455403085
+		[batch 40/50] avg loss: 0.07365992558616971
+		[batch 50/50] avg loss: 0.07238637310071204
+	LOSS [training: 0.07353018931910303 | validation: 0.07673264319999745]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_76.pth
+EPOCH 77/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.07397959354717573
+		[batch 20/50] avg loss: 0.07685637090918782
+		[batch 30/50] avg loss: 0.0689695032381343
+		[batch 40/50] avg loss: 0.06824932092986397
+		[batch 50/50] avg loss: 0.08607918279657811
+	LOSS [training: 0.074826794284188 | validation: 0.06637486753523032]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_77.pth
+EPOCH 78/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.06800803882169235
+		[batch 20/50] avg loss: 0.06162484191683126
+		[batch 30/50] avg loss: 0.07726299517262784
+		[batch 40/50] avg loss: 0.08100844957331858
+		[batch 50/50] avg loss: 0.08556390605152209
+	LOSS [training: 0.07469364630719842 | validation: 0.09019519936423116]
+	TIME [epoch: 15.3 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_78.pth
+EPOCH 79/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.07819346703892158
+		[batch 20/50] avg loss: 0.06945353810215547
+		[batch 30/50] avg loss: 0.06758328173409897
+		[batch 40/50] avg loss: 0.08018256709694925
+		[batch 50/50] avg loss: 0.07029826346799042
+	LOSS [training: 0.07314222348802316 | validation: 0.058767588379945744]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_79.pth
+EPOCH 80/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.05661047927112071
+		[batch 20/50] avg loss: 0.09546911114554527
+		[batch 30/50] avg loss: 0.06608868937329551
+		[batch 40/50] avg loss: 0.08393197157388418
+		[batch 50/50] avg loss: 0.06518776365661519
+	LOSS [training: 0.07345760300409215 | validation: 0.06756771525285452]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_80.pth
+EPOCH 81/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.07616011625035393
+		[batch 20/50] avg loss: 0.08036591103941289
+		[batch 30/50] avg loss: 0.05855684055162792
+		[batch 40/50] avg loss: 0.06743528458485969
+		[batch 50/50] avg loss: 0.06608728947214072
+	LOSS [training: 0.06972108837967901 | validation: 0.06993702106598718]
+	TIME [epoch: 15.3 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_81.pth
+EPOCH 82/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.08288564281559266
+		[batch 20/50] avg loss: 0.060316030294845634
+		[batch 30/50] avg loss: 0.07053390822390794
+		[batch 40/50] avg loss: 0.06788035632463077
+		[batch 50/50] avg loss: 0.07748507744598196
+	LOSS [training: 0.07182020302099179 | validation: 0.05045318744074989]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_82.pth
+	Model improved!!!
+EPOCH 83/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.05572933043745424
+		[batch 20/50] avg loss: 0.05956521403335927
+		[batch 30/50] avg loss: 0.08198663290869482
+		[batch 40/50] avg loss: 0.07659104901976557
+		[batch 50/50] avg loss: 0.06731048310235174
+	LOSS [training: 0.06823654190032513 | validation: 0.04958697759485808]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_83.pth
+	Model improved!!!
+EPOCH 84/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.06048482358216992
+		[batch 20/50] avg loss: 0.05890083609466105
+		[batch 30/50] avg loss: 0.07446729641725289
+		[batch 40/50] avg loss: 0.06533208582973804
+		[batch 50/50] avg loss: 0.06433828142042165
+	LOSS [training: 0.06470466466884871 | validation: 0.05897731369075716]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_84.pth
+EPOCH 85/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.06569951170635843
+		[batch 20/50] avg loss: 0.07474510226464408
+		[batch 30/50] avg loss: 0.06637100632840498
+		[batch 40/50] avg loss: 0.06490349545927529
+		[batch 50/50] avg loss: 0.056634389187581825
+	LOSS [training: 0.06567070098925291 | validation: 0.09228464205062534]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_85.pth
+EPOCH 86/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.07536619497410216
+		[batch 20/50] avg loss: 0.0582022185700112
+		[batch 30/50] avg loss: 0.059825074360482955
+		[batch 40/50] avg loss: 0.07078759621018416
+		[batch 50/50] avg loss: 0.058971035031956984
+	LOSS [training: 0.06463042382934751 | validation: 0.06386136584056688]
+	TIME [epoch: 15.4 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_86.pth
+EPOCH 87/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.06823215158369315
+		[batch 20/50] avg loss: 0.08115233240940348
+		[batch 30/50] avg loss: 0.05725335582163711
+		[batch 40/50] avg loss: 0.05701436262314087
+		[batch 50/50] avg loss: 0.06656568284915225
+	LOSS [training: 0.06604357705740538 | validation: 0.04974632693707078]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_87.pth
+EPOCH 88/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.05637843119249197
+		[batch 20/50] avg loss: 0.07609188265788527
+		[batch 30/50] avg loss: 0.06237862677232513
+		[batch 40/50] avg loss: 0.053420121844569644
+		[batch 50/50] avg loss: 0.07805786411223795
+	LOSS [training: 0.065265385315902 | validation: 0.08468585210963467]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_88.pth
+EPOCH 89/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.05827186490630988
+		[batch 20/50] avg loss: 0.05422886453830261
+		[batch 30/50] avg loss: 0.060770152550991864
+		[batch 40/50] avg loss: 0.07922024243068904
+		[batch 50/50] avg loss: 0.06248766967456285
+	LOSS [training: 0.06299575882017124 | validation: 0.04648129868692574]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_89.pth
+	Model improved!!!
+EPOCH 90/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.06089711859054973
+		[batch 20/50] avg loss: 0.06299703941025599
+		[batch 30/50] avg loss: 0.06158124843739286
+		[batch 40/50] avg loss: 0.056786245803608505
+		[batch 50/50] avg loss: 0.061181363144738
+	LOSS [training: 0.06068860307730899 | validation: 0.0550503677052286]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_90.pth
+EPOCH 91/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.06480749496236236
+		[batch 20/50] avg loss: 0.05408120945462187
+		[batch 30/50] avg loss: 0.06476233275302876
+		[batch 40/50] avg loss: 0.05487692568680912
+		[batch 50/50] avg loss: 0.06486622225845907
+	LOSS [training: 0.06067883702305625 | validation: 0.08303002834443576]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_91.pth
+EPOCH 92/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.07706008845517016
+		[batch 20/50] avg loss: 0.04807539226445575
+		[batch 30/50] avg loss: 0.06387257677723515
+		[batch 40/50] avg loss: 0.05644604399523079
+		[batch 50/50] avg loss: 0.06695119224292487
+	LOSS [training: 0.062481058747003354 | validation: 0.04385130413173331]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_92.pth
+	Model improved!!!
+EPOCH 93/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.05133284459594345
+		[batch 20/50] avg loss: 0.055500370410502375
+		[batch 30/50] avg loss: 0.056308480330022184
+		[batch 40/50] avg loss: 0.054421588790633926
+		[batch 50/50] avg loss: 0.06346150380818946
+	LOSS [training: 0.05620495758705829 | validation: 0.06820395327884861]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_93.pth
+EPOCH 94/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.05333561269771434
+		[batch 20/50] avg loss: 0.059305967683548455
+		[batch 30/50] avg loss: 0.053964746493770255
+		[batch 40/50] avg loss: 0.07016357476522893
+		[batch 50/50] avg loss: 0.048095306148420905
+	LOSS [training: 0.056973041557736546 | validation: 0.0529378394753105]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_94.pth
+EPOCH 95/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.05055190064766346
+		[batch 20/50] avg loss: 0.0574767428784958
+		[batch 30/50] avg loss: 0.04799386054893072
+		[batch 40/50] avg loss: 0.07119175998133775
+		[batch 50/50] avg loss: 0.06298989133330032
+	LOSS [training: 0.058040831077945595 | validation: 0.05056418154916784]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_95.pth
+EPOCH 96/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.050921677148292765
+		[batch 20/50] avg loss: 0.047711667443037474
+		[batch 30/50] avg loss: 0.06192758714587626
+		[batch 40/50] avg loss: 0.060882475112986355
+		[batch 50/50] avg loss: 0.056184114970873264
+	LOSS [training: 0.05552550436421323 | validation: 0.05648911942751043]
+	TIME [epoch: 15.6 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_96.pth
+EPOCH 97/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.04817249697341543
+		[batch 20/50] avg loss: 0.05393117204173905
+		[batch 30/50] avg loss: 0.04999635838902679
+		[batch 40/50] avg loss: 0.04984939388510205
+		[batch 50/50] avg loss: 0.04986683843568952
+	LOSS [training: 0.05036325194499456 | validation: 0.0395866937401672]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_97.pth
+	Model improved!!!
+EPOCH 98/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.05892230032521485
+		[batch 20/50] avg loss: 0.07139906561024416
+		[batch 30/50] avg loss: 0.048340241501324835
+		[batch 40/50] avg loss: 0.05748097289717781
+		[batch 50/50] avg loss: 0.054941836920627964
+	LOSS [training: 0.05821688345091792 | validation: 0.04328412387000362]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_98.pth
+EPOCH 99/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.04143689602078584
+		[batch 20/50] avg loss: 0.05938397480315573
+		[batch 30/50] avg loss: 0.05621852519626348
+		[batch 40/50] avg loss: 0.058782229873007186
+		[batch 50/50] avg loss: 0.052150856229204526
+	LOSS [training: 0.05359449642448337 | validation: 0.04129459914023319]
+	TIME [epoch: 15.5 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_99.pth
+EPOCH 100/100:
+	Training over batches...
+		[batch 10/50] avg loss: 0.044660687128692755
+		[batch 20/50] avg loss: 0.052705242866648946
+		[batch 30/50] avg loss: 0.04329167577162078
+		[batch 40/50] avg loss: 0.06607888544080437
+		[batch 50/50] avg loss: 0.043812258922102706
+	LOSS [training: 0.05010975002597392 | validation: 0.040382991485783934]
+	TIME [epoch: 15.3 sec]
+	Saving model to: out/model_training/model_phi2_3a_v1_32/states/model_phi2_3a_v1_32_100.pth
+Finished training in 1620.588 seconds.
