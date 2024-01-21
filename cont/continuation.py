@@ -40,8 +40,9 @@ def newton(x0, phi0, p0, step_func, tol=1e-5, maxiter=10000):
     return x1, phi1, p1, converged
 
 
-def continuation(x0, p0, F, Fx, dxFxPhi, Fp, **kwargs):
-    """Implements a continuation algorithm.
+def trace_curve(x0, p0, F, Fx, dxFxPhi, Fp, **kwargs):
+    """Implements a Pseudo-Arclength Continuation Algorithm.
+
     Args:
         x0 : ndarray - initial state vector.
         p0 : ndarray - initial parameter vector.

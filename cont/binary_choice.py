@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from continuation.continuation import continuation as cont
+from cont.continuation import trace_curve
 
 F = lambda x, p: -np.array([
         4*x[0]**3 - 8*x[0]*x[1] - p[0], 
@@ -59,7 +59,7 @@ def get_binary_choice_curves(p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS):
         col = xstarts[i][1]
         p0 = np.array([P1(x0), P2(x0)])
         for sign in [1, -1]:
-            _, ps, _, _ = cont(
+            _, ps, _, _ = trace_curve(
                 x0, p0, F, Fx, dxFxPhi, Fp,
                 maxiter=maxiter, 
                 ds=ds*sign,
@@ -86,7 +86,7 @@ def main():
         col = XSTARTS[i][1]
         p0 = np.array([P1(x0), P2(x0)])
         for sign in [1, -1]:
-            xs, ps, cps, d = cont(
+            xs, ps, cps, d = trace_curve(
                 x0, p0, F, Fx, dxFxPhi, Fp,
                 maxiter=maxiter, 
                 ds=ds*sign,
@@ -105,10 +105,10 @@ def main():
             # ax1.plot(ps[0,0], ps[0,1], 'o', alpha=0.2, color=col)
             # ax2.plot(xs[0,0], xs[0,1], 'o', alpha=0.2, color=col)
             if len(ps) > 1:
-                # ax1.plot(ps[1,0], ps[1,1], '*', alpha=0.6, color=col)
+                ax1.plot(ps[1,0], ps[1,1], '*', alpha=0.6, color=col)
                 ax1.plot(ps[:,0], ps[:,1], '-', alpha=1, color=col)
 
-                # ax2.plot(xs[1,0], xs[1,1], '*', alpha=0.6, color=col)
+                ax2.plot(xs[1,0], xs[1,1], '*', alpha=0.6, color=col)
                 ax2.plot(xs[:,0], xs[:,1], '-', alpha=1, color=col)
 
     ax1.set_xlim(*P1_VIEW_LIMS)
