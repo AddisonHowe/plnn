@@ -1,2 +1,2 @@
-from siginfer.continuation.binary_choice import get_binary_choice_curves
-from siginfer.continuation.binary_flip import get_binary_flip_curves
+from continuation.binary_choice import get_binary_choice_curves
+from continuation.binary_flip import get_binary_flip_curves

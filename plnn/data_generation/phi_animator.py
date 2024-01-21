@@ -23,8 +23,11 @@ class PhiSimulationAnimator:
     interval = 200          # default delay between frames in milliseconds.
     figsize = (12, 9)       # default figure size
 
-    main_scatter_color = 'k'
-    axlimbuffer = 0.05  # percent buffer on axis lims
+    _main_scatter_color = 'k'
+    _siglinecmap = 'tab10'
+    _paramlinecmap = 'tab10'
+    _biflinecmap = 'tab10'
+    _axlimbuffer = 0.05  # percent buffer on axis lims
 
     def __init__(
             self, 
@@ -38,6 +41,14 @@ class PhiSimulationAnimator:
             ps_saved, 
             xlims=None,
             ylims=None,
+            p0lims=None,
+            p1lims=None,
+            p0idx=0,
+            p0idxstr='$p_0$',
+            p1idx=1,
+            p1idxstr='$p_1$',
+            bifcurves=None,
+            bifcolors=None,
             grads=None,
             grad_func=None,
     ):
@@ -62,6 +73,14 @@ class PhiSimulationAnimator:
         self.ys = xys[:,:,1]
         self.sigs = sigs
         self.ps = ps
+        self.p0s = ps[:,p0idx]
+        self.p1s = ps[:,p1idx]
+        self.p0idx = p0idx
+        self.p1idx = p1idx
+        self.p0idxstr = p0idxstr
+        self.p1idxstr = p1idxstr
+        self.bifcurves = bifcurves
+        self.bifcolors = bifcolors
 
         self.ts_saved = ts_saved
         self.xys_saved = xys_saved
@@ -69,6 +88,8 @@ class PhiSimulationAnimator:
         self.ys_saved = xys_saved[:,:,1]
         self.sigs_saved = sigs_saved
         self.ps_saved = ps_saved
+        self.p0s_saved = ps_saved[:,p0idx]
+        self.p1s_saved = ps_saved[:,p1idx]
 
         self.grads = grads
         self.grad_func = grad_func
@@ -76,10 +97,19 @@ class PhiSimulationAnimator:
         self.nframes = len(self.ts)
         self.nsaves = len(self.ts_saved)
 
-        self.xlims = xlims if xlims else self._buffer_lims([np.min(self.xs), 
-                                                           np.max(self.xs)])
-        self.ylims = ylims if ylims else self._buffer_lims([np.min(self.ys), 
-                                                           np.max(self.ys)])
+        self.xlims = xlims if xlims else self._buffer_lims(
+            [np.min(self.xs), np.max(self.xs)]
+        )
+        self.ylims = ylims if ylims else self._buffer_lims(
+            [np.min(self.ys), np.max(self.ys)]
+        )
+        
+        self.p0lims = p0lims if p0lims else self._buffer_lims(
+            [np.min(self.p0s), np.max(self.p0s)]
+        )
+        self.p1lims = p1lims if p1lims else self._buffer_lims(
+            [np.min(self.p1s), np.max(self.p1s)]
+        )
 
     def animate(self, savepath=None, **kwargs):
         """"""
@@ -146,7 +176,10 @@ class PhiSimulationAnimator:
         self._setup_heat()
         self._setup_bifs()
         self._setup_text()
-        return self.scat_main,# self.esig0_scat, self.esig1_scat,
+        return (
+            self.scat_main, self.scat_clst, *self._signal_markers,
+            *self._param_markers, self._bif_marker
+        )
         
     def update(self, i):
         """Update each axis and text."""
@@ -157,7 +190,10 @@ class PhiSimulationAnimator:
         self._update_heat(i)
         self._update_bifs(i)
         self._update_text(i)
-        return self.scat_main,# self.esig0_scat, self.esig1_scat,
+        return (
+            self.scat_main, self.scat_clst, *self._signal_markers,
+            *self._param_markers, self._bif_marker
+        )
 
     #####################
     ##  Setup Methods  ##
@@ -170,7 +206,7 @@ class PhiSimulationAnimator:
             [], [], 
             marker='.', 
             markersize=4, 
-            color=self.main_scatter_color, 
+            color=self._main_scatter_color, 
             alpha=0.75, 
             linestyle='None', 
             animated=True
@@ -196,7 +232,7 @@ class PhiSimulationAnimator:
             self.meshy, 
             np.zeros(self.meshx.shape), 
             np.zeros(self.meshy.shape),
-            color=self.main_scatter_color, 
+            color=self._main_scatter_color, 
             alpha=0.5, 
             animated=True
         )
@@ -205,7 +241,7 @@ class PhiSimulationAnimator:
         ax = self.ax_clst
         self.scat_clst, = ax.plot(
             [], [], marker='.', markersize=4, 
-            color=self.main_scatter_color, 
+            color=self._main_scatter_color, 
             alpha=0.75, linestyle='None', 
             animated=True
         )
@@ -220,14 +256,17 @@ class PhiSimulationAnimator:
 
     def _setup_sigs(self):
         ax = self.ax_sigs
-        ax.set_xlabel(f"$t$")
-        ax.set_ylabel(f"$s$")
-        if self.sigs is None:
-            return
         # Plot signals
+        siglines = []
+        cmap = plt.cm.get_cmap(self._siglinecmap)
         for i in range(self.sigs.shape[1]):
-            ax.plot(self.ts, self.sigs[:,i], label=f"$s_{i}$")
-        ax.legend()
+            line, = ax.plot(
+                self.ts, self.sigs[:,i], 
+                label=f"$s_{i}$", 
+                color=cmap(i),
+            )
+            siglines.append(line)
+        ax.legend(siglines, [f"$s_{i+1}$" for i in range(len(siglines))])
         # Add marker placeholders
         self._signal_markers = []
         for i in range(self.sigs.shape[1]):
@@ -238,15 +277,42 @@ class PhiSimulationAnimator:
                 linestyle='None', animated=True
             )
             self._signal_markers.append(marker)
+        # Axis labeling
+        ax.set_xlabel(f"$t$")
+        ax.set_ylabel(f"$s$")
 
     def _setup_prms(self):
-        pass
+        ax = self.ax_prms
+        # Plot signals
+        paramlines = []
+        cmap = plt.cm.get_cmap(self._paramlinecmap)
+        for i in range(self.ps.shape[1]):
+            line, = ax.plot(
+                self.ts, self.ps[:,i], 
+                label=f"$p_{i}$", 
+                color=cmap(i),
+            )
+            paramlines.append(line)
+        ax.legend(paramlines, [f"$p_{i+1}$" for i in range(len(paramlines))])
+        # Add marker placeholders
+        self._param_markers = []
+        for i in range(self.ps.shape[1]):
+            marker, = ax.plot(
+                [], [], 
+                marker='*', 
+                markersize=6, color='k', alpha=0.9, 
+                linestyle='None', animated=True
+            )
+            self._param_markers.append(marker)
+        # Axis labeling
+        ax.set_xlabel(f"$t$")
+        ax.set_ylabel(f"$p$")
 
     def _setup_heat(self):
         ax = self.ax_heat
         # self.scat_dist, = ax.plot(
         #     [], [], marker='.', markersize=4, 
-        #     color=self.main_scatter_color, 
+        #     color=self._main_scatter_color, 
         #     alpha=0.75, linestyle='None', 
         #     animated=True
         # )
@@ -260,7 +326,25 @@ class PhiSimulationAnimator:
         self.disttext = ax.text(*pos, "", fontsize='small')
 
     def _setup_bifs(self):
-        pass
+        ax = self.ax_bifs
+        ax.axis([*self.p0lims, *self.p1lims])
+        # Plot bifurcation curves
+        if self.bifcurves is not None:
+            self._plot_bifcurves(ax)
+        # Plot trace of parameter values
+        ax.plot(
+            self.p0s, self.p1s, alpha=0.5, linestyle=':', color='k'
+        )
+        # Add marker placeholders
+        self._bif_marker, = ax.plot(
+            [], [], 
+            marker='*', 
+            markersize=6, color='k', alpha=0.9, 
+            linestyle='None', animated=True
+        )
+        # Axis labeling
+        ax.set_xlabel(self.p0idxstr)
+        ax.set_ylabel(self.p1idxstr)
 
     def _setup_text(self):
         ax = self.ax_text
@@ -306,20 +390,19 @@ class PhiSimulationAnimator:
             self.scat_clst.set_data(xy_saved)
 
     def _update_sigs(self, i):
-        if self.sigs is None:
-            return
         t = self.get_t(i)
         sigs = self.get_sigs(i)
         for j, sig in enumerate(sigs):
             self._signal_markers[j].set_data([t, sig])
 
     def _update_prms(self, i):
-        pass
+        t = self.get_t(i)
+        params = self.get_ps(i)
+        for j, sig in enumerate(params):
+            self._param_markers[j].set_data([t, sig])
 
     def _update_heat(self, i):
         ax = self.ax_heat
-        if self.ts_saved is None:
-            return 
         t = self.get_t(i)
         dist_t = self.ts_saved[self.dist_index]
         if t == dist_t:
@@ -332,7 +415,10 @@ class PhiSimulationAnimator:
             )
 
     def _update_bifs(self, i):
-        pass
+        params = self.get_ps(i)
+        p0 = params[self.p0idx]
+        p1 = params[self.p1idx]
+        self._bif_marker.set_data([p0, p1])
 
     def _update_text(self, i):
         t = self.get_t(i)
@@ -372,7 +458,7 @@ class PhiSimulationAnimator:
     ######################
     
     def _buffer_lims(self, lims):
-        buffer = self.axlimbuffer * (lims[1] - lims[0])
+        buffer = self._axlimbuffer * (lims[1] - lims[0])
         return [lims[0] - buffer, lims[1] + buffer]
         
     def get_grads_mesh(self, i):
@@ -386,3 +472,10 @@ class PhiSimulationAnimator:
             return gradx, grady
         else:
             return None
+
+    def _plot_bifcurves(self, ax, linestyle='--'):
+        ncurves = len(self.bifcurves)
+        for i in range(ncurves):
+            color = self.bifcolors[i]
+            curve = self.bifcurves[i]
+            ax.plot(curve[:,0], curve[:,1], color=color, linestyle=linestyle)
