@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from continuation import continuation
+from continuation.continuation import continuation as cont
 
 F = lambda x, p: -np.array([
         4*x[0]**3 - 8*x[0]*x[1] - p[0], 
@@ -59,7 +59,7 @@ def get_binary_choice_curves(p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS):
         col = xstarts[i][1]
         p0 = np.array([P1(x0), P2(x0)])
         for sign in [1, -1]:
-            _, ps, _, _ = continuation(
+            _, ps, _, _ = cont(
                 x0, p0, F, Fx, dxFxPhi, Fp,
                 maxiter=maxiter, 
                 ds=ds*sign,
@@ -86,7 +86,7 @@ def main():
         col = XSTARTS[i][1]
         p0 = np.array([P1(x0), P2(x0)])
         for sign in [1, -1]:
-            xs, ps, cps, d = continuation(
+            xs, ps, cps, d = cont(
                 x0, p0, F, Fx, dxFxPhi, Fp,
                 maxiter=maxiter, 
                 ds=ds*sign,
