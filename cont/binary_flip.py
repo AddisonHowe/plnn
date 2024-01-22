@@ -24,11 +24,7 @@ XSTARTS = [
     [[-0.811, -0.965], 'brown'],
     [[0.147,  0.139], 'k'],
     [[0.147, -0.139], 'k'],
-    [[ 0.050, -0.096], 'k',],
-    # [[-0.758, -0.296], 'r',],
-    # [[-0.758,  0.296], 'g',],
-    # [[ 0.050,  0.096], 'y',],
-    
+    [[ 0.050, -0.096], 'k',],    
     [[0.896,  0.577], 'cyan'],
     [[0.345,  1.034], 'cyan'],
     [[0.896, -0.577], 'pink'],
@@ -48,15 +44,6 @@ P1LIMS = [-10, 10]
 P2LIMS = [-10, 10]
 P1_VIEW_LIMS = [-2, 1.5]
 P2_VIEW_LIMS = [-1.5, 1.5]
-
-# XLIMS = [-1, 1]
-# YLIMS = [-1, 1]
-
-# for i in range(1000):
-#     XSTARTS.append([
-#         [np.random.uniform(low=XLIMS[0], high=XLIMS[1]), 
-#          np.random.uniform(low=YLIMS[0], high=YLIMS[1])
-#         ], 'y'])
 
 def get_binary_flip_curves(p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS):
     p1lims = p1lims.copy()
@@ -88,19 +75,24 @@ def get_binary_flip_curves(p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS):
             colors.append(col)
     return curves_p, colors
 
+
 def main():
+    plot_starts = False
+    plot_first_steps = False
+    plot_failed_to_converge_points = False
+
     fig1, [ax1, ax2] = plt.subplots(1, 2, figsize=(8,4))
-    colors = iter(plt.rcParams['axes.prop_cycle'].by_key()['color'])
 
     curves_x = []
     curves_p = []
     crit_ps = []
     eigs = []
+    failed_to_converge_xs = []
+    failed_to_converge_ps = []
     for i in range(len(XSTARTS)):
         x0 = np.array(XSTARTS[i][0])
         col = XSTARTS[i][1]
         p0 = np.array([P1(x0), P2(x0)])
-        print(i)
         for sign in [1, -1]:
             xs, ps, cps, d = trace_curve(
                 x0, p0, F, Fx, dxFxPhi, Fp,
@@ -117,15 +109,25 @@ def main():
             curves_p.append(ps)
             crit_ps.append(cps)
             eigs.append(np.array(d['eigs']))
+            failed_to_converge_ps.append(np.array(d['failed_to_converge_ps']))
+            failed_to_converge_xs.append(np.array(d['failed_to_converge_xs']))
 
-            ax1.plot(ps[0,0], ps[0,1], 'o', alpha=0.2, color=col)
-            ax2.plot(xs[0,0], xs[0,1], 'o', alpha=0.2, color=col)
+            if plot_starts:
+                ax1.plot(ps[0,0], ps[0,1], 'o', alpha=0.2, color=col)
+                ax2.plot(xs[0,0], xs[0,1], 'o', alpha=0.2, color=col)
+            
             if len(ps) > 1:
-                ax1.plot(ps[1,0], ps[1,1], '*', alpha=0.6, color=col)
                 ax1.plot(ps[:,0], ps[:,1], '-', alpha=1, color=col)
-
-                ax2.plot(xs[1,0], xs[1,1], '*', alpha=0.6, color=col)
                 ax2.plot(xs[:,0], xs[:,1], '-', alpha=1, color=col)
+                if plot_first_steps:
+                    ax1.plot(ps[1,0], ps[1,1], '*', alpha=0.6, color=col)
+                    ax2.plot(xs[1,0], xs[1,1], '*', alpha=0.6, color=col)
+                
+            if plot_failed_to_converge_points:
+                for p in d['failed_to_converge_ps']:
+                    ax1.plot(*p, '^', alpha=0.6, color=col)
+                for x in d['failed_to_converge_xs']:
+                    ax2.plot(*x, '^', alpha=0.6, color=col)
 
     ax1.set_xlim(*P1_VIEW_LIMS)
     ax1.set_ylim(*P2_VIEW_LIMS)
