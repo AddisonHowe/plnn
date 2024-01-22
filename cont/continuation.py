@@ -43,6 +43,8 @@ def newton(x0, phi0, p0, step_func, tol=1e-5, maxiter=10000):
 def trace_curve(x0, p0, F, Fx, dxFxPhi, Fp, **kwargs):
     """Implements a Pseudo-Arclength Continuation Algorithm.
 
+    [*] Refer to Sections 5.1-5.3 of Methods of Nonlinear Analysis, H. Riecke.
+
     Args:
         x0 : ndarray - initial state vector.
         p0 : ndarray - initial parameter vector.
@@ -91,16 +93,20 @@ def trace_curve(x0, p0, F, Fx, dxFxPhi, Fp, **kwargs):
     d = {}  # dictionary for informative output
     d['eigs'] = []
     d['dets'] = []
+    d['failed_to_converge_ps'] = []
+    d['failed_to_converge_xs'] = []
 
-    # Determine initial approximation of tangent state space vector phi
-    elvect = np.zeros(dimx)
-    elvect[0] = 1
+    # Determine initial approximation of state space tangent vector phi.
+    e1 = np.zeros(dimx)
+    e1[0] = 1
     L = Fx(x0)
-    L[0,:] = elvect
-    phi0 = np.linalg.solve(L, elvect)
+    L[0,:] = e1
+    phi0 = np.linalg.solve(L, e1)
 
+    # Construct M matrix: See Pg. 58 of [*].
     M = np.zeros([2*dimx + 2, 2*dimx + 2])
     M[0:dimx,2*dimx:] = Fp(x0, p0)
+
 
     y = np.zeros(2*dimx + dimp)
     y[:] = np.concatenate([x0, phi0, p0])
@@ -149,9 +155,9 @@ def trace_curve(x0, p0, F, Fx, dxFxPhi, Fp, **kwargs):
         deltap_exceeded = False
         stepped = False
         while not stepped:
-            # Increment arclength parameter
-            s1 = s0 + ds
+            s1 = s0 + ds  # Increment arclength parameter
 
+            # Define the stepper function. This evaluates the given 
             def stepper(x, phi, p):
                 fx = Fx(x)
                 M[0:dimx, 0:dimx] = fx
@@ -201,6 +207,8 @@ def trace_curve(x0, p0, F, Fx, dxFxPhi, Fp, **kwargs):
         det0 = det1
 
         if not converged:
+            d['failed_to_converge_ps'].append(p1)
+            d['failed_to_converge_xs'].append(x1)
             if verbosity > 0:
                 print(f"Newton failed to converge in {maxiter} iterations!")
             break
