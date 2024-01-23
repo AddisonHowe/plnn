@@ -56,7 +56,7 @@ def simulate_landscape(
         rng = np.random.default_rng(seed=seed)
 
     # Construct the simulator
-    f = get_landscape_func(landscape_name)
+    f = get_landscape_field_func(landscape_name)
     signal_func = get_signal_func(nsignals, signal_schedule, sigparams)
     param_func = get_param_func(param_func_name)
     noise_func = get_noise_func(noise_schedule, noise_args)
@@ -76,6 +76,14 @@ def get_landscape_func(landscape_name):
         return phi1
     elif landscape_name == 'phi2':
         return phi2
+    else:
+        raise NotImplementedError(f"Unknown landscape: {landscape_name}")
+
+def get_landscape_field_func(landscape_name):
+    if landscape_name == 'phi1':
+        return phi1_field
+    elif landscape_name == 'phi2':
+        return phi2_field
     else:
         raise NotImplementedError(f"Unknown landscape: {landscape_name}")
 
@@ -117,15 +125,31 @@ def get_noise_func(noise_schedule, noise_args):
 ##  Gradient Functions  ##
 ##########################
 
-def phi1(t, x, p):
-    """Landscape dynamics of first potential function in Saez et al."""
+def phi1(t, xy, p):
+    """"""
+    x = xy[...,0]
+    y = xy[...,1]
+    x2 = x*x
+    y2 = y*y
+    return x2*x2 + y2*y2 + y2*y - 4*x2*y + y2 - p[0]*x + p[1]*y
+
+def phi2(t, xy, p):
+    """"""
+    x = xy[...,0]
+    y = xy[...,1]
+    x2 = x*x
+    y2 = y*y
+    return x2*x2 + y2*y2 + x2*x - 2*x*y2 - x2 + p[0]*x + p[1]*y
+
+def phi1_field(t, x, p):
+    """Vector field of first potential function in Saez et al."""
     return -np.array([
         4*x[:,0]**3 - 8*x[:,0]*x[:,1] - p[0],
         4*x[:,1]**3 + 3*x[:,1]*x[:,1] - 4*x[:,0]*x[:,0] + 2*x[:,1] + p[1]
     ]).T
 
-def phi2(t, x, p):
-    """Landscape dynamics of second potential function in Saez et al."""
+def phi2_field(t, x, p):
+    """Vector field of second potential function in Saez et al."""
     return -np.array([
         4*x[:,0]**3 + 3*x[:,0]*x[:,0] - 2*x[:,1]*x[:,1] - 2*x[:,0] + p[0],
         4*x[:,1]**3 - 4*x[:,0]*x[:,1] + p[1]

@@ -1,7 +1,7 @@
 import sys, os, argparse
 import csv
 import numpy as np
-from plnn.data_generation.simulate import simulate_landscape
+from plnn.data_generation.simulate import simulate_landscape, get_landscape_func
 # from plnn.data_generation.animator import SimulationAnimator
 from plnn.data_generation.phi_animator import PhiSimulationAnimator
 
@@ -96,6 +96,14 @@ def main(args):
     os.makedirs(outdir, exist_ok=True)
     
     np.savetxt(f"{outdir}/nsims.txt", [nsims], '%d')
+
+    if args.animate:
+        from cont.binary_choice import get_binary_choice_curves
+        from cont.binary_flip import get_binary_flip_curves
+        if landscape_name == 'phi1':
+            bifcurves, bifcolors = get_binary_choice_curves()
+        elif landscape_name == 'phi2':
+            bifcurves, bifcolors = get_binary_flip_curves()
                 
     for nsim in range(nsims):
         simdir = f"{outdir}/sim{nsim}"
@@ -177,7 +185,21 @@ def main(args):
             animator = PhiSimulationAnimator(
                 ts, xs, sigs, ps, 
                 ts_saved, xs_saved, sigs_saved, ps_saved,
+                xlims=[-4, 4], 
+                ylims=[-4, 4],
+                p0lims=[-2, 2],
+                p1lims=[-2, 2],
+                p0idx=0,
+                p0idxstr='$p_1$',
+                p1idx=1,
+                p1idxstr='$p_2$',
+                phi_func=get_landscape_func(landscape_name),
+                bifcurves=bifcurves,
+                bifcolors=bifcolors,
+                grads=None,
+                grad_func=None,
             )
+
             animator.animate(
                 savepath=f"{simdir}/animation", 
                 duration=args.duration

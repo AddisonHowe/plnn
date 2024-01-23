@@ -47,6 +47,7 @@ class PhiSimulationAnimator:
             p0idxstr='$p_0$',
             p1idx=1,
             p1idxstr='$p_1$',
+            phi_func = None,
             bifcurves=None,
             bifcolors=None,
             grads=None,
@@ -79,6 +80,7 @@ class PhiSimulationAnimator:
         self.p1idx = p1idx
         self.p0idxstr = p0idxstr
         self.p1idxstr = p1idxstr
+        self.phi_func = phi_func
         self.bifcurves = bifcurves
         self.bifcolors = bifcolors
 
@@ -110,6 +112,20 @@ class PhiSimulationAnimator:
         self.p1lims = p1lims if p1lims else self._buffer_lims(
             [np.min(self.p1s), np.max(self.p1s)]
         )
+
+        # Mesh for heatmap
+        heatmap_n = 50
+        self.heatmeshx, self.heatmeshy = np.meshgrid(
+            np.linspace(*self.xlims, heatmap_n),
+            np.linspace(*self.ylims, heatmap_n)
+        )
+        xy = np.array([self.heatmeshx.ravel(), self.heatmeshy.ravel()]).T
+        
+        phis = np.array(
+            [self.phi_func(t, xy, self.ps[i]) for i, t in enumerate(self.ts)]
+        )
+        self.phis = np.log(1 + phis - phis.min())  # log normalize
+
 
     def animate(self, savepath=None, **kwargs):
         """"""
@@ -178,7 +194,7 @@ class PhiSimulationAnimator:
         self._setup_text()
         return (
             self.scat_main, self.scat_clst, *self._signal_markers,
-            *self._param_markers, self._bif_marker
+            *self._param_markers, self._bif_marker, self.heatmap
         )
         
     def update(self, i):
@@ -192,7 +208,7 @@ class PhiSimulationAnimator:
         self._update_text(i)
         return (
             self.scat_main, self.scat_clst, *self._signal_markers,
-            *self._param_markers, self._bif_marker
+            *self._param_markers, self._bif_marker, self.heatmap
         )
 
     #####################
@@ -237,6 +253,17 @@ class PhiSimulationAnimator:
             animated=True
         )
 
+        self.heatmap = ax.pcolormesh(
+            self.heatmeshx, 
+            self.heatmeshy, 
+            np.zeros(self.heatmeshx.shape), 
+            vmin=self.phis.min(),
+            vmax=self.phis.max(),
+            cmap='coolwarm', 
+            animated=True,
+            shading='gouraud',
+        )
+
     def _setup_clst(self):
         ax = self.ax_clst
         self.scat_clst, = ax.plot(
@@ -277,6 +304,9 @@ class PhiSimulationAnimator:
                 linestyle='None', animated=True
             )
             self._signal_markers.append(marker)
+        # Add vertical lines
+        ylims = ax.get_ylim()
+        ax.vlines(self.ts_saved, *ylims, linestyle=':', colors='k', alpha=0.25)
         # Axis labeling
         ax.set_xlabel(f"$t$")
         ax.set_ylabel(f"$s$")
@@ -304,6 +334,9 @@ class PhiSimulationAnimator:
                 linestyle='None', animated=True
             )
             self._param_markers.append(marker)
+        # Add vertical lines
+        ylims = ax.get_ylim()
+        ax.vlines(self.ts_saved, *ylims, linestyle=':', colors='k', alpha=0.25)
         # Axis labeling
         ax.set_xlabel(f"$t$")
         ax.set_ylabel(f"$p$")
@@ -377,6 +410,9 @@ class PhiSimulationAnimator:
             pcm = plt.get_cmap('RdBu_r')
             cnorm = colors.Normalize(vmin=0, vmax=np.max(norms))
             self.mesh_gradient.set_color(pcm(cnorm(norms).flatten()))
+        # Update heatmap
+        phi = self.phis[i]
+        self.heatmap.set_array(phi.ravel())
 
     def _update_clst(self, i):
         ax = self.ax_clst
