@@ -29,5 +29,5 @@ python plnn/data_generation/generate_data.py \
     --animate \
     --duration 10 \
     --animation_dt 0.1 \
-    --sims_to_animate 0 1 \
+    --sims_to_animate 0 1 2 3 4 5 6 7 8 9 \
 > logs/${runname}.o 
