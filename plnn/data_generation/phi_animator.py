@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore", module="matplotlib\..*", )
 """
 
 class PhiSimulationAnimator:
-    """
+    """Animation handler for landscape simulations.
     """
 
     savegif = True
