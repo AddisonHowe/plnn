@@ -7,7 +7,7 @@ import time
 import matplotlib.animation as animation
 
 import warnings
-warnings.filterwarnings("ignore", module="matplotlib\..*", )
+warnings.filterwarnings("ignore", module="matplotlib\..*")
 
 """
 
@@ -44,14 +44,16 @@ class PhiSimulationAnimator:
             p0lims=None,
             p1lims=None,
             p0idx=0,
-            p0idxstr='$p_0$',
             p1idx=1,
-            p1idxstr='$p_1$',
             phi_func = None,
             bifcurves=None,
             bifcolors=None,
             grads=None,
             grad_func=None,
+            info_str="",
+            sigparams_str="",
+            sig_names=None,
+            param_names=None,
     ):
         """
         ts         : (nts,)
@@ -73,16 +75,26 @@ class PhiSimulationAnimator:
         self.xs = xys[:,:,0]
         self.ys = xys[:,:,1]
         self.sigs = sigs
+        self.nsigs = sigs.shape[1]
         self.ps = ps
+        self.nparams = ps.shape[1]
         self.p0s = ps[:,p0idx]
         self.p1s = ps[:,p1idx]
         self.p0idx = p0idx
         self.p1idx = p1idx
-        self.p0idxstr = p0idxstr
-        self.p1idxstr = p1idxstr
         self.phi_func = phi_func
         self.bifcurves = bifcurves
         self.bifcolors = bifcolors
+        self.info_str = info_str
+        self.sigparams_str = sigparams_str
+        if sig_names is None:
+            self.sig_names = [f'$s_{i}$' for i in range(self.nsigs)]
+        else:
+            self.sig_names = sig_names
+        if param_names is None:
+            self.param_names = [f'$p_{i}$' for i in range(self.nparams)] 
+        else:
+            self.param_names = param_names
 
         self.ts_saved = ts_saved
         self.xys_saved = xys_saved
@@ -285,18 +297,19 @@ class PhiSimulationAnimator:
         ax = self.ax_sigs
         # Plot signals
         siglines = []
-        cmap = plt.cm.get_cmap(self._siglinecmap)
-        for i in range(self.sigs.shape[1]):
+        # cmap = plt.cm.get_cmap(self._siglinecmap)
+        cmap = plt.colormaps[self._siglinecmap]
+        for i in range(self.nsigs):
             line, = ax.plot(
                 self.ts, self.sigs[:,i], 
-                label=f"$s_{i}$", 
+                label=self.sig_names[i], 
                 color=cmap(i),
             )
             siglines.append(line)
-        ax.legend(siglines, [f"$s_{i+1}$" for i in range(len(siglines))])
+        ax.legend(siglines, self.sig_names)
         # Add marker placeholders
         self._signal_markers = []
-        for i in range(self.sigs.shape[1]):
+        for i in range(self.nsigs):
             marker, = ax.plot(
                 [], [], 
                 marker='*', 
@@ -315,18 +328,19 @@ class PhiSimulationAnimator:
         ax = self.ax_prms
         # Plot signals
         paramlines = []
-        cmap = plt.cm.get_cmap(self._paramlinecmap)
-        for i in range(self.ps.shape[1]):
+        # cmap = plt.cm.get_cmap(self._paramlinecmap)
+        cmap = plt.colormaps[self._paramlinecmap]
+        for i in range(self.nparams):
             line, = ax.plot(
                 self.ts, self.ps[:,i], 
-                label=f"$p_{i}$", 
+                label=self.param_names[i], 
                 color=cmap(i),
             )
             paramlines.append(line)
-        ax.legend(paramlines, [f"$p_{i+1}$" for i in range(len(paramlines))])
+        ax.legend(paramlines, self.param_names)
         # Add marker placeholders
         self._param_markers = []
-        for i in range(self.ps.shape[1]):
+        for i in range(self.nparams):
             marker, = ax.plot(
                 [], [], 
                 marker='*', 
@@ -376,8 +390,8 @@ class PhiSimulationAnimator:
             linestyle='None', animated=True
         )
         # Axis labeling
-        ax.set_xlabel(self.p0idxstr)
-        ax.set_ylabel(self.p1idxstr)
+        ax.set_xlabel(self.param_names[self.p0idx])
+        ax.set_ylabel(self.param_names[self.p1idx])
 
     def _setup_text(self):
         ax = self.ax_text
@@ -389,7 +403,6 @@ class PhiSimulationAnimator:
         pos = [xlims[0] + (xlims[1]-xlims[0])*.2, 
                ylims[0] + (ylims[1]-ylims[0])*0.05]
         self.text = ax.text(*pos, "", fontsize='small')
-        self.sim_param_str = "Parameters:\n..."
 
     ######################
     ##  Update Methods  ##
@@ -429,13 +442,13 @@ class PhiSimulationAnimator:
         t = self.get_t(i)
         sigs = self.get_sigs(i)
         for j, sig in enumerate(sigs):
-            self._signal_markers[j].set_data([t, sig])
+            self._signal_markers[j].set_data([[t], [sig]])
 
     def _update_prms(self, i):
         t = self.get_t(i)
         params = self.get_ps(i)
-        for j, sig in enumerate(params):
-            self._param_markers[j].set_data([t, sig])
+        for j, param in enumerate(params):
+            self._param_markers[j].set_data([[t], [param]])
 
     def _update_heat(self, i):
         ax = self.ax_heat
@@ -454,11 +467,11 @@ class PhiSimulationAnimator:
         params = self.get_ps(i)
         p0 = params[self.p0idx]
         p1 = params[self.p1idx]
-        self._bif_marker.set_data([p0, p1])
+        self._bif_marker.set_data([[p0], [p1]])
 
     def _update_text(self, i):
         t = self.get_t(i)
-        s = f"$t={t:.3f}$\n" + self.sim_param_str
+        s = self.info_str + f"\n$t={t:.3f}$\n" + self.sigparams_str
         self.text.set_text(s)
 
     ######################
