@@ -2,7 +2,6 @@ import sys, os, argparse
 import csv
 import numpy as np
 from plnn.data_generation.simulate import simulate_landscape, get_landscape_func
-# from plnn.data_generation.animator import SimulationAnimator
 from plnn.data_generation.phi_animator import PhiSimulationAnimator
 
 def parse_args(args):
@@ -10,15 +9,17 @@ def parse_args(args):
     parser.add_argument('-o', '--outdir', type=str, required=True,
                         help="path to output directory")
     
-    parser.add_argument('-ns', '--nsims', type=int, default=1)
-    parser.add_argument('-nc', '--ncells', type=int, default=100)
+    parser.add_argument('--nsims', type=int, default=1, 
+                        help="Number of simulations to run.")
+    parser.add_argument('--ncells', type=int, default=100)
     parser.add_argument('--x0', type=float, nargs='+', default=(0, -0.5))
-    parser.add_argument('-t', '--tfin', type=float, default=10)
+    parser.add_argument('--tfin', type=float, default=10.)
     parser.add_argument('--dt', type=float, default=1e-2)
     parser.add_argument('--dt_save', type=float, default=1e-1)
-    parser.add_argument('--burnin', type=int, default=50)
+    parser.add_argument('--burnin', type=float, default=0.5,
+                        help="Burnin time as a factor of the total duration.")
 
-    parser.add_argument('--landscape_name', type=str,
+    parser.add_argument('--landscape_name', type=str, required=True, 
                         choices=['phi1', 'phi2'])
     
     parser.add_argument('--nsignals', type=int, default=2)
@@ -44,6 +45,7 @@ def parse_args(args):
                         help="Timestep between frames in animation")
     parser.add_argument('--sims_to_animate', type=int, nargs='+', default=[0],
                         help="Indices of the simulations to animate.")
+    parser.add_argument('--save_animation_data', action='store_true')
     
     parser.add_argument('--seed', type=int, default=None)
     return parser.parse_args(args)
@@ -80,7 +82,7 @@ def main(args):
     dt = args.dt
     dt_save = args.dt_save
     ncells = args.ncells
-    burnin = args.burnin
+    burnin = int(args.burnin * tfin // dt)
     nsignals = args.nsignals
     signal_schedule = args.signal_schedule
     s10_range = args.s10_range
@@ -91,35 +93,42 @@ def main(args):
     noise_schedule = args.noise_schedule
     noise_args = args.noise_args
     seed = args.seed if args.seed else np.random.randint(2**32)
+    do_animate = args.animate
 
-    rng = np.random.default_rng(seed=seed)
+    parent_rng = np.random.default_rng(seed=seed)
     os.makedirs(outdir, exist_ok=True)
     
     np.savetxt(f"{outdir}/nsims.txt", [nsims], '%d')
 
-    if args.animate:
+    if do_animate:
         from cont.binary_choice import get_binary_choice_curves
         from cont.binary_flip import get_binary_flip_curves
         if landscape_name == 'phi1':
+            landscape_tex = "Binary Choice"
             bifcurves, bifcolors = get_binary_choice_curves()
         elif landscape_name == 'phi2':
+            landscape_tex = "Binary Flip"
             bifcurves, bifcolors = get_binary_flip_curves()
-                
-    for nsim in range(nsims):
-        simdir = f"{outdir}/sim{nsim}"
+
+    sim_subseeds = parent_rng.choice(2**32, size=nsims, replace=False)
+    streams = parent_rng.spawn(nsims)
+    for simidx in range(nsims):
+        simdir = f"{outdir}/sim{simidx}"
         os.makedirs(simdir, exist_ok=True)
+        with open(f"{simdir}/args.txt", 'w') as f:
+            f.write(str(args))
         
+        sim_rng = streams[simidx]
+        sim_seed = sim_rng.integers(2**32)
+
         sigparams = get_sigparams(
             tfin, 
             s10_range=s10_range, 
             s20_range=s20_range, 
             s11_range=s11_range, 
             s21_range=s21_range, 
-            rng=rng
+            rng=sim_rng
         )
-
-        with open(f"{simdir}/args.txt", 'w') as f:
-            f.write(str(args))
         
         ts_saved, xs_saved, sigs_saved, ps_saved = simulate_landscape(
             landscape_name=landscape_name,
@@ -135,7 +144,7 @@ def main(args):
             param_func_name=param_func_name,
             noise_schedule=noise_schedule, 
             noise_args=noise_args,
-            rng=rng,
+            rng=np.random.default_rng([sim_seed, sim_subseeds[simidx]]),
         )
         
         # Save output
@@ -144,17 +153,8 @@ def main(args):
         np.save(f"{simdir}/sigs.npy", sigs_saved)
         np.save(f"{simdir}/ps.npy", ps_saved)
         np.save(f"{simdir}/sigparams.npy", sigparams)
-
         
-    # Animate simulations
-    if args.animate:
-        for simidx in args.sims_to_animate:
-            simdir = f"{outdir}/sim{simidx}"
-            ts_saved = np.load(f"{simdir}/ts.npy")
-            xs_saved = np.load(f"{simdir}/xs.npy")
-            sigs_saved = np.load(f"{simdir}/sigs.npy")
-            ps_saved = np.load(f"{simdir}/ps.npy")
-            sigparams = np.load(f"{simdir}/sigparams.npy")
+        if do_animate and simidx in args.sims_to_animate:
             if args.animation_dt is None:
                 ts = ts_saved
                 xs = xs_saved
@@ -172,15 +172,35 @@ def main(args):
                     tfin=args.tfin, 
                     dt=args.dt, 
                     dt_save=ani_dt, 
-                    burnin=args.burnin,
+                    burnin=burnin,
                     nsignals=args.nsignals,
                     signal_schedule=args.signal_schedule, 
                     sigparams=sigparams,
                     param_func_name=param_func_name,
                     noise_schedule=args.noise_schedule, 
                     noise_args=args.noise_args,
-                    seed=seed,
+                    rng=np.random.default_rng([sim_seed, sim_subseeds[simidx]]),
                 )
+
+                if args.save_animation_data:
+                    np.save(f"{simdir}/ani_ts.npy", ts)
+                    np.save(f"{simdir}/ani_xs.npy", xs)
+                    np.save(f"{simdir}/ani_sigs.npy", sigs)
+                    np.save(f"{simdir}/ani_ps.npy", ps)
+
+            info_str = f"Landscape: {landscape_tex}" + \
+                f"\nSignal type: {signal_schedule}" + \
+                f"\n$T = {tfin:.5g}$" + \
+                f"\n$dt = {dt:.5g}$" + \
+                f"\n$\sigma = {noise_args[0]:.5g}$" + \
+                f"\n$\Delta T = {dt_save:.5g}$" + \
+                f"\n$N_{{cells}} = {ncells:.5g}$" + \
+                f"\n$\mathbf{{x}}_0 = {x0}$" + \
+                f"\nburnin: ${args.burnin:.5g}T$"
+
+            sigparams_str = f"Signal parameters:\n  " + \
+                '\n  '.join([', '.join([f"{x:.3g}" for x in s]) 
+                             for s in sigparams])
 
             animator = PhiSimulationAnimator(
                 ts, xs, sigs, ps, 
@@ -190,12 +210,12 @@ def main(args):
                 p0lims=[-2, 2],
                 p1lims=[-2, 2],
                 p0idx=0,
-                p0idxstr='$p_1$',
                 p1idx=1,
-                p1idxstr='$p_2$',
                 phi_func=get_landscape_func(landscape_name),
                 bifcurves=bifcurves,
                 bifcolors=bifcolors,
+                info_str=info_str,
+                sigparams_str=sigparams_str,
                 grads=None,
                 grad_func=None,
             )
