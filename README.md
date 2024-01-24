@@ -33,7 +33,7 @@ pip install diffrax==0.4.1
 
 For the GPU, specifying cuda toolkit 11.2:
 ```bash
-mamba create -p <env-path> python=3.9 pytorch=1.11[build=cuda112*] numpy=1.24 matplotlib= 3.7 pytest=7.4 tqdm ipykernel ipywidgets
+mamba create -p <env-path> python=3.9 pytorch=1.11[build=cuda112*] numpy=1.25 matplotlib= 3.7 pytest=7.4 tqdm ipykernel ipywidgets
 mamba activate env
 pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 pip install optax==0.1.7 diffrax==0.4.1 equinox==0.11.2

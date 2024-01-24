@@ -44,6 +44,7 @@ def parse_args(args):
                         help="Timestep between frames in animation")
     parser.add_argument('--sims_to_animate', type=int, nargs='+', default=[0],
                         help="Indices of the simulations to animate.")
+    parser.add_argument('--save_animation_data', action='store_true')
     
     parser.add_argument('--seed', type=int, default=None)
     return parser.parse_args(args)
@@ -59,8 +60,8 @@ def get_sampler1(p_initial, p_final_1, p_final_2, prob):
 def get_sampler2(p_initial_1, p_initial_2, p_final_1, p_final_2, prob):
     def sampler_func(rng):
         p = rng.random()
-        p_initial = p_initial_1 if rng.random() < p else p_initial_2
-        p_final   = p_final_1   if rng.random() < p else p_final_2
+        p_initial = p_initial_1 if p < prob else p_initial_2
+        p_final   = p_final_1   if p < prob else p_final_2
         return p_initial, p_final
     return sampler_func
 
@@ -153,7 +154,7 @@ def main(args):
             simdir = f"{subdir}/sim{simidx}"
             os.makedirs(simdir, exist_ok=True)
 
-            p_initial, p_final = p_initials[simidx], p_final[simidx]
+            p_initial, p_final = p_initials[simidx], p_finals[simidx]
             
             sigparams = np.array([
                 [tcrit, p_initial[0], p_final[0], np.exp(logr)],
@@ -204,19 +205,19 @@ def main(args):
 
                     # Rerun simulation with finer saverate
                     ts, xs, sigs, ps = simulate_landscape(
-                        landscape_name=args.landscape_name,
-                        ncells=args.ncells, 
-                        x0=args.x0,
-                        tfin=args.tfin, 
-                        dt=args.dt, 
+                        landscape_name=landscape_name,
+                        ncells=ncells, 
+                        x0=x0,
+                        tfin=tfin, 
+                        dt=dt, 
                         dt_save=ani_dt, 
                         burnin=burnin,
-                        nsignals=args.nsignals,
-                        signal_schedule=args.signal_schedule, 
+                        nsignals=nsignals,
+                        signal_schedule=signal_schedule, 
                         sigparams=sigparams,
                         param_func_name=param_func_name,
-                        noise_schedule=args.noise_schedule, 
-                        noise_args=args.noise_args,
+                        noise_schedule=noise_schedule, 
+                        noise_args=noise_args,
                         rng=np.random.default_rng([sim_seed, sim_subseeds[simidx]]),
                     )
 
@@ -260,7 +261,7 @@ def main(args):
 
                 animator.animate(
                     savepath=f"{simdir}/animation", 
-                    duration=args.duration
+                    duration=ani_duration
                 )
 
 
