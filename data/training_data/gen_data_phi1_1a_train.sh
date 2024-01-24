@@ -14,7 +14,7 @@ echo Logging information to logs/${runname}.o
 python plnn/data_generation/generate_data.py \
     -o data/training_data/${runname} \
     --nsims 100 \
-    -t 10 --dt 0.001 --dt_save 0.1 --ncells 100 --burnin 0.1 \
+    --tfin 10 --dt 0.001 --dt_save 0.1 --ncells 100 --burnin 0.1 \
     --landscape_name ${landscape} \
     --nsignals 2 \
     --signal_schedule binary \
