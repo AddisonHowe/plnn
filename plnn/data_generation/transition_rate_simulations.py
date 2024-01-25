@@ -69,6 +69,8 @@ def get_sampler2(p_initial_1, p_initial_2, p_final_1, p_final_2, prob):
 def main(args):
     outdir = args.outdir
     index = args.index
+    if index == -1:
+        index = None
     sigma = args.sigma
     tcrit = args.tcrit
     logr_range = args.logr_range
