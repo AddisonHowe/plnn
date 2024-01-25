@@ -22,24 +22,36 @@ class Simulator:
             x0, 
             tfin, 
             dt=1e-2, 
-            t0=0, 
             burnin=0, 
             dt_save=None, 
             rng=np.random.default_rng()
     ):
-        """
+        """Run a simulation.
+
+        Args:
+            ncells (int) : Number of particles to simulate.
+            x0 (tuple[float]) : Initial state.
+            tfin (float) : Simulation end time.
+            dt (float) : Simulation internal time step. Must be a divisor of 
+                the end time. Default 1e-2.
+            burnin (int) : Number of burnin steps to take. Default 0.
+            dt_save (float) : Intervals of simulation time at which to save.
+                Must be a multiple of the step size dt, but need not divide the
+                simulation end time.
+            rng (Generator) : Random number generator.
+        Returns:
+            ts_save (ndarray) : Saved timepoints. Shape (nsaves,).
+            xs_save (ndarray) : Saved states. Shape (nsaves, ndims).
+            sig_save (ndarray) : Saved signal values. Shape (nsaves, nsignals).
+            ps_save (ndarray) : Saved parameter values. Shape (nsaves, nparams).
         """
         # Simulation save points: Save every `saverate` steps
-        if dt_save:
-            ts_save = np.linspace(t0, tfin, 1 + int((tfin - t0) / dt_save))
-            saverate = int(dt_save / dt)
-        else:
-            ts_save = np.array([t0, tfin])
-            saverate = int((tfin - t0) / dt)
+        t0 = 0.
+        ts_save, saverate = get_ts_save(tfin, dt, dt_save)
         nsaves = len(ts_save)
 
         # Simulation timesteps
-        ts = np.linspace(t0, tfin, 1 + int((tfin - t0) / dt))
+        ts = np.linspace(0., tfin, 1 + int(tfin / dt))
         
         # Initial state
         x0 = np.array(x0)
@@ -91,3 +103,19 @@ class Simulator:
                 save_counter += 1
         
         return ts_save, xs_save, sig_save, ps_save
+
+def get_ts_save(tfin, dt, dt_save):
+    if not dt_save:
+        saverate = int((1e8 * tfin) / (1e8 * dt))
+        ts_save = np.array([0., tfin])
+        return ts_save, saverate
+    
+    saverate = int((1e8 * dt_save) / (1e8 * dt))
+    if (1e8 * tfin) % (1e8 * dt_save) == 0:
+        nsaves = 1 + int((1e8 * tfin) / (1e8 * dt_save))
+        ts_save = np.linspace(0., tfin, nsaves)
+    else:
+        nsaves = 1 + int((tfin - (tfin % dt_save)) / dt_save)
+        ts_save = np.linspace(0., tfin - (tfin % dt_save), nsaves)
+    return ts_save, saverate
+    

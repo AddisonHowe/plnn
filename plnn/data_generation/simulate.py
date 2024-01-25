@@ -63,7 +63,7 @@ def simulate_landscape(
     simulator = Simulator(f, signal_func, param_func, noise_func)
     # Run the simulation
     ts, xs, sigs, ps = simulator.simulate(
-        ncells, x0, tfin, dt=dt, t0=0,burnin=burnin, dt_save=dt_save, rng=rng
+        ncells, x0, tfin, dt=dt, burnin=burnin, dt_save=dt_save, rng=rng
     )
     return ts, xs, sigs, ps
 
