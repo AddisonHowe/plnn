@@ -27,7 +27,7 @@ animation_dt=0.1
 sims_to_animate="0"
 
 python plnn/data_generation/transition_rate_simulations.py \
-    --outdir data/transition_rate_study/phi1_1_training \
+    --outdir data/transition_rate_study/${runid}_training \
     --index ${index} \
     --landscape_name ${landscape_name} \
     --sigma ${sigma} \
@@ -48,7 +48,7 @@ python plnn/data_generation/transition_rate_simulations.py \
     --seed 999991132 \
 
 python plnn/data_generation/transition_rate_simulations.py \
-    --outdir data/transition_rate_study/phi1_1_validation \
+    --outdir data/transition_rate_study/${runid}_validation \
     --index ${index} \
     --landscape_name ${landscape_name} \
     --sigma ${sigma} \
