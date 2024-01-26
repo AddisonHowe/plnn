@@ -44,16 +44,16 @@ class LandscapeSimulationDataset(Dataset):
     
     def __getitem__(self, idx):
         data = self.dataset[idx]
-        t0, x0, t1, x1, p_params = data
+        t0, x0, t1, x1, sigparams = data
         
         # Transform input x
         if self.transform == 'tensor':
-            x = np.concatenate([[t0], [t1], x0.flatten(), p_params.flatten()])
+            x = np.concatenate([[t0], [t1], x0.flatten(), sigparams.flatten()])
             x = torch.tensor(x, dtype=self.dtype)
         elif self.transform:
             x = self.transform(*data)
         else:
-            x = t0, x0, t1, p_params
+            x = t0, x0, t1, sigparams
         
         # Transform target y, the final distribution
         if self.target_transform == 'tensor':
@@ -76,7 +76,7 @@ class LandscapeSimulationDataset(Dataset):
         show = kwargs.get('show', True)
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
         data = self.dataset[idx]
-        t0, x0, t1, x1, p_params = data
+        t0, x0, t1, x1, sigparams = data
         if ax is None: fig, ax = plt.subplots(1, 1)
         ax.plot(x0[:,0], x0[:,1], '.', 
                 c=col1, markersize=size, label=f"$t={t0:.3g}$")
@@ -88,11 +88,11 @@ class LandscapeSimulationDataset(Dataset):
         ax.set_ylabel(f"$y$")
         ax.set_title(f"datapoint {idx}/{len(self)}")
         # s = f"$t:{t0:.4g}\\to{t1:.4g}$\
-        #     \n$t^*={p_params[0]:.3g}$\
-        #     \n$p_0=[{p_params[1]:.3g}, {p_params[2]:.3g}]$\
-        #     \n$p_1=[{p_params[3]:.3g}, {p_params[4]:.3g}]$"
+        #     \n$t^*={sigparams[0]:.3g}$\
+        #     \n$p_0=[{sigparams[1]:.3g}, {sigparams[2]:.3g}]$\
+        #     \n$p_1=[{sigparams[3]:.3g}, {sigparams[4]:.3g}]$"
         s = f"$t:{t0:.4g}\\to{t1:.4g}$\n"
-        s += "\n".join([f"$s_{i+1}: {', '.join([f'{x:.3g}' for x in p])}$" for i, p in enumerate(p_params)])
+        s += "\n".join([f"$s_{i+1}: {', '.join([f'{x:.3g}' for x in p])}$" for i, p in enumerate(sigparams)])
         ax.text(0.02, 0.02, s, fontsize=8, transform=ax.transAxes)
         ax.legend()
         if show: plt.show()
@@ -146,23 +146,23 @@ class LandscapeSimulationDataset(Dataset):
             ts = np.load(f"{dirpath}/ts.npy")
             xs = np.load(f"{dirpath}/xs.npy")
             ps = np.load(f"{dirpath}/ps.npy")
-            p_params = np.load(f"{dirpath}/p_params.npy")
+            sigparams = np.load(f"{dirpath}/sigparams.npy")
             ts_all.append(ts)
             xs_all.append(xs)
             ps_all.append(ps)
             self._add_sim_data_to_dataset(dataset, ts=ts, xs=xs, ps=ps, 
-                                          p_params=p_params)
+                                          sigparams=sigparams)
         self.dataset = np.array(dataset, dtype=object)
         self.ts_all = ts_all
         self.xs_all = xs_all
         self.ps_all = ps_all
 
-    def _add_sim_data_to_dataset(self, dataset, ts, xs, ps, p_params):
+    def _add_sim_data_to_dataset(self, dataset, ts, xs, ps, sigparams):
         ntimes = len(ts)
         for i in range(ntimes - 1):
             x0, x1 = xs[i], xs[i + 1]
             t0, t1 = ts[i], ts[i + 1]
-            dataset.append((t0, x0, t1, x1, p_params))
+            dataset.append((t0, x0, t1, x1, sigparams))
 
 
 ###############################

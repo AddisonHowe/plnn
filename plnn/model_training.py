@@ -112,14 +112,15 @@ def train_model(
             if verbosity: print(f"\tSaving model to: {model_path}")
             save_model(model_path, model, hyperparams)
 
+        # Plotting, if specified
+        if plotting and (avg_vloss < best_vloss or save_all):
+            make_plots(epoch + 1, model, outdir, plotting_opts)
+            
         # Track best performance
         if avg_vloss < best_vloss:
             best_vloss = avg_vloss
             if verbosity: print(f"\tModel improved!!!", flush=True)
         
-        # Plotting, if specified
-        if plotting:
-            make_plots(epoch + 1, model, outdir, plotting_opts)
         
     time1 = time.time()
     if verbosity: print(f"Finished training in {time1-time0:.3f} seconds.")
