@@ -9,7 +9,7 @@ nsims_valid=2
 
 sigma="1e-2"
 tfin=100
-dt="1e-2"
+dt="1e-3"
 dt_save=10.0
 
 logr_range="-2 2"
@@ -66,5 +66,5 @@ python plnn/data_generation/transition_rate_simulations.py \
     --duration ${duration} \
     --animation_dt ${animation_dt} \
     --sims_to_animate ${sims_to_animate} \
-    --seed 222221212 \
+    --seed 888881212 \
     

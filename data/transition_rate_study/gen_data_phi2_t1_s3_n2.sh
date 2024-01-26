@@ -2,22 +2,22 @@
 
 index=$1
 
-runid=phi1_t1_s3_n3
+runid=phi2_t1_s2_n2
 
 nsims_train=2
 nsims_valid=2
 
-sigma="1e-3"
+sigma="1e-2"
 tfin=10
 dt="1e-3"
-dt_save=3.0
+dt_save=2.0
 
 logr_range="-2 2"
 num_rs=6
 tcrit=5.0
 
-landscape_name=phi1
-x0="0 -0.5"
+landscape_name=phi2
+x0="-1 0"
 ncells=500
 burnin=0.5
 
@@ -45,7 +45,7 @@ python plnn/data_generation/transition_rate_simulations.py \
     --duration ${duration} \
     --animation_dt ${animation_dt} \
     --sims_to_animate ${sims_to_animate} \
-    --seed 999991133 \
+    --seed 999992132 \
 
 python plnn/data_generation/transition_rate_simulations.py \
     --outdir data/transition_rate_study/${runid}_validation \
@@ -66,5 +66,5 @@ python plnn/data_generation/transition_rate_simulations.py \
     --duration ${duration} \
     --animation_dt ${animation_dt} \
     --sims_to_animate ${sims_to_animate} \
-    --seed 888881133 \
+    --seed 888882132 \
     

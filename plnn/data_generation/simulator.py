@@ -81,7 +81,7 @@ class Simulator:
 
         # Burnin steps: Update only x. Signal and parameters are fixed.
         for i in range(burnin):
-            dw[:] = rng.standard_normal(x.shape)
+            dw[:] = np.sqrt(dt) * rng.standard_normal(x.shape)
             term1 = dt * self.f(t0, x, p)
             term2 = dw * self.noise_func(t0, x)
             x += term1 + term2
@@ -90,7 +90,7 @@ class Simulator:
         xs_save[0] = x
         save_counter = 1
         for i, t in zip(range(1, len(ts)), ts[0:-1]):
-            dw[:] = rng.standard_normal(x.shape)
+            dw[:] = np.sqrt(dt) * rng.standard_normal(x.shape)
             sig = self.signal_func(t)
             p = self.param_func(sig)
             term1 = dt * self.f(t, x, p)

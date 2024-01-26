@@ -66,5 +66,5 @@ python plnn/data_generation/transition_rate_simulations.py \
     --duration ${duration} \
     --animation_dt ${animation_dt} \
     --sims_to_animate ${sims_to_animate} \
-    --seed 222221223 \
+    --seed 888881223 \
     
