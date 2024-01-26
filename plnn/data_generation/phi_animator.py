@@ -429,11 +429,11 @@ class PhiSimulationAnimator:
 
     def _update_clst(self, i):
         ax = self.ax_clst
-        if self.ts_saved is None:
-            return 
         t = self.get_t(i)
+        if self.clst_index >= len(self.ts_saved):
+            return 
         clst_t = self.ts_saved[self.clst_index]
-        if t == clst_t:
+        if t >= clst_t:
             xy_saved = self.get_xy_saved(self.clst_index)
             self.clst_index += 1
             self.scat_clst.set_data(xy_saved)
@@ -453,8 +453,10 @@ class PhiSimulationAnimator:
     def _update_heat(self, i):
         ax = self.ax_heat
         t = self.get_t(i)
+        if self.dist_index >= len(self.ts_saved):
+            return 
         dist_t = self.ts_saved[self.dist_index]
-        if t == dist_t:
+        if t >= dist_t:
             xy_saved = self.get_xy_saved(self.dist_index)
             self.dist_index += 1
             ax.plot(
