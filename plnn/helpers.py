@@ -26,29 +26,51 @@ def batch_cov(batch_points):
     """
     return jax.vmap(jnp.cov, 0)(batch_points.transpose((0, 2, 1)))
 
-def kl_divergence_est(q_samp, p_samp):
+@jax.jit
+def euclidean_distance(x, y):
+    return jnp.sqrt(jnp.sum(jnp.square(x - y)))
+
+@jax.jit
+def cdist(x, y):
+    return jax.vmap(lambda x1: jax.vmap(
+        lambda y1: euclidean_distance(x1, y1))(y))(x)
+
+@jax.jit
+def kl_divergence_est(p_samp, q_samp):
     """Estimate the KL divergence. Returns the average over all batches.
     Adapted from:
       https://gist.github.com/atabakd/ed0f7581f8510c8587bc2f41a094b518
 
     Args:
-        q_samp : Estimated sample distribution of shape (b,m,d)
-        p_samp : Target sample distribution of shape (b,n,d)
+        p_samp (array) : Samples from target (i.e. true) distribution. 
+            Shape (n,d).
+        q_samp (array) : Samples from estimated (i.e. approximate) distribution.
+            Shape (m,d).
     Returns:
-        (float) KL estimate D(p|q), averaged over each batch.
+        (float) KL estimate of D(P||Q).
     """
 
-    # _, n, d = p_samp.shape
-    # _, m, _ = q_samp.shape
+    n, d = p_samp.shape
+    m, _ = q_samp.shape
     
-    # diffs_xx = torch.cdist(p_samp, p_samp, p=2, 
-    #                        compute_mode='donot_use_mm_for_euclid_dist')  
-    # diffs_xy = torch.cdist(q_samp, p_samp, p=2, 
-    #                        compute_mode='donot_use_mm_for_euclid_dist')
+    diffs_xx = cdist(p_samp, p_samp)
+    diffs_xy = cdist(p_samp, q_samp)
     
-    # r = torch.kthvalue(diffs_xx, 2, dim=1)[0]
-    # s = torch.kthvalue(diffs_xy, 1, dim=1)[0]
+    r = -jax.lax.top_k(-diffs_xx, 2)[0][:,1]
+    s = -jax.lax.top_k(-diffs_xy, 1)[0][:,0]
+    return -jnp.log(r/s).sum() * d/n + jnp.log(m / (n - 1.))
 
-    # vals = -torch.log(r/s).sum(axis=1) * d/n + np.log(m/(n-1.))
-    # return torch.mean(vals)
-    raise NotImplementedError()
+def kl_divergence_loss(p_samps, q_samps):
+    """Estimate the KL divergence. Returns the average over all batches.
+    Adapted from:
+      https://gist.github.com/atabakd/ed0f7581f8510c8587bc2f41a094b518
+
+    Args:
+        p_samp (array) : Batched samples from target (i.e. true) distribution. 
+            Shape (b,n,d).
+        q_samp (array) : Batched samples from estimated (i.e. approximate) 
+            distribution. Shape (b,m,d).
+    Returns:
+        (float) KL estimate of D(P||Q), averaged across batches.
+    """
+    return jax.vmap(kl_divergence_est)(p_samps, q_samps).mean()
