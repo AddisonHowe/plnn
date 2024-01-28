@@ -66,8 +66,8 @@ def test_mean_cov_loss(y_sim, y_obs, loss_exp):
      0.8700861617889799],
 ])
 def test_kl_loss(dtype, atol, xpath, ypath, loss_exp):
-    x = jnp.array(np.load(xpath), dtype=dtype)
-    y = jnp.array(np.load(ypath), dtype=dtype)
-    loss_act = kl_divergence_loss(y, x)  # computed KL(y|x) for this test
+    x_sim = jnp.array(np.load(xpath), dtype=dtype)
+    y_obs = jnp.array(np.load(ypath), dtype=dtype)
+    loss_act = kl_divergence_loss(x_sim, y_obs)  # computed KL(sim|obs)
     assert jnp.allclose(loss_exp, loss_act, atol=atol), \
         f"Expected:\n{loss_exp}\nGot:\n{loss_act}"
