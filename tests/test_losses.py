@@ -1,7 +1,9 @@
 import pytest
 import numpy as np
+from jax import config
+config.update("jax_enable_x64", True)
 import jax.numpy as jnp
-from plnn.helpers import mean_cov_loss, mean_diff_loss, kl_divergence_est
+from plnn.helpers import mean_cov_loss, mean_diff_loss, kl_divergence_loss
 
 @pytest.mark.parametrize('y_sim, y_obs, loss_exp', [
     [   
@@ -48,7 +50,6 @@ def test_mean_cov_loss(y_sim, y_obs, loss_exp):
     assert np.allclose(loss_act, loss_exp)
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize('dtype, atol', [
     [jnp.float32, 1e-6], 
     [jnp.float64, 1e-6]
@@ -67,6 +68,6 @@ def test_mean_cov_loss(y_sim, y_obs, loss_exp):
 def test_kl_loss(dtype, atol, xpath, ypath, loss_exp):
     x = jnp.array(np.load(xpath), dtype=dtype)
     y = jnp.array(np.load(ypath), dtype=dtype)
-    loss_act = kl_divergence_est(x, y).numpy()
-    assert np.allclose(loss_exp, loss_act, atol=atol), \
+    loss_act = kl_divergence_loss(y, x)  # computed KL(y|x) for this test
+    assert jnp.allclose(loss_exp, loss_act, atol=atol), \
         f"Expected:\n{loss_exp}\nGot:\n{loss_act}"
