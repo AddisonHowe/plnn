@@ -99,7 +99,7 @@ def trace_curve(x0, p0, F, Fx, dxFxPhi, Fp, **kwargs):
     # Determine initial approximation of state space tangent vector phi.
     e1 = np.zeros(dimx)
     e1[0] = 1
-    L = Fx(x0)
+    L = np.array(Fx(x0))
     L[0,:] = e1
     phi0 = np.linalg.solve(L, e1)
 
