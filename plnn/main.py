@@ -16,7 +16,7 @@ import optax
 from plnn.dataset import get_dataloaders
 from plnn.models import make_model, initialize_model, load_model
 from plnn.model_training import train_model
-from plnn.helpers import mean_diff_loss, mean_cov_loss, kl_divergence_est
+from plnn.helpers import mean_diff_loss, mean_cov_loss, kl_divergence_loss
 
 
 def parse_args(args):
@@ -312,7 +312,7 @@ def get_signal_spec(key):
 
 def select_loss_function(key):
     if key == 'kl':
-        return kl_divergence_est
+        return kl_divergence_loss
     elif key == 'mcd':
         return mean_cov_loss
     elif key == 'md':
