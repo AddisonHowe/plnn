@@ -86,6 +86,9 @@ def train_model(
             verbosity=verbosity,
         )
 
+        if np.isnan(avg_tloss):
+            raise RuntimeError("nan encountered in training (training loss).")
+
         # Validation pass
         avg_vloss = validate_post_epoch(
             model,
@@ -93,6 +96,9 @@ def train_model(
             loss_fn, 
             validkey,
         )
+
+        if np.isnan(avg_vloss):
+            raise RuntimeError("nan encountered in training (validation loss).")
         
         if verbosity:
             print(f"\tLOSS [training: {avg_tloss} | validation: {avg_vloss}]")
