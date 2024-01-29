@@ -5,6 +5,7 @@ import jax
 import jax.numpy as jnp
 import equinox as eqx
 
+@jax.jit
 def mean_cov_loss(y_sim, y_obs):
     mu_sim = jnp.mean(y_sim, axis=1)
     mu_obs = jnp.mean(y_obs, axis=1)
@@ -14,12 +15,14 @@ def mean_cov_loss(y_sim, y_obs):
     cov_err = jnp.sum(jnp.square(cov_sim - cov_obs), axis=(1,2))
     return jnp.mean(mu_err + cov_err)
 
+@jax.jit
 def mean_diff_loss(y_sim, y_obs):
     mu_sim = jnp.mean(y_sim, axis=1)
     mu_obs = jnp.mean(y_obs, axis=1)
     mu_err = jnp.sum(jnp.square(mu_sim - mu_obs), axis=1)
     return jnp.mean(mu_err)
 
+@jax.jit
 def batch_cov(batch_points):
     """
     Returns:
@@ -27,13 +30,16 @@ def batch_cov(batch_points):
     """
     return jax.vmap(jnp.cov, 0)(batch_points.transpose((0, 2, 1)))
 
+@jax.jit
 def euclidean_distance(x, y):
     return jnp.sqrt(jnp.sum(jnp.square(x - y)))
 
+@jax.jit
 def cdist(x, y):
     return jax.vmap(lambda x1: jax.vmap(
         lambda y1: euclidean_distance(x1, y1))(y))(x)
 
+@jax.jit
 def kl_divergence_est(q_samp, p_samp):
     """Estimate the KL divergence. Returns the average over all batches.
     Adapted from:
@@ -59,6 +65,7 @@ def kl_divergence_est(q_samp, p_samp):
     lossval = -jnp.log(r/s).sum() * d/n + jnp.log(m / (n - 1.))
     return lossval
 
+@jax.jit
 def kl_divergence_loss(q_samps, p_samps):
     """Estimate the KL divergence. Returns the average over all batches.
     Adapted from:

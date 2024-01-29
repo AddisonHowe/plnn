@@ -75,7 +75,7 @@ def parse_args(args):
     parser.add_argument('--metric_final_act', type=str, default=None)
     parser.add_argument('--metric_layer_normalize', action='store_true')
 
-    parser.add_argument('--fix_noise', action="store_false",
+    parser.add_argument('--fix_noise', action="store_true",
                         help="NOT IMPLEMENTED! Fix the model noise parameter.")
     parser.add_argument('--sigma', type=float, default=1e-3,
                         help="Noise level if not inferring sigma." + \
