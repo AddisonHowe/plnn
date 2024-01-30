@@ -35,6 +35,7 @@ def parse_args(args):
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
     parser.add_argument('-b', '--batch_size', type=int, default=25)
     parser.add_argument('--report_every', type=int, default=10)
+    parser.add_argument('--clip', type=float, default=None)
 
     # Model simulation
     parser.add_argument('-nd', '--ndims', type=int, default=2,
@@ -190,6 +191,7 @@ def main(args):
     learning_rate = args.learning_rate
     momentum = args.momentum
     weight_decay = args.weight_decay
+    clip = args.clip
     cont_path = args.continuation
     loss_fn_key = args.loss
     signal_function_key = args.signal_function
@@ -347,6 +349,13 @@ def select_optimizer(optimization_method, args):
     else:
         msg = f"{optimization_method} optimization not implemented."
         raise RuntimeError(msg)
+
+    if args.clip is not None and args.clip > 0:
+        optimizer = optax.chain(
+            optax.clip(args.clip), 
+            optimizer, 
+        )
+    
     return optimizer
 
 
