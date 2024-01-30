@@ -287,7 +287,6 @@ class PLNN(eqx.Module):
             Array of shape (n,d).
         """
         subkeys = jrandom.split(key, len(y0))
-        print(subkeys)
         vecsim = jax.vmap(self.simulate_path, (None, None, 0, None, 0))
         return vecsim(t0, t1, y0, sigparams, subkeys).squeeze(1)
     
