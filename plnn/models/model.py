@@ -10,7 +10,7 @@ import jax
 import jax.numpy as jnp
 import jax.random as jrandom
 from jaxtyping import Array, Float
-from diffrax import diffeqsolve, ControlTerm, MultiTerm, ODETerm, SaveAt
+from diffrax import diffeqsolve, WeaklyDiagonalControlTerm, MultiTerm, ODETerm, SaveAt
 from diffrax import Euler, ReversibleHeun, VirtualBrownianTree
 import equinox as eqx
 
@@ -287,6 +287,7 @@ class PLNN(eqx.Module):
             Array of shape (n,d).
         """
         subkeys = jrandom.split(key, len(y0))
+        print(subkeys)
         vecsim = jax.vmap(self.simulate_path, (None, None, 0, None, 0))
         return vecsim(t0, t1, y0, sigparams, subkeys).squeeze(1)
     
@@ -310,7 +311,7 @@ class PLNN(eqx.Module):
         )
         terms = MultiTerm(
             ODETerm(drift), 
-            ControlTerm(diffusion, brownian_motion)
+            WeaklyDiagonalControlTerm(diffusion, brownian_motion)
         )
         solver = Euler()
         saveat = SaveAt(t1=True)
