@@ -10,8 +10,9 @@ import jax
 import jax.numpy as jnp
 import jax.random as jrandom
 from jaxtyping import Array, Float
-from diffrax import diffeqsolve, WeaklyDiagonalControlTerm, MultiTerm, ODETerm, SaveAt
-from diffrax import Euler, ReversibleHeun, VirtualBrownianTree
+import diffrax
+from diffrax import diffeqsolve, WeaklyDiagonalControlTerm, MultiTerm, ODETerm
+from diffrax import VirtualBrownianTree, SaveAt
 import equinox as eqx
 
 _ACTIVATION_KEYS = {
@@ -19,6 +20,13 @@ _ACTIVATION_KEYS = {
     'softplus' : jax.nn.softplus,
     'elu' : jax.nn.elu,
     'tanh' : jax.nn.tanh,
+}
+
+_SOLVER_KEYS = {
+    'euler' : diffrax.Euler, 
+    'heun' : diffrax.Heun, 
+    'reversible_heun' : diffrax.ReversibleHeun, 
+    'ito_milstein' : diffrax.ItoMilstein, 
 }
 
 def _explicit_initilizer(values):
@@ -181,6 +189,36 @@ class PLNN(eqx.Module):
         batch_keys = jax.random.split(key, t0.shape[0])
         return fwdvec(t0, t1, y0, sigparams, batch_keys)
     
+    def calldense(
+        self, 
+        t0: Float[Array, "b"],
+        t1: Float[Array, "b"],
+        y0: Float[Array, "b ncells ndims"],
+        sigparams: Float[Array, "b nsigs nsigparams"],
+        key: Array,
+    ) -> Float[Array, "b ncells ndims"]:
+        """Forward call. Acts on batched data.
+
+        TODO
+        
+        Args:
+            t0 (Array) : Initial time.
+            t1 (Array) : End time.
+            y0 (Array) : Initial condition.
+            sigparams (Array) : Signal parameters.
+            dt (float) : Constant step size. Default 1e-3.
+
+        Returns:
+            Array of shape (n,d).
+        """
+        # Parse the inputs
+        fwdvec = jax.vmap(self.simulate_dense_forward, 0)
+        key, sample_key = jrandom.split(key, 2)
+        if self.sample_cells:
+            y0 = self._sample_y0(sample_key, y0)
+        batch_keys = jax.random.split(key, t0.shape[0])
+        return fwdvec(t0, t1, y0, sigparams, batch_keys)
+
     ######################
     ##  Getter Methods  ##
     ######################
@@ -291,6 +329,26 @@ class PLNN(eqx.Module):
         return vecsim(t0, t1, y0, sigparams, subkeys).squeeze(1)
     
     @eqx.filter_jit
+    def simulate_dense_forward(
+        self,
+        t0: Float,
+        t1: Float,
+        y0: Float[Array, "ncells ndims"],
+        sigparams: Float[Array, "nsigs nsigparams"],
+        key: Array,
+    )->Float[Array, "ncells ndims"]:
+        """Evolve forward in time using the Euler-Maruyama method.
+        
+        Args:
+            TODO
+        Returns:
+            Array of shape (n,d).
+        """
+        subkeys = jrandom.split(key, len(y0))
+        vecsim = jax.vmap(self.simulate_dense_path, (None, None, 0, None, 0))
+        return vecsim(t0, t1, y0, sigparams, subkeys)
+    
+    @eqx.filter_jit
     def simulate_path(
         self,
         t0: Float,
@@ -312,7 +370,7 @@ class PLNN(eqx.Module):
             ODETerm(drift), 
             WeaklyDiagonalControlTerm(diffusion, brownian_motion)
         )
-        solver = Euler()
+        solver = _SOLVER_KEYS[self.solver]()
         saveat = SaveAt(t1=True)
         sol = diffeqsolve(
             terms, solver, 
@@ -321,6 +379,38 @@ class PLNN(eqx.Module):
             saveat=saveat
         )
         return sol.ys
+    
+    @eqx.filter_jit
+    def simulate_dense_path(
+        self,
+        t0: Float,
+        t1: Float,
+        y0: Float[Array, "ndims"],
+        sigparams: Float[Array, "nsigs nsigparams"],
+        key: Array,
+    ):
+        """TODO
+        """
+        drift = lambda t, y, args: self.eval_metric(t, y) @ self.eval_f(t, y, sigparams)
+        diffusion = lambda t, y, args: self.eval_metric(t, y) @ self.eval_g(t, y)
+        brownian_motion = VirtualBrownianTree(
+            t0, t1, tol=1e-3, 
+            shape=(len(y0),), 
+            key=key
+        )
+        terms = MultiTerm(
+            ODETerm(drift), 
+            WeaklyDiagonalControlTerm(diffusion, brownian_motion)
+        )
+        solver = _SOLVER_KEYS[self.solver]()
+        saveat = SaveAt(t0=True, t1=True, steps=True)
+        sol = diffeqsolve(
+            terms, solver, 
+            t0, t1, dt0=self.dt0, 
+            y0=y0, 
+            saveat=saveat
+        )
+        return sol.ts, sol.ys
     
     ##############################
     ##  Core Landscape Methods  ##
@@ -418,7 +508,7 @@ class PLNN(eqx.Module):
             Array of shape (d,).
         """
         if self.confine:
-            return 4 * jnp.power(y, 3)
+            return 4. * jnp.power(y, 3)
         return y * 0.
 
     @eqx.filter_jit

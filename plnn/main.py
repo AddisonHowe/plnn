@@ -50,6 +50,10 @@ def parse_args(args):
     parser.add_argument('--signal_function', type=str, default='jump',
                         choices=['jump', 'sigmoid'], 
                         help="Identifier for the signal function.")
+    parser.add_argument('--solver', type=str, default='euler',
+                        choices=['euler', 'reversible_heun', 
+                                 'ito_milstein', 'heun'], 
+                        help="Internal differential equation solver to use.")    
 
     # Model architecture
     parser.add_argument('--confine', action="store_true")
@@ -189,6 +193,7 @@ def main(args):
     cont_path = args.continuation
     loss_fn_key = args.loss
     signal_function_key = args.signal_function
+    solver = args.solver
     seed = args.seed
     dtype = jnp.float32 if args.dtype == 'float32' else jnp.float64
     do_plot = args.plot
@@ -250,6 +255,7 @@ def main(args):
             infer_metric=infer_metric,
             dtype=dtype,
             dt0=dt,
+            solver=solver,
         )
 
         model = initialize_model(
