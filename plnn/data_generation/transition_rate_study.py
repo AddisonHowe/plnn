@@ -1,8 +1,7 @@
-"""Perform simulations for a range of transition rates.
+"""Perform transition rate study simulations.
 
-Run a number of landscape simulations using a sigmoidal parameter schedule. 
-In each case, fix initial and final parameter values, as well as critical time, 
-and vary only the rate of transition, r.
+Run a number of landscape simulations using a sigmoidal parameter schedule. Fix
+the rate parameter r in each simulation.
 """
 
 import sys, os, argparse
@@ -14,18 +13,20 @@ def parse_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('-o', '--outdir', type=str, required=True,
                         help="path to output directory")
+    
     parser.add_argument('--index', type=int, default=None, 
                         help="Simulation index to run (for parallel purposes).")
+    parser.add_argument('--min_index', type=int, default=None, 
+                        help="Minimum index (for parallel purposes).")
+
+    parser.add_argument('--logr_range', type=float, nargs=2, required=True,
+                        help="Range of log(r) values to span.")
+    parser.add_argument('--num_rs', type=int, required=True)
 
     parser.add_argument('--landscape_name', type=str, required=True,
                         choices=['phi1', 'phi2'])
     parser.add_argument('--sigma', type=float, default=0.01,
                         help="Noise parameter (constant)")
-    parser.add_argument('--tcrit', type=float, default=5.0,
-                        help="Sigmoid critical time (shared across signals)")
-    parser.add_argument('--logr_range', type=float, nargs=2, default=[-2., 2.],
-                        help="Range of log(r) values to span.")
-    parser.add_argument('--num_rs', type=int, default=21)
     
     parser.add_argument('--nsims', type=int, default=10,
                         help="Number of simulations for each rate value.")
@@ -50,31 +51,26 @@ def parse_args(args):
     return parser.parse_args(args)
 
 
-def get_sampler1(p_initial, p_final_1, p_final_2, prob):
+def get_sampler(tc1_range, tc2_range, 
+                p10_range, p20_range, 
+                p11_range, p21_range):
     def sampler_func(rng):
-        p_final = p_final_1 if rng.random() < prob else p_final_2
-        return p_initial, p_final
-    return sampler_func
-
-
-def get_sampler2(p_initial_1, p_initial_2, p_final_1, p_final_2, prob):
-    def sampler_func(rng):
-        p = rng.random()
-        p_initial = p_initial_1 if p < prob else p_initial_2
-        p_final   = p_final_1   if p < prob else p_final_2
-        return p_initial, p_final
+        tc = [rng.uniform(*tc1_range), rng.uniform(*tc2_range)]
+        pi = [rng.uniform(*p10_range), rng.uniform(*p20_range)]
+        pf = [rng.uniform(*p11_range), rng.uniform(*p21_range)]
+        return tc, pi, pf
     return sampler_func
 
 
 def main(args):
     outdir = args.outdir
     index = args.index
+    min_index = args.min_index
     if index == -1:
         index = None
-    sigma = args.sigma
-    tcrit = args.tcrit
     logr_range = args.logr_range
     num_rs = args.num_rs
+    sigma = args.sigma
     landscape_name = args.landscape_name
     nsims = args.nsims
     ncells = args.ncells
@@ -94,18 +90,28 @@ def main(args):
     noise_args = [sigma]
     
     if landscape_name == 'phi1':
-        pi = [0., 1.]
-        pf1 = [ 0.75, 0.]
-        pf2 = [-0.75, 0.]
-        prob = 0.5
-        sampler = get_sampler1(pi, pf1, pf2, prob)
+        tbuffer = tfin * 0.10  # 10 percent buffer
+        tc1_range = [tbuffer, tfin - tbuffer]
+        tc2_range = [tbuffer, tfin - tbuffer]
+        p10_range = [-0.50, 0.50]  # 1st parameter initial value range
+        p20_range = [ 0.75, 1.00]  # 2nd parameter initial value range
+        p11_range = [-1.00, 1.00]  # 1st parameter final value range
+        p21_range = [-0.25, 0.25]  # 2nd parameter final value range
+        
     elif landscape_name == 'phi2':
-        pi1 = [-1.0,  0.5]
-        pi2 = [-1.0, -0.5]
-        pf1 = [-1.0, -0.5]
-        pf2 = [-1.0,  0.5]
-        prob = 0.5
-        sampler = get_sampler2(pi1, pi2, pf1, pf2, prob)
+        tbuffer = tfin * 0.10  # 10 percent buffer
+        tc1_range = [tbuffer, tfin - tbuffer]
+        tc2_range = [tbuffer, tfin - tbuffer]
+        p10_range = [-2.00, -1.50]  # 1st parameter initial value range
+        p20_range = [-0.75,  0.75]  # 2nd parameter initial value range
+        p11_range = [-1.00, -0.25]  # 1st parameter final value range
+        p21_range = [-0.50,  0.50]  # 2nd parameter final value range
+        
+    sampler = get_sampler(
+        tc1_range, tc2_range, 
+        p10_range, p20_range, 
+        p11_range, p21_range,
+    )
     
     log_rs = np.linspace(*logr_range, num_rs, endpoint=True)
 
@@ -113,8 +119,18 @@ def main(args):
     parent_rng = np.random.default_rng(seed=seed)  # RNG shared across indices
     streams = parent_rng.spawn(num_rs)  # RNG for each value of r
 
-    if index is None or index == 0:
+    # Only first process should write hyperparameters to base output directory.
+    if index is None or index == min_index:
         np.save(f"{outdir}/log_rs.npy", log_rs)
+        np.savetxt(f"{outdir}/sigma", [sigma], '%f')
+        np.savetxt(f"{outdir}/landscape_name", [landscape_name], '%s')
+        np.savetxt(f"{outdir}/nsims", [nsims], '%d')
+        np.savetxt(f"{outdir}/ncells", [ncells], '%d')
+        np.savetxt(f"{outdir}/tfin", [tfin], '%f')
+        np.savetxt(f"{outdir}/dt", [dt], '%f')
+        np.savetxt(f"{outdir}/dt_save", [dt_save], '%f')
+        np.savetxt(f"{outdir}/burnin", [burnin], '%f')
+        np.savetxt(f"{outdir}/seed", [seed], '%d')
 
     if index is not None:
         log_rs = [log_rs[index]]
@@ -130,6 +146,8 @@ def main(args):
         os.makedirs(subdir, exist_ok=True)
         np.savetxt(f"{subdir}/logr.txt", [logr], '%f')
         np.savetxt(f"{subdir}/nsims.txt", [nsims], '%d')
+        if index is not None:
+            np.savetxt(f"{subdir}/ridx.txt", [index], '%d')
 
         if do_animate:
             from cont.binary_choice import get_binary_choice_curves
@@ -142,10 +160,12 @@ def main(args):
                 bifcurves, bifcolors = get_binary_flip_curves()
         
         # Sample parameter values
+        t_crits = []
         p_initials = []
         p_finals = []
         for simidx in range(nsims):
-            p_initial, p_final = sampler(rng)
+            t_crit, p_initial, p_final = sampler(rng)
+            t_crits.append(t_crit)
             p_initials.append(p_initial)
             p_finals.append(p_final)
 
@@ -156,11 +176,13 @@ def main(args):
             simdir = f"{subdir}/sim{simidx}"
             os.makedirs(simdir, exist_ok=True)
 
-            p_initial, p_final = p_initials[simidx], p_finals[simidx]
+            tc = t_crits[simidx]
+            pi = p_initials[simidx]
+            pf = p_finals[simidx]
             
             sigparams = np.array([
-                [tcrit, p_initial[0], p_final[0], np.exp(logr)],
-                [tcrit, p_initial[1], p_final[1], np.exp(logr)],
+                [tc[0], pi[0], pf[0], np.exp(logr)],
+                [tc[1], pi[1], pf[1], np.exp(logr)],
             ])
 
             with open(f"{simdir}/args.txt", 'w') as f:
