@@ -1254,6 +1254,7 @@ def load_model(fname)->tuple[PLNN,dict]:
 
     Returns:
         PLNN: Model instance.
+        dict: Hyperparameters.
     """
     with open(fname, "rb") as f:
         hyperparams = json.loads(f.readline().decode())
