@@ -6,6 +6,7 @@ import warnings
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
@@ -925,6 +926,8 @@ class PLNN(eqx.Module):
         cbar_titlefontsize = kwargs.get('cbar_titlefontsize', 10)
         cbar_ticklabelsize = kwargs.get('cbar_ticklabelsize', 8)
         view_init = kwargs.get('view_init', (30, -45))
+        tight_layout = kwargs.get('tight_layout', True)
+        equal_axes = kwargs.get('equal_axes', False)
         saveas = kwargs.get('saveas', None)
         show = kwargs.get('show', False)
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -933,6 +936,9 @@ class PLNN(eqx.Module):
         elif ax is None and (not plot3d):
             fig, ax = plt.subplots(1, 1, figsize=figsize)
         
+        if equal_axes:
+            ax.set_aspect('equal')
+
         # Handle signal value
         eval_time = 0.
         if signal is None:
@@ -983,20 +989,24 @@ class PLNN(eqx.Module):
             )
         # Colorbar
         if include_cbar:
-            cbar = plt.colorbar(sc)
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            fig = ax.figure
+            cbar = fig.colorbar(sc, cax=cax)
             cbar.ax.set_title(cbar_title, size=cbar_titlefontsize)
             cbar.ax.tick_params(labelsize=cbar_ticklabelsize)
         
         # Format plot
         if xlims is not None: ax.set_xlim(*xlims)
         if ylims is not None: ax.set_ylim(*ylims)
-        ax.set_title(title)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
+        if title is not None: ax.set_title(title)
+        if xlabel is not None: ax.set_xlabel(xlabel)
+        if ylabel is not None: ax.set_ylabel(ylabel)
         if plot3d: 
             ax.set_zlabel(zlabel)
             ax.view_init(*view_init)
-        plt.tight_layout()
+        
+        if tight_layout: plt.tight_layout()
         
         # Save and close
         if saveas: plt.savefig(saveas, bbox_inches='tight')
