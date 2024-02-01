@@ -102,10 +102,10 @@ def main(args):
         tbuffer = tfin * 0.10  # 10 percent buffer
         tc1_range = [tbuffer, tfin - tbuffer]
         tc2_range = [tbuffer, tfin - tbuffer]
-        p10_range = [-2.00, -1.50]  # 1st parameter initial value range
+        p10_range = [-1.50, -1.00]  # 1st parameter initial value range
         p20_range = [-0.75,  0.75]  # 2nd parameter initial value range
-        p11_range = [-1.00, -0.25]  # 1st parameter final value range
-        p21_range = [-0.50,  0.50]  # 2nd parameter final value range
+        p11_range = [-1.50, -1.00]  # 1st parameter final value range
+        p21_range = [-0.75,  0.75]  # 2nd parameter final value range
         
     sampler = get_sampler(
         tc1_range, tc2_range, 

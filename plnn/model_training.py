@@ -219,6 +219,7 @@ def validate_post_epoch(
     return avg_vloss
 
 
+@eqx.filter_jit
 @eqx.filter_value_and_grad
 def compute_loss(model, x, y, loss_fn, key):
     t0, y0, t1, sigparams = x
