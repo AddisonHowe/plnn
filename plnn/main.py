@@ -131,6 +131,8 @@ def parse_args(args):
     parser.add_argument('--learning_rate', type=float, default=1e-3)
     parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--weight_decay', type=float, default=0.)
+    parser.add_argument('--lr_schedule', type=str, default='exponential_decay',
+                        choices=['constant', 'exponential_decay'])
     
     # Misc. options
     parser.add_argument('--plot', action="store_true")
@@ -191,6 +193,7 @@ def main(args):
     learning_rate = args.learning_rate
     momentum = args.momentum
     weight_decay = args.weight_decay
+    lr_schedule = args.lr_schedule
     clip = args.clip
     cont_path = args.continuation
     loss_fn_key = args.loss
@@ -331,18 +334,30 @@ def select_loss_function(key):
 
 
 def select_optimizer(optimization_method, args):
+
+    if args.lr_schedule == "exponential_decay":
+        lr = optax.exponential_decay(
+            init_value=args.learning_rate,
+            transition_steps=1_000,
+            decay_rate=0.99
+        )
+    elif args.lr_schedule == "cosine_warmup_decay":
+        raise NotImplementedError("cosine_warmup_decay not yet implemented.")
+    else:
+        lr = args.learning_rate  # constant learning rate
+
     if optimization_method == 'sgd':
         optimizer = optax.sgd(
-            learning_rate=args.learning_rate, 
+            learning_rate=lr, 
             momentum=args.momentum,
         )
     elif optimization_method == 'adam':
         optimizer = optax.adam(
-            learning_rate=args.learning_rate, 
+            learning_rate=lr, 
         )
     elif optimization_method == 'rms':
         optimizer = optax.rmsprop(
-            learning_rate=args.learning_rate,
+            learning_rate=lr,
             momentum=args.momentum,
             decay=args.weight_decay,
         )
