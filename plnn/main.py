@@ -190,11 +190,13 @@ def main(args):
     batch_size = args.batch_size
     num_epochs = args.num_epochs
     optimization_method = args.optimizer
-    learning_rate = args.learning_rate
-    momentum = args.momentum
-    weight_decay = args.weight_decay
-    lr_schedule = args.lr_schedule
-    clip = args.clip
+    optimizer_args = {
+        'learning_rate' : args.learning_rate,
+        'momentum'      : args.momentum,
+        'weight_decay'  : args.weight_decay,
+        'lr_schedule'   : args.lr_schedule,
+        'clip'          : args.clip,
+    }
     cont_path = args.continuation
     loss_fn_key = args.loss
     signal_function_key = args.signal_function
@@ -282,7 +284,7 @@ def main(args):
         )
 
     loss_fn = select_loss_function(loss_fn_key)
-    optimizer = select_optimizer(optimization_method, args)
+    optimizer = select_optimizer(optimization_method, optimizer_args)
     
     os.makedirs(outdir, exist_ok=True)
     if do_plot:
@@ -335,21 +337,21 @@ def select_loss_function(key):
 
 def select_optimizer(optimization_method, args):
 
-    if args.lr_schedule == "exponential_decay":
+    if args.get('lr_schedule') == "exponential_decay":
         lr = optax.exponential_decay(
-            init_value=args.learning_rate,
+            init_value=args.get('learning_rate'),
             transition_steps=1_000,
             decay_rate=0.99
         )
-    elif args.lr_schedule == "cosine_warmup_decay":
+    elif args.get('lr_schedule') == "cosine_warmup_decay":
         raise NotImplementedError("cosine_warmup_decay not yet implemented.")
     else:
-        lr = args.learning_rate  # constant learning rate
+        lr = args.get('learning_rate')  # constant learning rate
 
     if optimization_method == 'sgd':
         optimizer = optax.sgd(
             learning_rate=lr, 
-            momentum=args.momentum,
+            momentum=args.get('momentum'),
         )
     elif optimization_method == 'adam':
         optimizer = optax.adam(
@@ -358,16 +360,16 @@ def select_optimizer(optimization_method, args):
     elif optimization_method == 'rms':
         optimizer = optax.rmsprop(
             learning_rate=lr,
-            momentum=args.momentum,
-            decay=args.weight_decay,
+            momentum=args.get('momentum'),
+            decay=args.get('weight_decay'),
         )
     else:
         msg = f"{optimization_method} optimization not implemented."
         raise RuntimeError(msg)
 
-    if args.clip is not None and args.clip > 0:
+    if args.get('clip') is not None and args.get('clip') > 0:
         optimizer = optax.chain(
-            optax.clip(args.clip), 
+            optax.clip(args.get('clip')), 
             optimizer, 
         )
     
