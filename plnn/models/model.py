@@ -10,6 +10,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
+import jax.tree_util as jtu
 from jaxtyping import Array, Float
 import diffrax
 from diffrax import diffeqsolve, WeaklyDiagonalControlTerm, MultiTerm, ODETerm
@@ -1236,6 +1237,9 @@ def make_model(
         'metric_final_act' : metric_final_act,
         'metric_layer_normalize' : metric_layer_normalize,
     })
+    model = jtu.tree_map(
+        lambda x: x.astype(dtype) if eqx.is_array(x) else x, model
+    )
     return model, hyperparams
 
 
@@ -1256,7 +1260,7 @@ def save_model(fname, model, hyperparams):
         f.write((hyperparam_str + "\n").encode())
         eqx.tree_serialise_leaves(f, model)  
 
-def load_model(fname)->tuple[PLNN,dict]:
+def load_model(fname, dtype=jnp.float32)->tuple[PLNN,dict]:
     """Load a model from a binary parameter file.
     
     Args:
@@ -1268,7 +1272,7 @@ def load_model(fname)->tuple[PLNN,dict]:
     """
     with open(fname, "rb") as f:
         hyperparams = json.loads(f.readline().decode())
-        model, _ = make_model(key=jrandom.PRNGKey(0), **hyperparams)
+        model, _ = make_model(key=jrandom.PRNGKey(0), dtype=dtype, **hyperparams)
         return eqx.tree_deserialise_leaves(f, model), hyperparams
 
 

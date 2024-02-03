@@ -3,7 +3,6 @@
 
 import jax
 import jax.numpy as jnp
-import equinox as eqx
 
 @jax.jit
 def mean_cov_loss(y_sim, y_obs):
