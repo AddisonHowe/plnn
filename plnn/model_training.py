@@ -176,7 +176,7 @@ def train_one_epoch(
     for bidx, data in enumerate(dataloader):
         inputs, y1 = data
         key, subkey = jrandom.split(key, 2)
-        loss, model, opt_state = make_step(
+        model, opt_state, loss = make_step(
             model, inputs, y1, optimizer, opt_state, loss_fn, subkey
         )
         
@@ -232,7 +232,7 @@ def make_step(model, x, y, optimizer, opt_state, loss_fn, key):
     loss, grads = compute_loss(model, x, y, loss_fn, key)
     updates, opt_state = optimizer.update(grads, opt_state)
     model = eqx.apply_updates(model, updates)
-    return loss, model, opt_state
+    return model, opt_state, loss
 
 
 @eqx.filter_jit

@@ -1,7 +1,5 @@
 import pytest
 import numpy as np
-from jax import config
-config.update("jax_enable_x64", True)
 import jax.numpy as jnp
 from plnn.helpers import mean_cov_loss, mean_diff_loss, kl_divergence_loss
 

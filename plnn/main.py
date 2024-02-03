@@ -6,9 +6,8 @@ import os, sys
 import argparse
 from datetime import datetime
 import numpy as np
-from jax import config
-config.update("jax_enable_x64", True)
 
+import torch
 import jax.numpy as jnp
 import jax.random as jrandom
 import optax
@@ -142,7 +141,6 @@ def parse_args(args):
     parser.add_argument('--timestamp', action="store_true",
                         help="Add timestamp to out directory.")
     parser.add_argument('--save_all', action="store_true")
-    parser.add_argument('--jax_debug_nans', action="store_true")
 
     return parser.parse_args(args)
 
@@ -205,10 +203,14 @@ def main(args):
     dtype = jnp.float32 if args.dtype == 'float32' else jnp.float64
     do_plot = args.plot
     
-    config.update("jax_debug_nans", args.jax_debug_nans)
+    if dtype == jnp.float64:
+        testarray = jnp.ones([2.,2.], dtype=jnp.float64)
+        assert testarray.dtype == jnp.float64, \
+            "Test array is not jnp.float64 as requested."
     
     seed = seed if seed else np.random.randint(2**32)
     rng = np.random.default_rng(seed=seed)
+    torch.manual_seed(int(rng.integers(2**32)))
     key = jrandom.PRNGKey(int(rng.integers(2**32)))
     key, modelkey, initkey, trainkey = jrandom.split(key, 4)
     print(f"Using seed: {seed}", flush=True)
@@ -340,7 +342,7 @@ def select_optimizer(optimization_method, args):
     if args.get('lr_schedule') == "exponential_decay":
         lr = optax.exponential_decay(
             init_value=args.get('learning_rate'),
-            transition_steps=1_000,
+            transition_steps=100,
             decay_rate=0.99
         )
     elif args.get('lr_schedule') == "cosine_warmup_decay":

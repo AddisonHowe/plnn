@@ -1,13 +1,9 @@
 import pytest
 import numpy as np
-from jax import config
-config.update("jax_enable_x64", True)
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
-from diffrax import AbstractPath
 from plnn.models import PLNN, initialize_model
-from plnn.helpers import mean_cov_loss, mean_diff_loss
 
 #####################
 ##  Configuration  ##
@@ -63,6 +59,7 @@ def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1,
         key=jrandom.PRNGKey(seed),
         sample_cells=sample_cells,
         infer_metric=True,
+        dtype=dtype,
     )
     model = initialize_model(
         jrandom.PRNGKey(seed+1),
@@ -113,12 +110,23 @@ class TestBatchedCoreLandscapeMethods:
     ])
     def test_f(self, dtype, ws, wts, sigparams, t, x, 
                f_exp, f_shape_exp):
+        rtol = 1e-5 if dtype == jnp.float64 else 1e-3
+        atol = 1e-8 if dtype == jnp.float64 else 1e-3
         sigparams = jnp.array(sigparams, dtype=dtype)
         t = jnp.array(t, dtype=dtype)
         x = jnp.array(x, dtype=dtype)
         model = get_model(ws, wts, dtype, ncells=x.shape[1])
         f_act = jax.vmap(model.f, 0)(t, x, sigparams)
-        assert np.allclose(f_act, f_exp) and f_act.shape == f_shape_exp
+        errors = []
+        if not np.allclose(f_act, f_exp, rtol=rtol, atol=atol):
+            msg = f"Value mismatch between f actual and expected."
+            msg += f"\nExpected:\n{f_exp}\nGot:\n{f_act}"
+            errors.append(msg)
+        if not f_act.shape == f_shape_exp:
+            msg = f"Shape mismatch between f actual and expected."
+            msg += f"Expected {f_shape_exp}. Got {f_act.shape}."
+            errors.append(msg)
+        assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
 
     @pytest.mark.parametrize('ws, wts, t, x, sigma, g_exp, g_shape_exp', [
         [[W1, W2, W3], [WT1], [0],  # 1 batch
@@ -149,22 +157,33 @@ class TestBatchedCoreLandscapeMethods:
 
     @pytest.mark.parametrize("ws, x, phi_exp, phi_shape_exp", [
         [[W1, W2, W3], [[[0, 0]]], [[0.0]], (1,1)],
-        [[W1, W2, W3], [[[0, 1]]], [[3.9934]], (1,1)],
-        [[W1, W2, W3], [[[1, 0]]], [[2.69506]], (1,1)],
-        [[W1, W2, W3], [[[1, 1]]], [[3.24787]], (1,1)],
+        [[W1, W2, W3], [[[0, 1]]], [[3.99340437124]], (1,1)],
+        [[W1, W2, W3], [[[1, 0]]], [[2.69505521004]], (1,1)],
+        [[W1, W2, W3], [[[1, 1]]], [[3.2478696918]], (1,1)],
         [[W1, W2, W3], [[[0, 0],[0, 1],[1, 0],[1, 1]]], 
-         [[0.0, 3.9934, 2.69506, 3.24787]], (1,4)],
+         [[0.0, 3.99340437124, 2.69505521004, 3.2478696918]], (1,4)],
         [[W1, W2, W3], 
          [[[0, 0],[0, 1],[1, 0],[1, 1]],
           [[1, 1],[0, 1],[1, 0],[0, 0]]], 
-         [[0.0,3.9934,2.69506,3.24787], 
-          [3.24787,3.9934,2.69506,0.0]], (2, 4)],
+         [[0.0,3.99340437124,2.69505521004,3.2478696918], 
+          [3.2478696918,3.99340437124,2.69505521004,0.0]], (2, 4)],
     ])
     def test_phi(self, dtype, ws, x, phi_exp, phi_shape_exp):
+        rtol = 1e-5 if dtype == jnp.float64 else 1e-3
+        atol = 1e-8 if dtype == jnp.float64 else 1e-3
         model = get_model(ws, [WT1], dtype=dtype)
         x = jnp.array(x, dtype=dtype)
         phi_act = jax.vmap(model.phi, 0)(x)
-        assert np.allclose(phi_exp, phi_act) and phi_act.shape == phi_shape_exp
+        errors = []
+        if not np.allclose(phi_act, phi_exp, rtol=rtol, atol=atol):
+            msg = f"Value mismatch between phi actual and expected."
+            msg += f"\nExpected:\n{phi_exp}\nGot:\n{phi_act}"
+            errors.append(msg)
+        if not phi_act.shape == phi_shape_exp:
+            msg = f"Shape mismatch between f actual and expected."
+            msg += f"Expected {phi_shape_exp}. Got {phi_act.shape}."
+            errors.append(msg)
+        assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
 
     @pytest.mark.parametrize("ws, x, grad_phi_exp, shape_exp", [
         [[W1, W2, W3], [[[0, 0]]], [[[6.0, 14.0]]], (1, 1, 2)],
@@ -188,6 +207,8 @@ class TestBatchedCoreLandscapeMethods:
          [[1.11945, 2.71635], [-3.5586, -0.83997]]], (3, 2, 2)],
     ])
     def test_grad_phi(self, dtype, ws, x, grad_phi_exp, shape_exp):
+        rtol = 1e-5 if dtype == jnp.float64 else 1e-3
+        atol = 1e-8 if dtype == jnp.float64 else 1e-3
         model = get_model(ws, [WT1], dtype)
         x = jnp.array(x, dtype=dtype)
         t = jnp.array(x.shape[0]*[0], dtype=dtype)
@@ -195,7 +216,7 @@ class TestBatchedCoreLandscapeMethods:
         grad_phi_act = jax.vmap(model.grad_phi, 0)(t, x)
 
         errors = []
-        if not np.allclose(grad_phi_exp, grad_phi_act, atol=1e-5):
+        if not np.allclose(grad_phi_exp, grad_phi_act, rtol=rtol, atol=atol):
             msg = f"Value mismatch between grad phi actual and expected."
             msg += f"\nExpected:\n{grad_phi_exp}\nGot:\n{grad_phi_act}"
             errors.append(msg)
