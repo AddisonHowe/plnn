@@ -4,7 +4,7 @@ import numpy as np
 import jax.numpy as jnp
 import jax.random as jrandom
 import optax
-from plnn.models import PLNN, initialize_model
+from plnn.models import DeepPhiPLNN
 from plnn.model_training import train_model
 from plnn.dataset import get_dataloaders
 from plnn.helpers import mean_diff_loss
@@ -85,7 +85,7 @@ class TestTraining:
 
     def _get_model(self, dtype):
         # Construct the model
-        model = PLNN(
+        model = DeepPhiPLNN(
             ndims=2, 
             nparams=2, 
             nsigs=2, 
@@ -113,9 +113,9 @@ class TestTraining:
             metric_layer_normalize=False,
             key=jrandom.PRNGKey(0),
         )
-        model = initialize_model(
+        model = model.initialize(
             jrandom.PRNGKey(0),
-            model, dtype=dtype,
+            dtype=dtype,
             init_phi_weights_method='explicit',
             init_phi_weights_args=[[W1,W2,W3]],
             init_phi_bias_method='none',

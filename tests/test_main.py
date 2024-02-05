@@ -1,9 +1,9 @@
 import pytest
-import os, glob, shutil
+import shutil
 import jax.numpy as jnp
 import numpy as np
 from plnn.main import parse_args, main
-from plnn.models import load_model
+from plnn.models import DeepPhiPLNN
 
 
 def get_args(fpath):
@@ -41,14 +41,14 @@ def test_reproducibility(argstring_fpath, modelname, dtype):
     assert args.seed > 0, f"This test requires a seed! See {argstring_fpath}."
     main(args)
     # Load first model instance
-    model1, hp1 = load_model(
+    model1, hp1 = DeepPhiPLNN.load(
         f"tests/tmp_test_main/{modelname}/states/{modelname}_1.pth",
         dtype=dtype
     )
     _remove_dir("tests/tmp_test_main")
     # Re-run main
     main(args)
-    model2, hp2 = load_model(
+    model2, hp2 = DeepPhiPLNN.load(
         f"tests/tmp_test_main/{modelname}/states/{modelname}_1.pth",
         dtype=dtype
     )
@@ -58,5 +58,3 @@ def test_reproducibility(argstring_fpath, modelname, dtype):
     w2 = model2.get_parameters()['phi.w']
     for arr1, arr2 in zip(w1, w2):
         assert np.allclose(arr1, arr2), "Mismatch between trained parameters"
-
-

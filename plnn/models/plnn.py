@@ -16,6 +16,7 @@ import diffrax
 from diffrax import diffeqsolve, WeaklyDiagonalControlTerm, MultiTerm, ODETerm
 from diffrax import VirtualBrownianTree, SaveAt
 import equinox as eqx
+from abc import abstractmethod
 
 _ACTIVATION_KEYS = {
     'none' : None,
@@ -48,13 +49,36 @@ _INIT_METHOD_KEYS = {
     'explicit' : _explicit_initilizer, # parameters: values
 }
 
+def _get_nn_init_func(init_method):
+    if init_method is None:
+        init_method = 'none'
+    init_method = init_method.lower()
+    if init_method not in _INIT_METHOD_KEYS:
+        msg = f"Unknown nn layer initialization method: {init_method}"
+        raise RuntimeError(msg)
+    return _INIT_METHOD_KEYS[init_method]
+    
+def _get_nn_init_args(init_args):
+    if init_args is None:
+        return []
+    elif isinstance(init_args, list):
+        return init_args
+    else:
+        return [init_args]
+
+
+##############################################################################
+#########################  Abstract PLNN Base Class  #########################
+##############################################################################
+
 class PLNN(eqx.Module):
 
-    phi_nn: eqx.Module     # learnable
-    tilt_nn: eqx.Module    # learnable
-    logsigma: Array        # learnable
-    metric_nn: eqx.Module  # learnable
-
+    phi_module: eqx.Module     # learnable
+    tilt_module: eqx.Module    # learnable
+    logsigma: Array            # learnable
+    metric_module: eqx.Module  # learnable
+    
+    model_type: str
     ndims: int
     nparams: int
     nsigs: int
@@ -67,7 +91,6 @@ class PLNN(eqx.Module):
     confine: bool
     sample_cells: bool
     infer_metric: bool
-    include_phi_bias: bool
     include_tilt_bias: bool
     include_metric_bias: bool
 
@@ -86,13 +109,8 @@ class PLNN(eqx.Module):
         confine=False,
         sample_cells=True,
         infer_metric=True,
-        include_phi_bias=True,
         include_tilt_bias=False,
         include_metric_bias=True,
-        phi_hidden_dims=[16, 32, 32, 16],  # end of attributes
-        phi_hidden_acts='softplus',
-        phi_final_act=None,
-        phi_layer_normalize=False,
         tilt_hidden_dims=[],
         tilt_hidden_acts=None,
         tilt_final_act=None,
@@ -119,26 +137,14 @@ class PLNN(eqx.Module):
         self.confine = confine
         self.sample_cells = sample_cells
         self.infer_metric = infer_metric
-        self.include_phi_bias = include_phi_bias
         self.include_tilt_bias = include_tilt_bias
         self.include_metric_bias = include_metric_bias
 
-        key, key1, key2, key3 = jax.random.split(key, 4)
+        key, key_tilt, key_metric = jax.random.split(key, 3)
 
-        # Potential Neural Network: Maps ndims to a scalar.
-        self.phi_nn = self._construct_phi_nn(
-            key1, 
-            phi_hidden_dims, 
-            phi_hidden_acts, 
-            phi_final_act, 
-            phi_layer_normalize,
-            bias=include_phi_bias, 
-            dtype=dtype
-        )
-        
         # Tilt Neural Network: Linear tilt values. Maps nsigs to ndims.
-        self.tilt_nn = self._construct_tilt_nn(
-            key2, 
+        self.tilt_module = self._construct_tilt_module(
+            key_tilt, 
             tilt_hidden_dims,
             tilt_hidden_acts,
             tilt_final_act,
@@ -148,8 +154,8 @@ class PLNN(eqx.Module):
         )
 
         # Metric Neural Network: Maps ndims to (ndims, ndims).
-        self.metric_nn = self._construct_metric_nn(
-            key3, 
+        self.metric_module = self._construct_metric_module(
+            key_metric, 
             metric_hidden_dims, 
             metric_hidden_acts, 
             metric_final_act, 
@@ -244,12 +250,9 @@ class PLNN(eqx.Module):
         """
         def linear_layers(m):
             return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
-        phi_linlayers  = linear_layers(self.phi_nn)
-        tilt_linlayers = linear_layers(self.tilt_nn)
-        metric_linlayers = linear_layers(self.metric_nn)
+        tilt_linlayers = linear_layers(self.tilt_module)
+        metric_linlayers = linear_layers(self.metric_module)
         d = {
-            'phi.w'  : [l.weight for l in phi_linlayers],
-            'phi.b'  : [l.bias for l in phi_linlayers],
             'tilt.w' : [l.weight for l in tilt_linlayers],
             'tilt.b' : [l.bias for l in tilt_linlayers],
             'metric.w' : [l.weight for l in metric_linlayers],
@@ -277,7 +280,6 @@ class PLNN(eqx.Module):
             'confine' : self.confine,
             'sample_cells' : self.sample_cells,
             'infer_metric' : self.infer_metric,
-            'include_phi_bias' : self.include_phi_bias,
             'include_tilt_bias' : self.include_tilt_bias,
             'include_metric_bias' : self.include_metric_bias,
         }
@@ -285,16 +287,10 @@ class PLNN(eqx.Module):
     def get_linear_layer_parameters(self, include_metric=False):
         def linear_layers(m):
             return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
-        phi_linlayers  = linear_layers(self.phi_nn)
-        tilt_linlayers = linear_layers(self.tilt_nn)
-        metric_linlayers = linear_layers(self.metric_nn)
-        phi_params = []
+        tilt_linlayers = linear_layers(self.tilt_module)
+        metric_linlayers = linear_layers(self.metric_module)
         tilt_params = []
         metric_params = []
-        for layer in phi_linlayers:
-            phi_params.append(layer.weight)
-            if layer.bias is not None:
-                phi_params.append(layer.bias)
         for layer in tilt_linlayers:
             tilt_params.append(layer.weight)
             if layer.bias is not None:
@@ -303,8 +299,7 @@ class PLNN(eqx.Module):
             metric_params.append(layer.weight)
             if layer.bias is not None:
                 metric_params.append(layer.bias)
-        return phi_params + tilt_params \
-                          + (metric_params if include_metric else [])
+        return tilt_params + (metric_params if include_metric else [])
 
     ##########################
     ##  Simulation Methods  ##
@@ -472,7 +467,7 @@ class PLNN(eqx.Module):
         """
         if self.infer_metric:
             # Get upper triangular values including diag.
-            dm_vals = self.metric_nn(y)
+            dm_vals = self.metric_module(y)
             dm = jnp.zeros([self.ndims, self.ndims])
             dm = dm.at[jnp.triu_indices(self.ndims)].set(dm_vals) # array
             dm = dm + dm.T
@@ -513,7 +508,7 @@ class PLNN(eqx.Module):
             return 4. * jnp.power(y, 3)
         return y * 0.
 
-    @eqx.filter_jit
+    @abstractmethod
     def eval_phi(
         self, 
         y: Float[Array, "ndims"]
@@ -525,9 +520,9 @@ class PLNN(eqx.Module):
         Returns:
             Array of shape (1,).
         """
-        return self.eval_confinement(y) + self.phi_nn(y).squeeze(-1)
+        raise NotImplementedError()
 
-    @eqx.filter_jit
+    @abstractmethod
     def eval_grad_phi(
         self, 
         t: Float, 
@@ -541,8 +536,7 @@ class PLNN(eqx.Module):
         Returns:
             Array of shape (d,).
         """
-        return self.eval_grad_confinement(y) + \
-               jax.jacrev(self.phi_nn)(y).squeeze(0)
+        raise NotImplementedError()
     
     @eqx.filter_jit
     def grad_tilt(
@@ -562,7 +556,7 @@ class PLNN(eqx.Module):
             signal_vals = self.binary_signal_function(t, sigparams)
         elif self.signal_type == "sigmoid":
             signal_vals = self.sigmoid_signal_function(t, sigparams)
-        return self.tilt_nn(signal_vals)
+        return self.tilt_module(signal_vals)
     
     @eqx.filter_jit
     def eval_tilted_phi(
@@ -714,16 +708,32 @@ class PLNN(eqx.Module):
         r = sigparams[...,3]
         val = p0 + 0.5*(p1 - p0) * (1 + jnp.tanh(r * (t - tcrit)))
         return val
+    
+    ############################
+    ##  Model Saving/Loading  ##
+    ############################
+
+    def save(self, fname, hyperparams):
+        """Save model and hyperparameters to output file.
+
+        Args:
+            fname (str): Output file name.
+            hyperparams (dict): Hyperparameters of the model.
+        """
+        with open(fname, "wb") as f:
+            hyperparam_str = json.dumps(hyperparams)
+            f.write((hyperparam_str + "\n").encode())
+            eqx.tree_serialise_leaves(f, self)
 
     #############################
     ##  Initialization Method  ##
     #############################
 
     def initialize(self, key, dtype=jnp.float32, *,
-        init_phi_weights_method='xavier_uniform',
-        init_phi_weights_args=[],
-        init_phi_bias_method='constant',
-        init_phi_bias_args=[0.],
+        # init_phi_weights_method='xavier_uniform',
+        # init_phi_weights_args=[],
+        # init_phi_bias_method='constant',
+        # init_phi_bias_args=[0.],
         init_tilt_weights_method='xavier_uniform',
         init_tilt_weights_args=[],
         init_tilt_bias_method='constant',
@@ -735,10 +745,10 @@ class PLNN(eqx.Module):
     ):
         new_model = initialize_model(
             key, self, dtype=dtype,
-            init_phi_weights_method=init_phi_weights_method,
-            init_phi_weights_args=init_phi_weights_args,
-            init_phi_bias_method=init_phi_bias_method,
-            init_phi_bias_args=init_phi_bias_args,
+            # init_phi_weights_method=init_phi_weights_method,
+            # init_phi_weights_args=init_phi_weights_args,
+            # init_phi_bias_method=init_phi_bias_method,
+            # init_phi_bias_args=init_phi_bias_args,
             init_tilt_weights_method=init_tilt_weights_method,
             init_tilt_weights_args=init_tilt_weights_args,
             init_tilt_bias_method=init_tilt_bias_method,
@@ -802,21 +812,21 @@ class PLNN(eqx.Module):
         if activation:
             layer_list.append(eqx.nn.Lambda(activation))
         
-    def _construct_phi_nn(self, key, hidden_dims, hidden_acts, final_act, 
-                          layer_normalize, bias=True, dtype=jnp.float32):
-        return self._construct_ffn(
-            key, self.ndims, 1,
-            hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
-        )
+    # def _construct_phi_module(self, key, hidden_dims, hidden_acts, final_act, 
+    #                       layer_normalize, bias=True, dtype=jnp.float32):
+    #     return self._construct_ffn(
+    #         key, self.ndims, 1,
+    #         hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
+    #     )
     
-    def _construct_tilt_nn(self, key, hidden_dims, hidden_acts, final_act, 
+    def _construct_tilt_module(self, key, hidden_dims, hidden_acts, final_act, 
                           layer_normalize, bias=False, dtype=jnp.float32):
         return self._construct_ffn(
             key, self.nsigs, self.ndims, 
             hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
         )
     
-    def _construct_metric_nn(self, key, hidden_dims, hidden_acts, final_act, 
+    def _construct_metric_module(self, key, hidden_dims, hidden_acts, final_act, 
                              layer_normalize, bias=True, dtype=jnp.float32):
         return self._construct_ffn(
             key, self.ndims, int(self.ndims * (self.ndims + 1) / 2), 
@@ -1129,151 +1139,151 @@ class PLNN(eqx.Module):
 ##  Model Construction  ##
 ##########################
 
-def make_model(
-    key, *, 
-    ndims=2, 
-    nparams=2,
-    nsigs=2, 
-    ncells=100, 
-    signal_type='jump', 
-    nsigparams=3, 
-    sigma_init=1e-2, 
-    solver='euler', 
-    dt0=1e-2, 
-    confine=False,
-    sample_cells=True, 
-    infer_metric=True,
-    include_phi_bias=True, 
-    include_tilt_bias=False,
-    include_metric_bias=True,
-    phi_hidden_dims=[16,32,32,16], 
-    phi_hidden_acts='softplus', 
-    phi_final_act=None, 
-    phi_layer_normalize=False, 
-    tilt_hidden_dims=[],
-    tilt_hidden_acts=None,
-    tilt_final_act=None,
-    tilt_layer_normalize=False,
-    metric_hidden_dims=[8,8,8,8], 
-    metric_hidden_acts='softplus', 
-    metric_final_act=None, 
-    metric_layer_normalize=False, 
-    dtype=jnp.float32,
-):
-    """Construct a model and store all hyperparameters.
+# def make_model(
+#     key, *, 
+#     ndims=2, 
+#     nparams=2,
+#     nsigs=2, 
+#     ncells=100, 
+#     signal_type='jump', 
+#     nsigparams=3, 
+#     sigma_init=1e-2, 
+#     solver='euler', 
+#     dt0=1e-2, 
+#     confine=False,
+#     sample_cells=True, 
+#     infer_metric=True,
+#     include_phi_bias=True, 
+#     include_tilt_bias=False,
+#     include_metric_bias=True,
+#     phi_hidden_dims=[16,32,32,16], 
+#     phi_hidden_acts='softplus', 
+#     phi_final_act=None, 
+#     phi_layer_normalize=False, 
+#     tilt_hidden_dims=[],
+#     tilt_hidden_acts=None,
+#     tilt_final_act=None,
+#     tilt_layer_normalize=False,
+#     metric_hidden_dims=[8,8,8,8], 
+#     metric_hidden_acts='softplus', 
+#     metric_final_act=None, 
+#     metric_layer_normalize=False, 
+#     dtype=jnp.float32,
+# ):
+#     """Construct a model and store all hyperparameters.
     
-    Args:
-        key
-        ndims
-        nparams
-        nsigs
-        ncells
-        signal_type
-        nsigparams
-        sigma_init
-        solver
-        dt0
-        confine
-        sample_cells
-        infer_metric
-        include_phi_bias
-        include_tilt_bias
-        include_metric_bias
-        phi_hidden_dims
-        phi_hidden_acts
-        phi_final_act
-        phi_layer_normalize
-        tilt_hidden_dims
-        tilt_hidden_acts
-        tilt_final_act
-        tilt_layer_normalize
-        metric_hidden_dims
-        metric_hidden_acts
-        metric_final_act
-        metric_layer_normalize
-        dtype
+#     Args:
+#         key
+#         ndims
+#         nparams
+#         nsigs
+#         ncells
+#         signal_type
+#         nsigparams
+#         sigma_init
+#         solver
+#         dt0
+#         confine
+#         sample_cells
+#         infer_metric
+#         include_phi_bias
+#         include_tilt_bias
+#         include_metric_bias
+#         phi_hidden_dims
+#         phi_hidden_acts
+#         phi_final_act
+#         phi_layer_normalize
+#         tilt_hidden_dims
+#         tilt_hidden_acts
+#         tilt_final_act
+#         tilt_layer_normalize
+#         metric_hidden_dims
+#         metric_hidden_acts
+#         metric_final_act
+#         metric_layer_normalize
+#         dtype
     
-    Returns:
-        PLNN: model.
-        dict: dictionary of hyperparameters.
-    """
-    model = PLNN(
-        key=key,
-        ndims=ndims, nparams=nparams, nsigs=nsigs, ncells=ncells,
-        signal_type=signal_type, nsigparams=nsigparams,
-        sigma_init=sigma_init,
-        solver=solver, dt0=dt0, confine=confine, sample_cells=sample_cells,
-        infer_metric=infer_metric,
-        include_phi_bias=include_phi_bias,
-        include_tilt_bias=include_tilt_bias,
-        include_metric_bias=include_metric_bias,
-        phi_hidden_dims=phi_hidden_dims, 
-        phi_hidden_acts=phi_hidden_acts, 
-        phi_final_act=phi_final_act,
-        phi_layer_normalize=phi_layer_normalize,
-        tilt_hidden_dims=tilt_hidden_dims, 
-        tilt_hidden_acts=tilt_hidden_acts, 
-        tilt_final_act=tilt_final_act,
-        tilt_layer_normalize=tilt_layer_normalize,
-        metric_hidden_dims=metric_hidden_dims, 
-        metric_hidden_acts=metric_hidden_acts, 
-        metric_final_act=metric_final_act,
-        metric_layer_normalize=metric_layer_normalize,
-        dtype=dtype,
-    )
-    hyperparams = model.get_hyperparameters()
-    # Append to dictionary those hyperparams not stored internally.
-    hyperparams.update({
-        'phi_hidden_dims' : phi_hidden_dims,
-        'phi_hidden_acts' : phi_hidden_acts,
-        'phi_final_act' : phi_final_act,
-        'phi_layer_normalize' : phi_layer_normalize,
-        'tilt_hidden_dims' : tilt_hidden_dims,
-        'tilt_hidden_acts' : tilt_hidden_acts,
-        'tilt_final_act' : tilt_final_act,
-        'tilt_layer_normalize' : tilt_layer_normalize,
-        'metric_hidden_dims' : metric_hidden_dims,
-        'metric_hidden_acts' : metric_hidden_acts,
-        'metric_final_act' : metric_final_act,
-        'metric_layer_normalize' : metric_layer_normalize,
-    })
-    model = jtu.tree_map(
-        lambda x: x.astype(dtype) if eqx.is_array(x) else x, model
-    )
-    return model, hyperparams
+#     Returns:
+#         PLNN: model.
+#         dict: dictionary of hyperparameters.
+#     """
+#     model = PLNN(
+#         key=key,
+#         ndims=ndims, nparams=nparams, nsigs=nsigs, ncells=ncells,
+#         signal_type=signal_type, nsigparams=nsigparams,
+#         sigma_init=sigma_init,
+#         solver=solver, dt0=dt0, confine=confine, sample_cells=sample_cells,
+#         infer_metric=infer_metric,
+#         include_phi_bias=include_phi_bias,
+#         include_tilt_bias=include_tilt_bias,
+#         include_metric_bias=include_metric_bias,
+#         phi_hidden_dims=phi_hidden_dims, 
+#         phi_hidden_acts=phi_hidden_acts, 
+#         phi_final_act=phi_final_act,
+#         phi_layer_normalize=phi_layer_normalize,
+#         tilt_hidden_dims=tilt_hidden_dims, 
+#         tilt_hidden_acts=tilt_hidden_acts, 
+#         tilt_final_act=tilt_final_act,
+#         tilt_layer_normalize=tilt_layer_normalize,
+#         metric_hidden_dims=metric_hidden_dims, 
+#         metric_hidden_acts=metric_hidden_acts, 
+#         metric_final_act=metric_final_act,
+#         metric_layer_normalize=metric_layer_normalize,
+#         dtype=dtype,
+#     )
+#     hyperparams = model.get_hyperparameters()
+#     # Append to dictionary those hyperparams not stored internally.
+#     hyperparams.update({
+#         'phi_hidden_dims' : phi_hidden_dims,
+#         'phi_hidden_acts' : phi_hidden_acts,
+#         'phi_final_act' : phi_final_act,
+#         'phi_layer_normalize' : phi_layer_normalize,
+#         'tilt_hidden_dims' : tilt_hidden_dims,
+#         'tilt_hidden_acts' : tilt_hidden_acts,
+#         'tilt_final_act' : tilt_final_act,
+#         'tilt_layer_normalize' : tilt_layer_normalize,
+#         'metric_hidden_dims' : metric_hidden_dims,
+#         'metric_hidden_acts' : metric_hidden_acts,
+#         'metric_final_act' : metric_final_act,
+#         'metric_layer_normalize' : metric_layer_normalize,
+#     })
+#     model = jtu.tree_map(
+#         lambda x: x.astype(dtype) if eqx.is_array(x) else x, model
+#     )
+#     return model, hyperparams
 
 
 ############################
 ##  Model Saving/Loading  ##
 ############################
 
-def save_model(fname, model, hyperparams):
-    """Save a model and hyperparameters to output file.
+# def save_model(fname, model, hyperparams):
+#     """Save a model and hyperparameters to output file.
 
-    Args:
-        fname (str): Output file name.
-        model (PLNN): Model instance.
-        hyperparams (dict): Hyperparameters of the model.
-    """
-    with open(fname, "wb") as f:
-        hyperparam_str = json.dumps(hyperparams)
-        f.write((hyperparam_str + "\n").encode())
-        eqx.tree_serialise_leaves(f, model)  
+#     Args:
+#         fname (str): Output file name.
+#         model (PLNN): Model instance.
+#         hyperparams (dict): Hyperparameters of the model.
+#     """
+#     with open(fname, "wb") as f:
+#         hyperparam_str = json.dumps(hyperparams)
+#         f.write((hyperparam_str + "\n").encode())
+#         eqx.tree_serialise_leaves(f, model)
 
-def load_model(fname, dtype=jnp.float32)->tuple[PLNN,dict]:
-    """Load a model from a binary parameter file.
+# def load_model(fname, dtype=jnp.float32)->tuple[PLNN,dict]:
+#     """Load a model from a binary parameter file.
     
-    Args:
-        fname (str): Parameter file to load.
+#     Args:
+#         fname (str): Parameter file to load.
 
-    Returns:
-        PLNN: Model instance.
-        dict: Hyperparameters.
-    """
-    with open(fname, "rb") as f:
-        hyperparams = json.loads(f.readline().decode())
-        model, _ = make_model(key=jrandom.PRNGKey(0), dtype=dtype, **hyperparams)
-        return eqx.tree_deserialise_leaves(f, model), hyperparams
+#     Returns:
+#         PLNN: Model instance.
+#         dict: Hyperparameters.
+#     """
+#     with open(fname, "rb") as f:
+#         hyperparams = json.loads(f.readline().decode())
+#         model, _ = make_model(key=jrandom.PRNGKey(0), dtype=dtype, **hyperparams)
+#         return eqx.tree_deserialise_leaves(f, model), hyperparams
 
 
 ############################
@@ -1282,10 +1292,10 @@ def load_model(fname, dtype=jnp.float32)->tuple[PLNN,dict]:
 
 def initialize_model(
     key, model, dtype=jnp.float32, *, 
-    init_phi_weights_method='xavier_uniform',
-    init_phi_weights_args=[],
-    init_phi_bias_method='constant',
-    init_phi_bias_args=[0.],
+    # init_phi_weights_method='xavier_uniform',
+    # init_phi_weights_args=[],
+    # init_phi_bias_method='constant',
+    # init_phi_bias_args=[0.],
     init_tilt_weights_method='xavier_uniform',
     init_tilt_weights_args=[],
     init_tilt_bias_method='constant',
@@ -1295,50 +1305,49 @@ def initialize_model(
     init_metric_bias_method='constant',
     init_metric_bias_args=[0.],
 ):
-    if 'xavier_uniform' in [init_phi_bias_method, init_tilt_bias_method, 
-                            init_metric_bias_method]:
+    if 'xavier_uniform' in [init_tilt_bias_method, init_metric_bias_method]:
         raise RuntimeError("Cannot initialize bias using `xavier_uniform`")
-    key, key1, key2, key3, key4, key5, key6 = jrandom.split(key, 7)
+    key, key3, key4, key5, key6 = jrandom.split(key, 5)
     is_linear = lambda x: isinstance(x, eqx.nn.Linear)
     
-    # Initialize PLNN Weights
-    get_weights = lambda m: [
-            x.weight 
-            for x in jax.tree_util.tree_leaves(m.phi_nn, is_leaf=is_linear) 
-            if is_linear(x)
-        ]
-    init_fn_args = _get_nn_init_args(init_phi_weights_args)
-    init_fn_handle = _get_nn_init_func(init_phi_weights_method)
-    if init_fn_handle:
-        init_fn = init_fn_handle(*init_fn_args)
-        weights = get_weights(model)
-        new_weights = [
-            init_fn(subkey, w.shape, dtype) 
-            for w, subkey in zip(weights, jrandom.split(key1, len(weights)))
-        ]
-        model = eqx.tree_at(get_weights, model, new_weights)
+    # # Initialize PLNN Weights
+    # get_weights = lambda m: [
+    #         x.weight 
+    #         for x in jax.tree_util.tree_leaves(m.phi_module, is_leaf=is_linear) 
+    #         if is_linear(x)
+    #     ]
+    # init_fn_args = _get_nn_init_args(init_phi_weights_args)
+    # init_fn_handle = _get_nn_init_func(init_phi_weights_method)
+    # if init_fn_handle:
+    #     init_fn = init_fn_handle(*init_fn_args)
+    #     weights = get_weights(model)
+    #     new_weights = [
+    #         init_fn(subkey, w.shape, dtype) 
+    #         for w, subkey in zip(weights, jrandom.split(key1, len(weights)))
+    #     ]
+    #     model = eqx.tree_at(get_weights, model, new_weights)
 
-    # Initialize PLNN Bias if applicable
-    get_biases = lambda m: [
-            x.bias 
-            for x in jax.tree_util.tree_leaves(m.phi_nn, is_leaf=is_linear) 
-            if is_linear(x) and x.use_bias
-        ]
-    init_fn_args = _get_nn_init_args(init_phi_bias_args)
-    init_fn_handle = _get_nn_init_func(init_phi_bias_method)
-    if init_fn_handle and model.include_phi_bias:
-        init_fn = init_fn_handle(*init_fn_args)
-        biases = get_biases(model)
-        new_biases = [
-            init_fn(subkey, b.shape, dtype) 
-            for b, subkey in zip(biases, jrandom.split(key2, len(biases)))
-        ]
-        model = eqx.tree_at(get_biases, model, new_biases)
+    # # Initialize PLNN Bias if applicable
+    # get_biases = lambda m: [
+    #         x.bias 
+    #         for x in jax.tree_util.tree_leaves(m.phi_module, is_leaf=is_linear) 
+    #         if is_linear(x) and x.use_bias
+    #     ]
+    # init_fn_args = _get_nn_init_args(init_phi_bias_args)
+    # init_fn_handle = _get_nn_init_func(init_phi_bias_method)
+    # if init_fn_handle and model.include_phi_bias:
+    #     init_fn = init_fn_handle(*init_fn_args)
+    #     biases = get_biases(model)
+    #     new_biases = [
+    #         init_fn(subkey, b.shape, dtype) 
+    #         for b, subkey in zip(biases, jrandom.split(key2, len(biases)))
+    #     ]
+    #     model = eqx.tree_at(get_biases, model, new_biases)
 
     # Initialize TiltNN Weights
     get_weights = lambda m: [
             x.weight 
-            for x in jax.tree_util.tree_leaves(m.tilt_nn, is_leaf=is_linear) 
+            for x in jax.tree_util.tree_leaves(m.tilt_module, is_leaf=is_linear) 
             if is_linear(x)
         ]
     init_fn_args = _get_nn_init_args(init_tilt_weights_args)
@@ -1355,7 +1364,7 @@ def initialize_model(
     # Initialize TiltNN Bias if applicable
     get_biases = lambda m: [
             x.bias 
-            for x in jax.tree_util.tree_leaves(m.tilt_nn, is_leaf=is_linear) 
+            for x in jax.tree_util.tree_leaves(m.tilt_module, is_leaf=is_linear) 
             if is_linear(x) and x.use_bias
         ]
     init_fn_args = _get_nn_init_args(init_tilt_bias_args)
@@ -1372,7 +1381,7 @@ def initialize_model(
     # Initialize MetricNN Weights
     get_weights = lambda m: [
             x.weight 
-            for x in jax.tree_util.tree_leaves(m.metric_nn, is_leaf=is_linear) 
+            for x in jax.tree_util.tree_leaves(m.metric_module, is_leaf=is_linear) 
             if is_linear(x)
         ]
     init_fn_args = _get_nn_init_args(init_metric_weights_args)
@@ -1389,7 +1398,7 @@ def initialize_model(
     # Initialize MetricNN Bias if applicable
     get_biases = lambda m: [
             x.bias 
-            for x in jax.tree_util.tree_leaves(m.metric_nn, is_leaf=is_linear) 
+            for x in jax.tree_util.tree_leaves(m.metric_module, is_leaf=is_linear) 
             if is_linear(x) and x.use_bias
         ]
     init_fn_args = _get_nn_init_args(init_metric_bias_args)
@@ -1404,23 +1413,3 @@ def initialize_model(
         model = eqx.tree_at(get_biases, model, new_biases)
 
     return model
-
-
-def _get_nn_init_func(init_method):
-    if init_method is None:
-        init_method = 'none'
-    init_method = init_method.lower()
-    if init_method not in _INIT_METHOD_KEYS:
-        msg = f"Unknown nn layer initialization method: {init_method}"
-        raise RuntimeError(msg)
-    return _INIT_METHOD_KEYS[init_method]
-    
-
-def _get_nn_init_args(init_args):
-    if init_args is None:
-        return []
-    elif isinstance(init_args, list):
-        return init_args
-    else:
-        return [init_args]
-    

@@ -29,6 +29,8 @@ def parse_args(args):
     parser.add_argument('--s20_range', type=float, nargs=2, default=[-1, 1])
     parser.add_argument('--s11_range', type=float, nargs=2, default=[-1, 1])
     parser.add_argument('--s21_range', type=float, nargs=2, default=[-1, 1])
+    parser.add_argument('--logr1_range', type=float, nargs=2, default=[-3, 2])
+    parser.add_argument('--logr2_range', type=float, nargs=2, default=[-3, 2])
 
     parser.add_argument('--param_func', type=str,
                         choices=['identity'])
@@ -51,25 +53,55 @@ def parse_args(args):
     return parser.parse_args(args)
 
 
-def get_sigparams(
+def get_sigparams_binary(
         tfin, 
         s10_range=[-1, 1], 
         s20_range=[-1, 1], 
         s11_range=[-1, 1], 
         s21_range=[-1, 1], 
+        tcrit_buffer=0.1,
         rng=None, 
         seed=None
 ):
     if rng is None:
         rng = np.random.default_rng(seed=seed)
-    tcrit = rng.uniform(0, tfin)
+    tcrit1 = rng.uniform(tcrit_buffer*tfin, (1-tcrit_buffer)*tfin)
+    tcrit2 = rng.uniform(tcrit_buffer*tfin, (1-tcrit_buffer)*tfin)
     s10 = rng.uniform(*s10_range)
     s20 = rng.uniform(*s20_range)
     s11 = rng.uniform(*s11_range)
     s21 = rng.uniform(*s21_range)
     return np.array([
-        [tcrit, s10, s11],
-        [tcrit, s20, s21]
+        [tcrit1, s10, s11],
+        [tcrit2, s20, s21]
+    ])
+
+
+def get_sigparams_sigmoid(
+        tfin, 
+        s10_range=[-1, 1], 
+        s20_range=[-1, 1], 
+        s11_range=[-1, 1], 
+        s21_range=[-1, 1], 
+        logr1_range=[-3, 2], 
+        logr2_range=[-3, 2], 
+        tcrit_buffer=0.1,
+        rng=None, 
+        seed=None
+):
+    if rng is None:
+        rng = np.random.default_rng(seed=seed)
+    tcrit1 = rng.uniform(tcrit_buffer*tfin, (1-tcrit_buffer)*tfin)
+    tcrit2 = rng.uniform(tcrit_buffer*tfin, (1-tcrit_buffer)*tfin)
+    s10 = rng.uniform(*s10_range)
+    s20 = rng.uniform(*s20_range)
+    s11 = rng.uniform(*s11_range)
+    s21 = rng.uniform(*s21_range)
+    r1 = np.exp(rng.uniform(*logr1_range))
+    r2 = np.exp(rng.uniform(*logr2_range))
+    return np.array([
+        [tcrit1, s10, s11, r1],
+        [tcrit2, s20, s21, r2]
     ])
 
 
@@ -89,6 +121,8 @@ def main(args):
     s20_range = args.s20_range
     s11_range = args.s11_range
     s21_range = args.s21_range
+    logr1_range = args.logr1_range
+    logr2_range = args.logr2_range
     param_func_name = args.param_func
     noise_schedule = args.noise_schedule
     noise_args = args.noise_args
@@ -121,14 +155,30 @@ def main(args):
         sim_rng = streams[simidx]
         sim_seed = sim_rng.integers(2**32)
 
-        sigparams = get_sigparams(
-            tfin, 
-            s10_range=s10_range, 
-            s20_range=s20_range, 
-            s11_range=s11_range, 
-            s21_range=s21_range, 
-            rng=sim_rng
-        )
+        if signal_schedule == "binary":
+            sigparams = get_sigparams_binary(
+                tfin, 
+                s10_range=s10_range, 
+                s20_range=s20_range, 
+                s11_range=s11_range, 
+                s21_range=s21_range, 
+                tcrit_buffer=0.1,
+                rng=sim_rng
+            )
+        elif signal_schedule == "sigmoid":
+            sigparams = get_sigparams_sigmoid(
+                tfin, 
+                s10_range=s10_range, 
+                s20_range=s20_range, 
+                s11_range=s11_range, 
+                s21_range=s21_range, 
+                logr1_range=logr1_range, 
+                logr2_range=logr2_range, 
+                tcrit_buffer=0.1,
+                rng=sim_rng
+            )
+        else:
+            raise RuntimeError(f"Unknown signal schedule {signal_schedule}")
         
         ts_saved, xs_saved, sigs_saved, ps_saved = simulate_landscape(
             landscape_name=landscape_name,
@@ -192,10 +242,10 @@ def main(args):
                 f"\nSignal type: {signal_schedule}" + \
                 f"\n$T = {tfin:.5g}$" + \
                 f"\n$dt = {dt:.5g}$" + \
-                f"\n$\sigma = {noise_args[0]:.5g}$" + \
-                f"\n$\Delta T = {dt_save:.5g}$" + \
+                f"\n$\\sigma = {noise_args[0]:.5g}$" + \
+                f"\n$\\Delta T = {dt_save:.5g}$" + \
                 f"\n$N_{{cells}} = {ncells:.5g}$" + \
-                f"\n$\mathbf{{x}}_0 = {x0}$" + \
+                f"\n$\\mathbf{{x}}_0 = {x0}$" + \
                 f"\nburnin: ${args.burnin:.5g}T$"
 
             sigparams_str = f"Signal parameters:\n  " + \

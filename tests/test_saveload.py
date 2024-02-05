@@ -1,9 +1,9 @@
 import pytest
 import jax.numpy as jnp
 import jax.random as jrandom
-import os, glob, shutil
+import os, shutil
 import numpy as np
-from plnn.models import PLNN, make_model, initialize_model, save_model, load_model
+from plnn.models import DeepPhiPLNN
 
 
 def get_make_args(fpath):
@@ -22,12 +22,12 @@ class TestMakeSaveLoad:
     
     def test_make(self, arg_fpath, dtype, initialize):
         args, key = get_make_args(arg_fpath)
-        model, _ = make_model(key, dtype=dtype, **args)
+        model, _ = DeepPhiPLNN.make_model(key, dtype=dtype, **args)
         if initialize: 
-            model = initialize_model(key, model, dtype=dtype)
+            model = model.initialize(key, dtype=dtype)
         errors = []
-        if not isinstance(model, PLNN):
-            msg = f"Wrong type for model Expected PLNN. Got {type(model)}."
+        if not isinstance(model, DeepPhiPLNN):
+            msg = f"Wrong type for model Expected DeepPhiPLNN. Got {type(model)}."
             errors.append(msg)
         model_layers = model.get_linear_layer_parameters()
         if not np.all([l.dtype == dtype for l in model_layers]):
@@ -38,26 +38,26 @@ class TestMakeSaveLoad:
 
     def test_make_save(self, arg_fpath, dtype, initialize):
         args, key = get_make_args(arg_fpath)
-        model, _ = make_model(key, dtype=dtype, **args)
+        model, _ = DeepPhiPLNN.make_model(key, dtype=dtype, **args)
         if initialize: 
-            model = initialize_model(key, model, dtype=dtype)
+            model = model.initialize(key, dtype=dtype)
         tmpdir = "tests/tmp_make_save"
         fpath = f"{tmpdir}/tmp_model.pth"
         os.makedirs(tmpdir, exist_ok=True)
-        save_model(fpath, model, args)
+        model.save(fpath, args)
         assert os.path.isfile(fpath)
         shutil.rmtree(tmpdir)
     
     def test_make_save_load(self, arg_fpath, dtype, initialize):
         args, key = get_make_args(arg_fpath)
-        model, _ = make_model(key, dtype=dtype, **args)
+        model, _ = DeepPhiPLNN.make_model(key, dtype=dtype, **args)
         if initialize: 
-            model = initialize_model(key, model, dtype=dtype)
+            model = model.initialize(key, dtype=dtype)
         tmpdir = "tests/tmp_make_save_load"
         fpath = f"{tmpdir}/tmp_model.pth"
         os.makedirs(tmpdir, exist_ok=True)
-        save_model(fpath, model, args)
+        model.save(fpath, args)
         # Load another instance
-        model2, hyperparams = load_model(fpath, dtype=dtype)
-        assert isinstance(model2, PLNN)
+        model2, hyperparams = DeepPhiPLNN.load(fpath, dtype=dtype)
+        assert isinstance(model2, DeepPhiPLNN)
         shutil.rmtree(tmpdir)

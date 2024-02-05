@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 from plnn.data_generation.signals import get_binary_function
 from plnn.data_generation.signals import get_sigmoid_function
-from plnn.models import PLNN
 
 #####################
 ##  Configuration  ##
