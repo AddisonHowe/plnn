@@ -8,12 +8,13 @@ from datetime import datetime
 import numpy as np
 
 import torch
+import jax
 import jax.numpy as jnp
 import jax.random as jrandom
 import optax
 
 from plnn.dataset import get_dataloaders
-from plnn.models import make_model, initialize_model, load_model
+from plnn.models import DeepPhiPLNN, GMMPhiPLNN
 from plnn.model_training import train_model
 from plnn.helpers import mean_diff_loss, mean_cov_loss, kl_divergence_loss
 
@@ -29,6 +30,8 @@ def parse_args(args):
                         default="data/model_training_data")
     parser.add_argument('-v', '--validation_data', type=str, 
                         default="data/model_validation_data")
+    parser.add_argument('--model_type', type=str, default="deep_phi",
+                        choices=['deep_phi', 'gmm_phi'])
     parser.add_argument('-nt', '--nsims_training', type=int, default=None)
     parser.add_argument('-nv', '--nsims_validation', type=int, default=None)
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
@@ -141,6 +144,7 @@ def parse_args(args):
     parser.add_argument('--timestamp', action="store_true",
                         help="Add timestamp to out directory.")
     parser.add_argument('--save_all', action="store_true")
+    parser.add_argument('--enforce_gpu', action="store_true")
 
     return parser.parse_args(args)
 
@@ -152,6 +156,7 @@ def main(args):
     datdir_valid = args.validation_data
     nsims_train = args.nsims_training if args.nsims_training else read_nsims(datdir_train)
     nsims_valid = args.nsims_validation if args.nsims_validation else read_nsims(datdir_valid)
+    model_type = args.model_type
     ndims = args.ndims
     nparams = args.nparams
     nsigs = args.nsigs
@@ -207,7 +212,20 @@ def main(args):
         testarray = jnp.ones([2.,2.], dtype=jnp.float64)
         assert testarray.dtype == jnp.float64, \
             "Test array is not jnp.float64 as requested."
-    
+        
+    if args.enforce_gpu:
+        try:
+            _ = jax.device_put(jnp.ones(1), device=jax.devices('gpu')[0])
+        except RuntimeError as e:
+            raise RuntimeError(f"Could not utilize GPU as requested:\n{e}")
+        
+    if model_type == 'deep_phi':
+        model_class = DeepPhiPLNN
+    elif model_type == 'gmm_phi':
+        model_class = GMMPhiPLNN
+    else:
+        raise RuntimeError(f"Unknown model class {model_type}.")
+        
     seed = seed if seed else np.random.randint(2**32)
     rng = np.random.default_rng(seed=seed)
     torch.manual_seed(int(rng.integers(2**32)))
@@ -233,10 +251,11 @@ def main(args):
     signal_type, nsigparams = get_signal_spec(signal_function_key)
     
     if cont_path:
-        model, hyperparams = load_model(cont_path)
+        model, hyperparams = model_class.load(cont_path, dtype=dtype)
     else:
-        model, hyperparams = make_model(
+        model, hyperparams = model_class.make_model(
             key=modelkey,
+            dtype=dtype,
             ndims=ndims, 
             nparams=nparams, 
             nsigs=nsigs, 
@@ -262,14 +281,12 @@ def main(args):
             include_metric_bias=True,
             sample_cells=True,
             infer_metric=infer_metric,
-            dtype=dtype,
             dt0=dt,
             solver=solver,
         )
 
-        model = initialize_model(
+        model = model.initialize(
             initkey,
-            model, 
             dtype=dtype,
             init_phi_weights_method=init_phi_weights_method,
             init_phi_weights_args=init_phi_weights_args,

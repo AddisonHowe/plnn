@@ -8,9 +8,6 @@ import numpy as np
 import jax.random as jrandom
 import equinox as eqx
 
-from plnn.models import save_model
-
-
 def train_model(
     model, 
     loss_fn, 
@@ -65,7 +62,7 @@ def train_model(
     os.makedirs(f"{outdir}/states", exist_ok=True)
     model_path = f"{outdir}/states/{model_name}_0.pth"
     if verbosity: print(f"Saving initial model state to: {model_path}")
-    save_model(model_path, model, hyperparams)
+    model.save(model_path, hyperparams)
 
     for epoch in range(num_epochs):
         if verbosity: print(f'EPOCH {epoch + 1}/{num_epochs}:', flush=True)
@@ -116,7 +113,7 @@ def train_model(
         if avg_vloss < best_vloss or save_all:
             model_path = f"{outdir}/states/{model_name}_{epoch + 1}.pth"
             if verbosity: print(f"\tSaving model to: {model_path}")
-            save_model(model_path, model, hyperparams)
+            model.save(model_path, hyperparams)
 
         # Plotting, if specified
         if plotting and (avg_vloss < best_vloss or save_all):

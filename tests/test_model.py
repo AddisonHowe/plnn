@@ -3,7 +3,7 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
-from plnn.models import PLNN, initialize_model
+from plnn.models import DeepPhiPLNN
 
 #####################
 ##  Configuration  ##
@@ -33,7 +33,9 @@ WT1 = np.array([
 def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1, 
               sample_cells=False):
     # Construct the model
-    model = PLNN(
+    model = DeepPhiPLNN(
+        key=jrandom.PRNGKey(seed),
+        dtype=dtype,
         ndims=2, 
         nparams=2, 
         nsigs=2, 
@@ -56,14 +58,12 @@ def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1,
         metric_hidden_acts='tanh',
         metric_final_act=None,
         metric_layer_normalize=False,
-        key=jrandom.PRNGKey(seed),
         sample_cells=sample_cells,
         infer_metric=True,
-        dtype=dtype,
     )
-    model = initialize_model(
+    model = model.initialize(
         jrandom.PRNGKey(seed+1),
-        model, dtype=dtype,
+        dtype=dtype,
         init_phi_weights_method='explicit',
         init_phi_weights_args=[ws],
         init_phi_bias_method='none',
