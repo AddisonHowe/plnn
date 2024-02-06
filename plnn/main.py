@@ -135,6 +135,9 @@ def parse_args(args):
     parser.add_argument('--weight_decay', type=float, default=0.)
     parser.add_argument('--lr_schedule', type=str, default='exponential_decay',
                         choices=['constant', 'exponential_decay'])
+    parser.add_argument('--transition_begin', type=int, default=50)
+    parser.add_argument('--transition_steps', type=int, default=20)
+    parser.add_argument('--decay_rate', type=float, default=0.99)
     
     # Misc. options
     parser.add_argument('--plot', action="store_true")
@@ -194,11 +197,14 @@ def main(args):
     num_epochs = args.num_epochs
     optimization_method = args.optimizer
     optimizer_args = {
-        'learning_rate' : args.learning_rate,
-        'momentum'      : args.momentum,
-        'weight_decay'  : args.weight_decay,
-        'lr_schedule'   : args.lr_schedule,
-        'clip'          : args.clip,
+        'learning_rate'     : args.learning_rate,
+        'momentum'          : args.momentum,
+        'weight_decay'      : args.weight_decay,
+        'lr_schedule'       : args.lr_schedule,
+        'clip'              : args.clip,
+        'transition_begin'  : args.transition_begin,
+        'transition_steps'  : args.transition_steps,
+        'decay_rate'        : args.decay_rate,
     }
     cont_path = args.continuation
     loss_fn_key = args.loss
@@ -357,28 +363,32 @@ def select_loss_function(key):
 def select_optimizer(optimization_method, args):
 
     if args.get('lr_schedule') == "exponential_decay":
-        lr = optax.exponential_decay(
+        # Exponentially decaying schedule
+        lr_sched = optax.exponential_decay(
             init_value=args.get('learning_rate'),
-            transition_steps=100,
-            decay_rate=0.99
+            transition_begin=args.get('transition_begin'),
+            transition_steps=args.get('transition_steps'),
+            decay_rate=args.get('decay_rate'),
         )
     elif args.get('lr_schedule') == "cosine_warmup_decay":
+        # Cosine schedule with warmup and decay
         raise NotImplementedError("cosine_warmup_decay not yet implemented.")
     else:
-        lr = args.get('learning_rate')  # constant learning rate
+        # Constant schedule
+        lr_sched = optax.constant_schedule(args.get('learning_rate'))
 
     if optimization_method == 'sgd':
-        optimizer = optax.sgd(
-            learning_rate=lr, 
+        optimizer = optax.inject_hyperparams(optax.sgd)(
+            learning_rate=lr_sched, 
             momentum=args.get('momentum'),
         )
     elif optimization_method == 'adam':
-        optimizer = optax.adam(
-            learning_rate=lr, 
+        optimizer = optax.inject_hyperparams(optax.adam)(
+            learning_rate=lr_sched, 
         )
     elif optimization_method == 'rms':
-        optimizer = optax.rmsprop(
-            learning_rate=lr,
+        optimizer = optax.inject_hyperparams(optax.rmsprop)(
+            learning_rate=lr_sched,
             momentum=args.get('momentum'),
             decay=args.get('weight_decay'),
         )
@@ -389,6 +399,11 @@ def select_optimizer(optimization_method, args):
     if args.get('clip') is not None and args.get('clip') > 0:
         optimizer = optax.chain(
             optax.clip(args.get('clip')), 
+            optimizer, 
+        )
+    else:
+        optimizer = optax.chain(
+            optax.clip(1000.), 
             optimizer, 
         )
     
