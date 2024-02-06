@@ -181,8 +181,10 @@ def train_one_epoch(
         batch_running_loss += loss.item()
         if bidx % report_every == (report_every - 1):
             avg_batch_loss = batch_running_loss / report_every
+            lr = opt_state[1].hyperparams['learning_rate']
             if verbosity: 
                 msg = f"\t\t[batch {bidx+1}/{n}] avg loss: {avg_batch_loss}"
+                msg += f"\t\t[learning rate: {lr:.5g}]"
                 print(msg, flush=True)
             batch_running_loss = 0.
 
