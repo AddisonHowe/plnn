@@ -26,10 +26,8 @@ def parse_args(args):
     parser.add_argument('--name', type=str, default="model")
     parser.add_argument('-o', '--outdir', type=str, 
                         default="out/model_training")
-    parser.add_argument('-t', '--training_data', type=str, 
-                        default="data/model_training_data")
-    parser.add_argument('-v', '--validation_data', type=str, 
-                        default="data/model_validation_data")
+    parser.add_argument('-t', '--training_data', type=str, required=True)
+    parser.add_argument('-v', '--validation_data', type=str, required=True)
     parser.add_argument('--model_type', type=str, default="deep_phi",
                         choices=['deep_phi', 'gmm_phi'])
     parser.add_argument('-nt', '--nsims_training', type=int, default=None)
@@ -85,8 +83,8 @@ def parse_args(args):
     parser.add_argument('--fix_noise', action="store_true",
                         help="NOT IMPLEMENTED! Fix the model noise parameter.")
     parser.add_argument('--sigma', type=float, default=1e-3,
-                        help="Noise level if not inferring sigma." + \
-                        "Otherwise, the initial value for the sigma parameter.")    
+                        help="Noise level if not inferring sigma. Otherwise, \
+                            the initial value for the sigma parameter.")    
 
     # Model initialization
     parser.add_argument('--init_phi_weights_method', type=str, 
@@ -135,9 +133,16 @@ def parse_args(args):
     parser.add_argument('--weight_decay', type=float, default=0.)
     parser.add_argument('--lr_schedule', type=str, default='exponential_decay',
                         choices=['constant', 'exponential_decay'])
-    parser.add_argument('--transition_begin', type=int, default=50)
-    parser.add_argument('--transition_steps', type=int, default=20)
-    parser.add_argument('--decay_rate', type=float, default=0.99)
+    parser.add_argument('--transition_begin', type=int, default=50,
+                        help="Number of steps to train at initial learning \
+                            rate. Applicable to schedules: exponential_decay.")
+    parser.add_argument('--transition_steps', type=int, default=20,
+                        help="Number of steps over which to reduce the \
+                            learning rate. Applicable to schedules: \
+                                exponential_decay.")
+    parser.add_argument('--decay_rate', type=float, default=0.99,
+                        help="Decay rate of the learning rate hyperparameter. \
+                            Applicable to schedules: exponential_decay.")
     
     # Misc. options
     parser.add_argument('--plot', action="store_true")
