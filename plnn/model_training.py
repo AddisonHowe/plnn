@@ -48,6 +48,7 @@ def train_model(
     best_vloss = 1_000_000
     loss_hist_train = []
     loss_hist_valid = []
+    learn_rate_hist = []
     sigma_hist = []
 
     opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
@@ -97,14 +98,22 @@ def train_model(
         if np.isnan(avg_vloss):
             raise RuntimeError("nan encountered in training (validation loss).")
         
+        if hasattr(opt_state[1], 'hyperparams'):
+            lr = opt_state[1].hyperparams['learning_rate']
+        else:
+            lr = 0
+
         if verbosity:
+            if lr: print(f"\tLearning Rate: {lr:.6g}")
             print(f"\tLOSS [training: {avg_tloss} | validation: {avg_vloss}]")
             print(f"\tTIME [epoch: {time.time() - etime0:.3g} sec]", flush=True)
         
         loss_hist_train.append(avg_tloss)
         loss_hist_valid.append(avg_vloss)
+        learn_rate_hist.append(lr)
         np.save(f"{outdir}/training_loss_history.npy", loss_hist_train)
         np.save(f"{outdir}/validation_loss_history.npy", loss_hist_valid)
+        np.save(f"{outdir}/learning_rate_history.npy", learn_rate_hist)
 
         sigma_hist.append(model.get_sigma())
         np.save(f"{outdir}/sigma_history.npy", sigma_hist)
@@ -181,10 +190,11 @@ def train_one_epoch(
         batch_running_loss += loss.item()
         if bidx % report_every == (report_every - 1):
             avg_batch_loss = batch_running_loss / report_every
-            lr = opt_state[1].hyperparams['learning_rate']
             if verbosity: 
                 msg = f"\t\t[batch {bidx+1}/{n}] avg loss: {avg_batch_loss}"
-                msg += f"\t\t[learning rate: {lr:.5g}]"
+                if hasattr(opt_state[1], 'hyperparams'):
+                    lr = opt_state[1].hyperparams['learning_rate']
+                    msg += f"\t\t[learning rate: {lr:.5g}]"
                 print(msg, flush=True)
             batch_running_loss = 0.
 
