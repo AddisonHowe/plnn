@@ -77,6 +77,8 @@ class TestTwoStepSimulation:
             ndims=2, 
             nparams=2, 
             nsigs=2, 
+            signal_type='jump', 
+            nsigparams=3, 
             ncells=4, 
             sigma_init=0,
             solver='euler',
