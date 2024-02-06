@@ -3,8 +3,8 @@ import jax
 import jax.numpy as jnp
 import jax.random as jrandom
 import jax.tree_util as jtu
-import equinox as eqx
 from jaxtyping import Array, Float
+import equinox as eqx
 
 from .plnn import PLNN, _get_nn_init_args, _get_nn_init_func
 
@@ -14,15 +14,14 @@ class DeepPhiPLNN(PLNN):
     include_phi_bias: bool
 
     def __init__(
-        self, 
-        key, *,
-        dtype=jnp.float32,
-        include_phi_bias=True,
-        phi_hidden_dims=[16, 32, 32, 16],
-        phi_hidden_acts='softplus',
-        phi_final_act=None,
-        phi_layer_normalize=False,
-        **kwargs
+            self, 
+            key, dtype=jnp.float32, *,
+            include_phi_bias=True,
+            phi_hidden_dims=[16, 32, 32, 16],
+            phi_hidden_acts='softplus',
+            phi_final_act=None,
+            phi_layer_normalize=False,
+            **kwargs
     ):
         key, subkey = jrandom.split(key, 2)
         super().__init__(subkey, dtype=dtype, **kwargs)
@@ -40,6 +39,60 @@ class DeepPhiPLNN(PLNN):
             bias=include_phi_bias, 
             dtype=dtype
         )
+
+    ######################
+    ##  Getter Methods  ##
+    ######################
+
+    def get_parameters(self) -> dict:
+        """Return dictionary of learnable model parameters.
+
+        The returned dictionary contains the following strings as keys: 
+            phi.w, phi.b, tilt.w, tilt.b, metric.w, metric.b, sigma
+        Each key maps to a list of jnp.array objects.
+        
+        Returns:
+            dict: Dictionary containing learnable parameters.
+        """
+        d = super().get_parameters()
+        def linear_layers(m):
+            return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
+        phi_linlayers  = linear_layers(self.phi_module)
+        d.update({
+            'phi.w' : [l.weight for l in phi_linlayers],
+            'phi.b' : [l.bias for l in phi_linlayers],
+        })
+        return d
+    
+    def get_hyperparameters(self) -> dict:
+        """Return dictionary of hyperparameters specifying the model.
+        
+        Returns:
+            dict: dictionary of hyperparameters.
+        """
+        d = super().get_hyperparameters()
+        d['include_phi_bias'] = self.include_phi_bias
+        return d
+    
+    def get_linear_layer_parameters(self, include_metric=False) -> list[Array]:
+        """Return a list of learnable parameters from linear layers.
+        
+        Args:
+            include_metric (bool, optional) : Whether to include metric params.
+                Default False.
+        Returns:
+            list[Array] : List of linear layer learnable parameter arrays.
+        """
+        params = super().get_linear_layer_parameters(include_metric)
+        def linear_layers(m):
+            return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
+        phi_linlayers  = linear_layers(self.phi_module)
+        phi_params = []
+        for layer in phi_linlayers:
+            phi_params.append(layer.weight)
+            if layer.bias is not None:
+                phi_params.append(layer.bias)
+        return phi_params + params
 
     ##############################
     ##  Core Landscape Methods  ##
@@ -76,66 +129,14 @@ class DeepPhiPLNN(PLNN):
         return self.eval_grad_confinement(y) + \
                jax.jacrev(self.phi_module)(y).squeeze(0)
     
-    ######################
-    ##  Getter Methods  ##
-    ######################
-
-    def get_parameters(self):
-        """Return dictionary of learnable model parameters.
-
-        The returned dictionary contains the following strings as keys: 
-            phi.w, phi.b, tilt.w, tilt.b, metric.w, metric.b, sigma
-        Each key maps to a list of jnp.array objects.
-        
-        Returns:
-            dict: Dictionary containing learnable parameters.     
-        """
-        d = super().get_parameters()
-        def linear_layers(m):
-            return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
-        phi_linlayers  = linear_layers(self.phi_module)
-        d.update({
-            'phi.w' : [l.weight for l in phi_linlayers],
-            'phi.b' : [l.bias for l in phi_linlayers],
-        })
-        return d
-    
-    def get_hyperparameters(self):
-        """Return dictionary of hyperparameters specifying the model.
-        
-        Returns:
-            dict: dictionary of hyperparameters.
-        """
-        d = super().get_hyperparameters()
-        d['include_phi_bias'] = self.include_phi_bias,
-        return d
-    
-    def get_linear_layer_parameters(self, include_metric=False):
-        """Return a list of learnable parameters from linear layers.
-        Args:
-            include_metric (bool, optional) : Whether to include metric params.
-                Default False.
-        Returns:
-            list[Array] : List of linear layer learnable parameter arrays.
-        """
-        params = super().get_linear_layer_parameters(include_metric)
-        def linear_layers(m):
-            return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
-        phi_linlayers  = linear_layers(self.phi_module)
-        phi_params = []
-        for layer in phi_linlayers:
-            phi_params.append(layer.weight)
-            if layer.bias is not None:
-                phi_params.append(layer.bias)
-        return phi_params + params
-
     ##########################
     ##  Model Construction  ##
     ##########################
 
     @staticmethod
     def make_model(
-        key, dtype=jnp.float32, *, 
+        key, *, 
+        dtype=jnp.float32,
         ndims=2, 
         nparams=2,
         nsigs=2, 
@@ -163,7 +164,7 @@ class DeepPhiPLNN(PLNN):
         metric_hidden_acts='softplus', 
         metric_final_act=None, 
         metric_layer_normalize=False, 
-    ) -> tuple[PLNN, dict]:
+    ) -> tuple['DeepPhiPLNN', dict]:
         """Construct a model and store all hyperparameters.
         
         Args:
@@ -258,8 +259,7 @@ class DeepPhiPLNN(PLNN):
     #############################
     
     def initialize(self, 
-            key, 
-            dtype=jnp.float32, *,
+            key, dtype=jnp.float32, *,
             init_phi_weights_method='xavier_uniform',
             init_phi_weights_args=[],
             init_phi_bias_method='constant',
@@ -272,7 +272,7 @@ class DeepPhiPLNN(PLNN):
             init_metric_weights_args=[],
             init_metric_bias_method='constant',
             init_metric_bias_args=[0.],
-    ) -> PLNN:
+    ) -> 'DeepPhiPLNN':
         """Return an initialized version of the model.
 
         Args:
@@ -299,8 +299,7 @@ class DeepPhiPLNN(PLNN):
         
         key, subkey = jrandom.split(key, 2)
         model = super().initialize(
-            subkey, 
-            dtype=dtype, 
+            subkey, dtype=dtype, 
             init_tilt_weights_method=init_tilt_weights_method,
             init_tilt_weights_args=init_tilt_weights_args,
             init_tilt_bias_method=init_tilt_bias_method,
@@ -314,7 +313,7 @@ class DeepPhiPLNN(PLNN):
         key, key1, key2 = jrandom.split(key, 3)
         is_linear = lambda x: isinstance(x, eqx.nn.Linear)
         
-        # Initialize PLNN Weights
+        # Initialize PhiNN Weights
         get_weights = lambda m: [
                 x.weight 
                 for x in jax.tree_util.tree_leaves(m.phi_module, is_leaf=is_linear) 
@@ -331,7 +330,7 @@ class DeepPhiPLNN(PLNN):
             ]
             model = eqx.tree_at(get_weights, model, new_weights)
 
-        # Initialize PLNN Bias if applicable
+        # Initialize PhiNN Bias if applicable
         get_biases = lambda m: [
                 x.bias 
                 for x in jax.tree_util.tree_leaves(m.phi_module, is_leaf=is_linear) 
@@ -355,7 +354,7 @@ class DeepPhiPLNN(PLNN):
     ############################
 
     @staticmethod
-    def load(fname:str, dtype=jnp.float32) -> tuple[PLNN, dict]:
+    def load(fname:str, dtype=jnp.float32) -> tuple['DeepPhiPLNN', dict]:
         """Load a model from a binary parameter file.
         
         Args:
@@ -373,9 +372,9 @@ class DeepPhiPLNN(PLNN):
             )
             return eqx.tree_deserialise_leaves(f, model), hyperparams
 
-    ###################################
-    ##  Construction Helper Methods  ##
-    ###################################
+    ######################
+    ##  Helper Methods  ##
+    ######################
     
     def _construct_phi_module(self, key, hidden_dims, hidden_acts, final_act, 
                               layer_normalize, bias=True, dtype=jnp.float32):

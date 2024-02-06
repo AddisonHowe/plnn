@@ -1,22 +1,21 @@
-"""Landscape Potential Model
+"""Abstract Base Class for a Parameterized Landscape.
 
 """
 
 import warnings
 import json
+from abc import abstractmethod
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
-import jax.tree_util as jtu
 from jaxtyping import Array, Float
 import diffrax
 from diffrax import diffeqsolve, WeaklyDiagonalControlTerm, MultiTerm, ODETerm
 from diffrax import VirtualBrownianTree, SaveAt
 import equinox as eqx
-from abc import abstractmethod
 
 _ACTIVATION_KEYS = {
     'none' : None,
@@ -73,12 +72,12 @@ def _get_nn_init_args(init_args):
 
 class PLNN(eqx.Module):
 
-    phi_module: eqx.Module     # learnable
+    phi_module: eqx.Module     # learnable (abstract)
     tilt_module: eqx.Module    # learnable
     logsigma: Array            # learnable
     metric_module: eqx.Module  # learnable
     
-    model_type: str
+    model_type: str  # (abstract)
     ndims: int
     nparams: int
     nsigs: int
@@ -96,33 +95,31 @@ class PLNN(eqx.Module):
 
     def __init__(
         self, 
-        key,
+        key, *,
+        dtype,
         ndims,
         nparams,
         nsigs,
         ncells,
-        signal_type='jump',
-        nsigparams=3,
-        sigma_init=1e-2,
-        solver='euler',
-        dt0=1e-2,
-        confine=False,
-        sample_cells=True,
-        infer_metric=True,
-        include_tilt_bias=False,
-        include_metric_bias=True,
-        tilt_hidden_dims=[],
-        tilt_hidden_acts=None,
-        tilt_final_act=None,
-        tilt_layer_normalize=False,
-        metric_hidden_dims=[8, 8, 8, 8],
-        metric_hidden_acts='softplus',
-        metric_final_act=None,
-        metric_layer_normalize=False,
-        dtype=jnp.float32,
+        signal_type,
+        nsigparams,
+        sigma_init,
+        solver,
+        dt0,
+        confine,
+        sample_cells,
+        infer_metric,
+        include_tilt_bias,
+        include_metric_bias,
+        tilt_hidden_dims,
+        tilt_hidden_acts,
+        tilt_final_act,
+        tilt_layer_normalize,
+        metric_hidden_dims,
+        metric_hidden_acts,
+        metric_final_act,
+        metric_layer_normalize,
     ):
-        """
-        """
         super().__init__()
         
         self.ndims = ndims
@@ -141,6 +138,9 @@ class PLNN(eqx.Module):
         self.include_metric_bias = include_metric_bias
 
         key, key_tilt, key_metric = jax.random.split(key, 3)
+
+        # Noise parameter
+        self.logsigma = jnp.array(jnp.log(sigma_init), dtype=dtype)
 
         # Tilt Neural Network: Linear tilt values. Maps nsigs to ndims.
         self.tilt_module = self._construct_tilt_module(
@@ -164,8 +164,9 @@ class PLNN(eqx.Module):
             dtype=dtype
         )
 
-        # Noise parameter
-        self.logsigma = jnp.array(jnp.log(sigma_init), dtype=dtype)
+    #######################
+    ##  Forward Methods  ##
+    #######################
 
     def __call__(
         self, 
@@ -177,17 +178,18 @@ class PLNN(eqx.Module):
     ) -> Float[Array, "b ncells ndims"]:
         """Forward call. Acts on batched data.
 
-        TODO
+        Simulate across batches a number of initial conditions between times t0
+        and t1, where t0 and t1 are arrays.
         
         Args:
-            t0 (Array) : Initial time.
-            t1 (Array) : End time.
-            y0 (Array) : Initial condition.
-            sigparams (Array) : Signal parameters.
-            dt (float) : Constant step size. Default 1e-3.
+            t0 (Array) : Initial times. Shape (b,).
+            t1 (Array) : End times. Shape (b,).
+            y0 (Array) : Initial conditions. Shape (b,n,d).
+            sigparams (Array) : Signal parameters. Shape (b,nsigs,nsigparams).
+            key (Array) : PRNGKey.
 
         Returns:
-            Array of shape (n,d).
+            (Array) Final states, across batches. Shape (b,n,d).
         """
         # Parse the inputs
         fwdvec = jax.vmap(self.simulate_forward, 0)
@@ -205,19 +207,21 @@ class PLNN(eqx.Module):
         sigparams: Float[Array, "b nsigs nsigparams"],
         key: Array,
     ) -> Float[Array, "b ncells ndims"]:
-        """Forward call. Acts on batched data.
+        """Dense version of forward call. Acts on batched data.
 
-        TODO
+        Simulate across batches a number of initial conditions between times t0
+        and t1, where t0 and t1 are arrays. Return arrays including all 
+        evaluated times.
         
         Args:
-            t0 (Array) : Initial time.
-            t1 (Array) : End time.
-            y0 (Array) : Initial condition.
-            sigparams (Array) : Signal parameters.
-            dt (float) : Constant step size. Default 1e-3.
+            t0 (Array) : Initial times. Shape (b,).
+            t1 (Array) : End times. Shape (b,).
+            y0 (Array) : Initial conditions. Shape (b,n,d).
+            sigparams (Array) : Signal parameters. Shape (b,nsigs,nsigparams).
+            key (Array) : PRNGKey.
 
         Returns:
-            Array of shape (n,d).
+            (Array) Final states, across batches. Shape (b,?,n,d).
         """
         # Parse the inputs
         fwdvec = jax.vmap(self.simulate_dense_forward, 0)
@@ -231,17 +235,17 @@ class PLNN(eqx.Module):
     ##  Getter Methods  ##
     ######################
     
-    def get_ncells(self):
+    def get_ncells(self) -> int:
         return self.ncells
 
-    def get_sigma(self):
+    def get_sigma(self) -> Float[Array, "1"]:
         return jnp.exp(self.logsigma.item())
     
-    def get_parameters(self):
+    def get_parameters(self) -> dict:
         """Return dictionary of learnable model parameters.
 
-        Returned dictionary contains (str) keys: 
-            phi.w, phi.b, tilt.w, tilt.b, sigma
+        The returned dictionary contains the following strings as keys: 
+            tilt.w, tilt.b, metric.w, metric.b, sigma
         Each key maps to a list of jnp.array objects.
         
         Returns:
@@ -261,7 +265,7 @@ class PLNN(eqx.Module):
         }
         return d
     
-    def get_hyperparameters(self):
+    def get_hyperparameters(self) -> dict:
         """Return dictionary of hyperparameters specifying the model.
         
         Returns:
@@ -284,7 +288,15 @@ class PLNN(eqx.Module):
             'include_metric_bias' : self.include_metric_bias,
         }
     
-    def get_linear_layer_parameters(self, include_metric=False):
+    def get_linear_layer_parameters(self, include_metric=False) -> list[Array]:
+        """Return a list of learnable parameters from linear layers.
+        
+        Args:
+            include_metric (bool, optional) : Whether to include metric params.
+                Default False.
+        Returns:
+            list[Array] : List of linear layer learnable parameter arrays.
+        """
         def linear_layers(m):
             return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
         tilt_linlayers = linear_layers(self.tilt_module)
@@ -314,12 +326,17 @@ class PLNN(eqx.Module):
         sigparams: Float[Array, "nsigs nsigparams"],
         key: Array,
     )->Float[Array, "ncells ndims"]:
-        """Evolve forward in time using the Euler-Maruyama method.
+        """Evolve an ensemble forward in time and return the final state.
         
         Args:
-            TODO
+            t0 (Array) : Initial time. Shape (1,).
+            t1 (Array) : End time. Shape (1,).
+            y0 (Array) : Initial condition. Shape (n,d).
+            sigparams (Array) : Signal parameters. Shape (nsigs,nsigparams).
+            key (Array) : PRNGKey.
+
         Returns:
-            Array of shape (n,d).
+            Array : Final state. Shape (n,d).
         """
         subkeys = jrandom.split(key, len(y0))
         vecsim = jax.vmap(self.simulate_path, (None, None, 0, None, 0))
@@ -333,13 +350,18 @@ class PLNN(eqx.Module):
         y0: Float[Array, "ncells ndims"],
         sigparams: Float[Array, "nsigs nsigparams"],
         key: Array,
-    )->Float[Array, "ncells ndims"]:
-        """Evolve forward in time using the Euler-Maruyama method.
+    )->Float[Array, "? ncells ndims"]:
+        """Evolve an ensemble forward in time and return all evaluated states.
         
         Args:
-            TODO
+            t0 (Array) : Initial time. Shape (1,).
+            t1 (Array) : End time. Shape (1,).
+            y0 (Array) : Initial condition. Shape (n,d).
+            sigparams (Array) : Signal parameters. Shape (nsigs,nsigparams).
+            key (Array) : PRNGKey.
+
         Returns:
-            Array of shape (n,d).
+            Array : Final state. Shape (?,n,d).
         """
         subkeys = jrandom.split(key, len(y0))
         vecsim = jax.vmap(self.simulate_dense_path, (None, None, 0, None, 0))
@@ -353,8 +375,18 @@ class PLNN(eqx.Module):
         y0: Float[Array, "ndims"],
         sigparams: Float[Array, "nsigs nsigparams"],
         key: Array,
-    ):
-        """TODO
+    )->Float[Array, "ndims"]:
+        """Evolve a single cell forward in time and return the final state.
+        
+        Args:
+            t0 (Array) : Initial time. Shape (1,).
+            t1 (Array) : End time. Shape (1,).
+            y0 (Array) : Initial condition. Shape (d,).
+            sigparams (Array) : Signal parameters. Shape (nsigs,nsigparams).
+            key (Array) : PRNGKey.
+
+        Returns:
+            Array : Final state. Shape (d,).
         """
         drift = lambda t, y, args: self.eval_metric(t, y) @ self.eval_f(t, y, sigparams)
         diffusion = lambda t, y, args: self.eval_metric(t, y) @ self.eval_g(t, y)
@@ -385,8 +417,18 @@ class PLNN(eqx.Module):
         y0: Float[Array, "ndims"],
         sigparams: Float[Array, "nsigs nsigparams"],
         key: Array,
-    ):
-        """TODO
+    )->Float[Array, "? ndims"]:
+        """Evolve a single cell forward in time and return all evaluated states.
+        
+        Args:
+            t0 (Array) : Initial time. Shape (1,).
+            t1 (Array) : End time. Shape (1,).
+            y0 (Array) : Initial condition. Shape (d,).
+            sigparams (Array) : Signal parameters. Shape (nsigs,nsigparams).
+            key (Array) : PRNGKey.
+
+        Returns:
+            Array : Final state. Shape (?,d).
         """
         drift = lambda t, y, args: self.eval_metric(t, y) @ self.eval_f(t, y, sigparams)
         diffusion = lambda t, y, args: self.eval_metric(t, y) @ self.eval_g(t, y)
@@ -423,8 +465,8 @@ class PLNN(eqx.Module):
         """Evaluate drift term. 
 
         Args:
-            t (Scalar)         : Time.
-            y (Array)          : State. Shape (d,).
+            t (Scalar)        : Time.
+            y (Array)         : State. Shape (d,).
             sigparams (Array) : Signal parameters. Shape (nsigs, nsigparams).
         Returns:
             Array of shape (d,).
@@ -513,7 +555,7 @@ class PLNN(eqx.Module):
         self, 
         y: Float[Array, "ndims"]
     ) -> Float:
-        """Evaluate potential value without tilt.
+        """(Abstract Method) Evaluate potential value without tilt.
 
         Args:
             y (Array) : State. Shape (d,).
@@ -528,7 +570,7 @@ class PLNN(eqx.Module):
         t: Float, 
         y: Float[Array, "ndims"]
     ) -> Float[Array, "ndims"]:
-        """Evaluate gradient of potential without tilt.
+        """(Abstract Method) Evaluate gradient of potential without tilt.
 
         Args:
             t (Scalar) : Time.
@@ -552,7 +594,7 @@ class PLNN(eqx.Module):
         Returns:
             Array of shape (ndims,).
         """
-        if self.signal_type == "jump":
+        if self.signal_type in ('jump', 'step', 'binary'):
             signal_vals = self.binary_signal_function(t, sigparams)
         elif self.signal_type == "sigmoid":
             signal_vals = self.sigmoid_signal_function(t, sigparams)
@@ -568,8 +610,8 @@ class PLNN(eqx.Module):
         """Evaluate tilted landscape level. 
 
         Args:
-            t (Scalar)         : Time.
-            y (Array)          : State. Shape (d,).
+            t (Scalar)        : Time.
+            y (Array)         : State. Shape (d,).
             sigparams (Array) : Signal parameters. Shape (nsigs, nsigparams).
         Returns:
             Array of shape (1,).
@@ -589,7 +631,7 @@ class PLNN(eqx.Module):
         y: Float[Array, "ncells ndims"], 
         sigparams: Float[Array, "nsigs nsigparams"],
     ) -> Float[Array, "ncells ndims"]:
-        """Drift term vectorized across a set of cells.
+        """Drift term vectorized across an ensemble of cells.
 
         Args:
             t (Scalar)         : Time.
@@ -606,7 +648,7 @@ class PLNN(eqx.Module):
         t: Float, 
         y: Float[Array, "ncells ndims"]
     ) -> Float[Array, "ncells ndims"]:
-        """Diffusion term vectorized across a set of cells. 
+        """Diffusion term vectorized across an ensemble of cells. 
 
         Args:
             t (Scalar) : Time.
@@ -621,7 +663,7 @@ class PLNN(eqx.Module):
         self, 
         y: Float[Array, "ncells ndims"]
     ) -> Float[Array, "ncells"]:
-        """Potential value without tilt, vectorized across a set of cells.
+        """Potential value without tilt, vectorized across an ensemble of cells.
 
         Args:
             y (Array) : State. Shape (n,d).
@@ -685,8 +727,7 @@ class PLNN(eqx.Module):
         tcrit = sigparams[...,0]
         p0 = sigparams[...,1]
         p1 = sigparams[...,2]
-        val = (t < tcrit) * p0 + (t >= tcrit) * p1
-        return val
+        return (t < tcrit) * p0 + (t >= tcrit) * p1
     
     @eqx.filter_jit
     def sigmoid_signal_function(
@@ -706,8 +747,8 @@ class PLNN(eqx.Module):
         p0 = sigparams[...,1]
         p1 = sigparams[...,2]
         r = sigparams[...,3]
-        val = p0 + 0.5*(p1 - p0) * (1 + jnp.tanh(r * (t - tcrit)))
-        return val
+        return p0 + 0.5*(p1 - p0) * (1 + jnp.tanh(r * (t - tcrit)))
+        
     
     ############################
     ##  Model Saving/Loading  ##
@@ -725,40 +766,114 @@ class PLNN(eqx.Module):
             f.write((hyperparam_str + "\n").encode())
             eqx.tree_serialise_leaves(f, self)
 
+    @staticmethod
+    @abstractmethod
+    def load(fname:str, dtype=jnp.float32) -> tuple['PLNN', dict]:
+        """(Abstract Method) Load a model from a binary parameter file.
+        
+        Args:
+            fname (str): Parameter file to load.
+            dtype : Datatype. Either jnp.float32 or jnp.float64.
+
+        Returns:
+            PLNN: Model instance.
+            dict: Model hyperparameters.
+        """
+        raise NotImplementedError()
+
     #############################
     ##  Initialization Method  ##
     #############################
 
-    def initialize(self, key, dtype=jnp.float32, *,
-        # init_phi_weights_method='xavier_uniform',
-        # init_phi_weights_args=[],
-        # init_phi_bias_method='constant',
-        # init_phi_bias_args=[0.],
-        init_tilt_weights_method='xavier_uniform',
-        init_tilt_weights_args=[],
-        init_tilt_bias_method='constant',
-        init_tilt_bias_args=[0.],
-        init_metric_weights_method='xavier_uniform',
-        init_metric_weights_args=[],
-        init_metric_bias_method='constant',
-        init_metric_bias_args=[0.],
-    ):
-        new_model = initialize_model(
-            key, self, dtype=dtype,
-            # init_phi_weights_method=init_phi_weights_method,
-            # init_phi_weights_args=init_phi_weights_args,
-            # init_phi_bias_method=init_phi_bias_method,
-            # init_phi_bias_args=init_phi_bias_args,
-            init_tilt_weights_method=init_tilt_weights_method,
-            init_tilt_weights_args=init_tilt_weights_args,
-            init_tilt_bias_method=init_tilt_bias_method,
-            init_tilt_bias_args=init_tilt_bias_args,
-            init_metric_weights_method=init_metric_weights_method,
-            init_metric_weights_args=init_metric_weights_args,
-            init_metric_bias_method=init_metric_bias_method,
-            init_metric_bias_args=init_metric_bias_args,
-        )
-        return new_model
+    def initialize(
+            self, 
+            key, dtype=jnp.float32, *,
+            init_tilt_weights_method='xavier_uniform',
+            init_tilt_weights_args=[],
+            init_tilt_bias_method='constant',
+            init_tilt_bias_args=[0.],
+            init_metric_weights_method='xavier_uniform',
+            init_metric_weights_args=[],
+            init_metric_bias_method='constant',
+            init_metric_bias_args=[0.],
+    ) -> 'PLNN':
+        if 'xavier_uniform' in [init_tilt_bias_method, init_metric_bias_method]:
+            raise RuntimeError("Cannot initialize bias using `xavier_uniform`")
+        
+        model = self
+
+        key, key1, key2, key3, key4 = jrandom.split(key, 5)
+        is_linear = lambda x: isinstance(x, eqx.nn.Linear)
+        
+        # Initialize TiltNN Weights
+        get_weights = lambda m: [
+                x.weight 
+                for x in jax.tree_util.tree_leaves(m.tilt_module, is_leaf=is_linear) 
+                if is_linear(x)
+            ]
+        init_fn_args = _get_nn_init_args(init_tilt_weights_args)
+        init_fn_handle = _get_nn_init_func(init_tilt_weights_method)
+        if init_fn_handle:
+            init_fn = init_fn_handle(*init_fn_args)
+            weights = get_weights(model)
+            new_weights = [
+                init_fn(subkey, w.shape, dtype) 
+                for w, subkey in zip(weights, jrandom.split(key1, len(weights)))
+            ]
+            model = eqx.tree_at(get_weights, model, new_weights)
+
+        # Initialize TiltNN Bias if applicable
+        get_biases = lambda m: [
+                x.bias 
+                for x in jax.tree_util.tree_leaves(m.tilt_module, is_leaf=is_linear) 
+                if is_linear(x) and x.use_bias
+            ]
+        init_fn_args = _get_nn_init_args(init_tilt_bias_args)
+        init_fn_handle = _get_nn_init_func(init_tilt_bias_method)
+        if init_fn_handle and model.include_tilt_bias:
+            init_fn = init_fn_handle(*init_fn_args)
+            biases = get_biases(model)
+            new_biases = [
+                init_fn(subkey, b.shape, dtype) 
+                for b, subkey in zip(biases, jrandom.split(key2, len(biases)))
+            ]
+            model = eqx.tree_at(get_biases, model, new_biases)
+
+        # Initialize MetricNN Weights
+        get_weights = lambda m: [
+                x.weight 
+                for x in jax.tree_util.tree_leaves(m.metric_module, is_leaf=is_linear) 
+                if is_linear(x)
+            ]
+        init_fn_args = _get_nn_init_args(init_metric_weights_args)
+        init_fn_handle = _get_nn_init_func(init_metric_weights_method)
+        if init_fn_handle:
+            init_fn = init_fn_handle(*init_fn_args)
+            weights = get_weights(model)
+            new_weights = [
+                init_fn(subkey, w.shape, dtype) 
+                for w, subkey in zip(weights, jrandom.split(key3, len(weights)))
+            ]
+            model = eqx.tree_at(get_weights, model, new_weights)
+
+        # Initialize MetricNN Bias if applicable
+        get_biases = lambda m: [
+                x.bias 
+                for x in jax.tree_util.tree_leaves(m.metric_module, is_leaf=is_linear) 
+                if is_linear(x) and x.use_bias
+            ]
+        init_fn_args = _get_nn_init_args(init_metric_bias_args)
+        init_fn_handle = _get_nn_init_func(init_metric_bias_method)
+        if init_fn_handle and model.include_metric_bias:
+            init_fn = init_fn_handle(*init_fn_args)
+            biases = get_biases(model)
+            new_biases = [
+                init_fn(subkey, b.shape, dtype) 
+                for b, subkey in zip(biases, jrandom.split(key4, len(biases)))
+            ]
+            model = eqx.tree_at(get_biases, model, new_biases)
+
+        return model
     
     ###################################
     ##  Construction Helper Methods  ##
@@ -811,14 +926,7 @@ class PLNN(eqx.Module):
             layer_list.append(eqx.nn.LayerNorm([dout]))  # TODO: untested
         if activation:
             layer_list.append(eqx.nn.Lambda(activation))
-        
-    # def _construct_phi_module(self, key, hidden_dims, hidden_acts, final_act, 
-    #                       layer_normalize, bias=True, dtype=jnp.float32):
-    #     return self._construct_ffn(
-    #         key, self.ndims, 1,
-    #         hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
-    #     )
-    
+            
     def _construct_tilt_module(self, key, hidden_dims, hidden_acts, final_act, 
                           layer_normalize, bias=False, dtype=jnp.float32):
         return self._construct_ffn(
@@ -1134,282 +1242,3 @@ class PLNN(eqx.Module):
                 y0_samp = y0_samp.at[bidx,:].set(y0[bidx,samp_idxs])
         return y0_samp
     
-
-##########################
-##  Model Construction  ##
-##########################
-
-# def make_model(
-#     key, *, 
-#     ndims=2, 
-#     nparams=2,
-#     nsigs=2, 
-#     ncells=100, 
-#     signal_type='jump', 
-#     nsigparams=3, 
-#     sigma_init=1e-2, 
-#     solver='euler', 
-#     dt0=1e-2, 
-#     confine=False,
-#     sample_cells=True, 
-#     infer_metric=True,
-#     include_phi_bias=True, 
-#     include_tilt_bias=False,
-#     include_metric_bias=True,
-#     phi_hidden_dims=[16,32,32,16], 
-#     phi_hidden_acts='softplus', 
-#     phi_final_act=None, 
-#     phi_layer_normalize=False, 
-#     tilt_hidden_dims=[],
-#     tilt_hidden_acts=None,
-#     tilt_final_act=None,
-#     tilt_layer_normalize=False,
-#     metric_hidden_dims=[8,8,8,8], 
-#     metric_hidden_acts='softplus', 
-#     metric_final_act=None, 
-#     metric_layer_normalize=False, 
-#     dtype=jnp.float32,
-# ):
-#     """Construct a model and store all hyperparameters.
-    
-#     Args:
-#         key
-#         ndims
-#         nparams
-#         nsigs
-#         ncells
-#         signal_type
-#         nsigparams
-#         sigma_init
-#         solver
-#         dt0
-#         confine
-#         sample_cells
-#         infer_metric
-#         include_phi_bias
-#         include_tilt_bias
-#         include_metric_bias
-#         phi_hidden_dims
-#         phi_hidden_acts
-#         phi_final_act
-#         phi_layer_normalize
-#         tilt_hidden_dims
-#         tilt_hidden_acts
-#         tilt_final_act
-#         tilt_layer_normalize
-#         metric_hidden_dims
-#         metric_hidden_acts
-#         metric_final_act
-#         metric_layer_normalize
-#         dtype
-    
-#     Returns:
-#         PLNN: model.
-#         dict: dictionary of hyperparameters.
-#     """
-#     model = PLNN(
-#         key=key,
-#         ndims=ndims, nparams=nparams, nsigs=nsigs, ncells=ncells,
-#         signal_type=signal_type, nsigparams=nsigparams,
-#         sigma_init=sigma_init,
-#         solver=solver, dt0=dt0, confine=confine, sample_cells=sample_cells,
-#         infer_metric=infer_metric,
-#         include_phi_bias=include_phi_bias,
-#         include_tilt_bias=include_tilt_bias,
-#         include_metric_bias=include_metric_bias,
-#         phi_hidden_dims=phi_hidden_dims, 
-#         phi_hidden_acts=phi_hidden_acts, 
-#         phi_final_act=phi_final_act,
-#         phi_layer_normalize=phi_layer_normalize,
-#         tilt_hidden_dims=tilt_hidden_dims, 
-#         tilt_hidden_acts=tilt_hidden_acts, 
-#         tilt_final_act=tilt_final_act,
-#         tilt_layer_normalize=tilt_layer_normalize,
-#         metric_hidden_dims=metric_hidden_dims, 
-#         metric_hidden_acts=metric_hidden_acts, 
-#         metric_final_act=metric_final_act,
-#         metric_layer_normalize=metric_layer_normalize,
-#         dtype=dtype,
-#     )
-#     hyperparams = model.get_hyperparameters()
-#     # Append to dictionary those hyperparams not stored internally.
-#     hyperparams.update({
-#         'phi_hidden_dims' : phi_hidden_dims,
-#         'phi_hidden_acts' : phi_hidden_acts,
-#         'phi_final_act' : phi_final_act,
-#         'phi_layer_normalize' : phi_layer_normalize,
-#         'tilt_hidden_dims' : tilt_hidden_dims,
-#         'tilt_hidden_acts' : tilt_hidden_acts,
-#         'tilt_final_act' : tilt_final_act,
-#         'tilt_layer_normalize' : tilt_layer_normalize,
-#         'metric_hidden_dims' : metric_hidden_dims,
-#         'metric_hidden_acts' : metric_hidden_acts,
-#         'metric_final_act' : metric_final_act,
-#         'metric_layer_normalize' : metric_layer_normalize,
-#     })
-#     model = jtu.tree_map(
-#         lambda x: x.astype(dtype) if eqx.is_array(x) else x, model
-#     )
-#     return model, hyperparams
-
-
-############################
-##  Model Saving/Loading  ##
-############################
-
-# def save_model(fname, model, hyperparams):
-#     """Save a model and hyperparameters to output file.
-
-#     Args:
-#         fname (str): Output file name.
-#         model (PLNN): Model instance.
-#         hyperparams (dict): Hyperparameters of the model.
-#     """
-#     with open(fname, "wb") as f:
-#         hyperparam_str = json.dumps(hyperparams)
-#         f.write((hyperparam_str + "\n").encode())
-#         eqx.tree_serialise_leaves(f, model)
-
-# def load_model(fname, dtype=jnp.float32)->tuple[PLNN,dict]:
-#     """Load a model from a binary parameter file.
-    
-#     Args:
-#         fname (str): Parameter file to load.
-
-#     Returns:
-#         PLNN: Model instance.
-#         dict: Hyperparameters.
-#     """
-#     with open(fname, "rb") as f:
-#         hyperparams = json.loads(f.readline().decode())
-#         model, _ = make_model(key=jrandom.PRNGKey(0), dtype=dtype, **hyperparams)
-#         return eqx.tree_deserialise_leaves(f, model), hyperparams
-
-
-############################
-##  Model Initialization  ##
-############################
-
-def initialize_model(
-    key, model, dtype=jnp.float32, *, 
-    # init_phi_weights_method='xavier_uniform',
-    # init_phi_weights_args=[],
-    # init_phi_bias_method='constant',
-    # init_phi_bias_args=[0.],
-    init_tilt_weights_method='xavier_uniform',
-    init_tilt_weights_args=[],
-    init_tilt_bias_method='constant',
-    init_tilt_bias_args=[0.],
-    init_metric_weights_method='xavier_uniform',
-    init_metric_weights_args=[],
-    init_metric_bias_method='constant',
-    init_metric_bias_args=[0.],
-):
-    if 'xavier_uniform' in [init_tilt_bias_method, init_metric_bias_method]:
-        raise RuntimeError("Cannot initialize bias using `xavier_uniform`")
-    key, key3, key4, key5, key6 = jrandom.split(key, 5)
-    is_linear = lambda x: isinstance(x, eqx.nn.Linear)
-    
-    # # Initialize PLNN Weights
-    # get_weights = lambda m: [
-    #         x.weight 
-    #         for x in jax.tree_util.tree_leaves(m.phi_module, is_leaf=is_linear) 
-    #         if is_linear(x)
-    #     ]
-    # init_fn_args = _get_nn_init_args(init_phi_weights_args)
-    # init_fn_handle = _get_nn_init_func(init_phi_weights_method)
-    # if init_fn_handle:
-    #     init_fn = init_fn_handle(*init_fn_args)
-    #     weights = get_weights(model)
-    #     new_weights = [
-    #         init_fn(subkey, w.shape, dtype) 
-    #         for w, subkey in zip(weights, jrandom.split(key1, len(weights)))
-    #     ]
-    #     model = eqx.tree_at(get_weights, model, new_weights)
-
-    # # Initialize PLNN Bias if applicable
-    # get_biases = lambda m: [
-    #         x.bias 
-    #         for x in jax.tree_util.tree_leaves(m.phi_module, is_leaf=is_linear) 
-    #         if is_linear(x) and x.use_bias
-    #     ]
-    # init_fn_args = _get_nn_init_args(init_phi_bias_args)
-    # init_fn_handle = _get_nn_init_func(init_phi_bias_method)
-    # if init_fn_handle and model.include_phi_bias:
-    #     init_fn = init_fn_handle(*init_fn_args)
-    #     biases = get_biases(model)
-    #     new_biases = [
-    #         init_fn(subkey, b.shape, dtype) 
-    #         for b, subkey in zip(biases, jrandom.split(key2, len(biases)))
-    #     ]
-    #     model = eqx.tree_at(get_biases, model, new_biases)
-
-    # Initialize TiltNN Weights
-    get_weights = lambda m: [
-            x.weight 
-            for x in jax.tree_util.tree_leaves(m.tilt_module, is_leaf=is_linear) 
-            if is_linear(x)
-        ]
-    init_fn_args = _get_nn_init_args(init_tilt_weights_args)
-    init_fn_handle = _get_nn_init_func(init_tilt_weights_method)
-    if init_fn_handle:
-        init_fn = init_fn_handle(*init_fn_args)
-        weights = get_weights(model)
-        new_weights = [
-            init_fn(subkey, w.shape, dtype) 
-            for w, subkey in zip(weights, jrandom.split(key3, len(weights)))
-        ]
-        model = eqx.tree_at(get_weights, model, new_weights)
-
-    # Initialize TiltNN Bias if applicable
-    get_biases = lambda m: [
-            x.bias 
-            for x in jax.tree_util.tree_leaves(m.tilt_module, is_leaf=is_linear) 
-            if is_linear(x) and x.use_bias
-        ]
-    init_fn_args = _get_nn_init_args(init_tilt_bias_args)
-    init_fn_handle = _get_nn_init_func(init_tilt_bias_method)
-    if init_fn_handle and model.include_tilt_bias:
-        init_fn = init_fn_handle(*init_fn_args)
-        biases = get_biases(model)
-        new_biases = [
-            init_fn(subkey, b.shape, dtype) 
-            for b, subkey in zip(biases, jrandom.split(key4, len(biases)))
-        ]
-        model = eqx.tree_at(get_biases, model, new_biases)
-
-    # Initialize MetricNN Weights
-    get_weights = lambda m: [
-            x.weight 
-            for x in jax.tree_util.tree_leaves(m.metric_module, is_leaf=is_linear) 
-            if is_linear(x)
-        ]
-    init_fn_args = _get_nn_init_args(init_metric_weights_args)
-    init_fn_handle = _get_nn_init_func(init_metric_weights_method)
-    if init_fn_handle:
-        init_fn = init_fn_handle(*init_fn_args)
-        weights = get_weights(model)
-        new_weights = [
-            init_fn(subkey, w.shape, dtype) 
-            for w, subkey in zip(weights, jrandom.split(key5, len(weights)))
-        ]
-        model = eqx.tree_at(get_weights, model, new_weights)
-
-    # Initialize MetricNN Bias if applicable
-    get_biases = lambda m: [
-            x.bias 
-            for x in jax.tree_util.tree_leaves(m.metric_module, is_leaf=is_linear) 
-            if is_linear(x) and x.use_bias
-        ]
-    init_fn_args = _get_nn_init_args(init_metric_bias_args)
-    init_fn_handle = _get_nn_init_func(init_metric_bias_method)
-    if init_fn_handle and model.include_metric_bias:
-        init_fn = init_fn_handle(*init_fn_args)
-        biases = get_biases(model)
-        new_biases = [
-            init_fn(subkey, b.shape, dtype) 
-            for b, subkey in zip(biases, jrandom.split(key6, len(biases)))
-        ]
-        model = eqx.tree_at(get_biases, model, new_biases)
-
-    return model

@@ -31,7 +31,7 @@ WT1 = np.array([
 ], dtype=float)
 
 def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1, 
-              sample_cells=False):
+              sample_cells=False, signal_type='binary', nsigparams=3):
     # Construct the model
     model = DeepPhiPLNN(
         key=jrandom.PRNGKey(seed),
@@ -39,6 +39,8 @@ def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1,
         ndims=2, 
         nparams=2, 
         nsigs=2, 
+        signal_type=signal_type,
+        nsigparams=nsigparams,
         ncells=ncells, 
         sigma_init=sigma,
         dt0=dt,
@@ -60,6 +62,7 @@ def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1,
         metric_layer_normalize=False,
         sample_cells=sample_cells,
         infer_metric=True,
+        solver='euler'
     )
     model = model.initialize(
         jrandom.PRNGKey(seed+1),
@@ -304,7 +307,8 @@ class TestBatchedCoreLandscapeMethods:
     def test_grad_tilt(self, dtype, wts, sigparams, t, 
                        grad_tilt_exp, shape_exp):
         sigparams = jnp.array(sigparams, dtype=dtype)
-        model = get_model([W1,W2,W3], wts, dtype)
+        model = get_model([W1,W2,W3], wts, dtype, 
+                          signal_type='jump', nsigparams=3)
         ts = jnp.array(t, dtype=dtype)
         grad_tilt_act = jax.vmap(model.grad_tilt, 0)(ts, sigparams)
 
