@@ -219,10 +219,9 @@ def main(args):
     dtype = jnp.float32 if args.dtype == 'float32' else jnp.float64
     do_plot = args.plot
     
-    if dtype == jnp.float64:
-        testarray = jnp.ones([2.,2.], dtype=jnp.float64)
-        assert testarray.dtype == jnp.float64, \
-            "Test array is not jnp.float64 as requested."
+    testarray = jnp.ones([2, 2], dtype=jnp.float64)
+    assert testarray.dtype == dtype, \
+        f"Test array is not of type {dtype} as expected. Got {testarray.dtype}."
         
     if args.enforce_gpu:
         try:
