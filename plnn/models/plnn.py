@@ -368,6 +368,33 @@ class PLNN(eqx.Module):
         return vecsim(t0, t1, y0, sigparams, subkeys)
     
     @eqx.filter_jit
+    def simulate_ensemble_with_saves(
+        self,
+        t0: Float,
+        t1: Float,
+        y0: Float[Array, "ncells ndims"],
+        sigparams: Float[Array, "nsigs nsigparams"],
+        ts_save: Float[Array, "?"],
+        key: Array,
+    )->Float[Array, "? ncells ndims"]:
+        """Evolve an ensemble forward in time and return all evaluated states.
+        
+        Args:
+            t0 (Array) : Initial time. Shape (1,).
+            t1 (Array) : End time. Shape (1,).
+            y0 (Array) : Initial condition. Shape (n,d).
+            sigparams (Array) : Signal parameters. Shape (nsigs,nsigparams).
+            ts_save (Array) : Times at which to save.
+            key (Array) : PRNGKey.
+
+        Returns:
+            Array : Final state. Shape (?,n,d).
+        """
+        subkeys = jrandom.split(key, len(y0))
+        vecsim = jax.vmap(self.simulate_path_with_saves, (None, None, 0, None, None, 0))
+        return vecsim(t0, t1, y0, sigparams, ts_save, subkeys)
+    
+    @eqx.filter_jit
     def simulate_path(
         self,
         t0: Float,
@@ -443,6 +470,50 @@ class PLNN(eqx.Module):
         )
         solver = _SOLVER_KEYS[self.solver]()
         saveat = SaveAt(t0=True, t1=True, steps=True)
+        sol = diffeqsolve(
+            terms, solver, 
+            t0, t1, dt0=self.dt0, 
+            y0=y0, 
+            saveat=saveat
+        )
+        return sol.ts, sol.ys
+    
+    @eqx.filter_jit
+    def simulate_path_with_saves(
+        self,
+        t0: Float,
+        t1: Float,
+        y0: Float[Array, "ndims"],
+        sigparams: Float[Array, "nsigs nsigparams"],
+        ts_save: Float[Array, "?"],
+        key: Array,
+    )->Float[Array, "? ndims"]:
+        """Evolve a single cell forward in time and return all evaluated states.
+        
+        Args:
+            t0 (Array) : Initial time. Shape (1,).
+            t1 (Array) : End time. Shape (1,).
+            y0 (Array) : Initial condition. Shape (d,).
+            sigparams (Array) : Signal parameters. Shape (nsigs,nsigparams).
+            ts_save (Array) : Times at which to save.
+            key (Array) : PRNGKey.
+
+        Returns:
+            Array : Final state. Shape (?,d).
+        """
+        drift = lambda t, y, args: self.eval_metric(t, y) @ self.eval_f(t, y, sigparams)
+        diffusion = lambda t, y, args: self.eval_metric(t, y) @ self.eval_g(t, y)
+        brownian_motion = VirtualBrownianTree(
+            t0, t1, tol=1e-3, 
+            shape=(len(y0),), 
+            key=key
+        )
+        terms = MultiTerm(
+            ODETerm(drift), 
+            WeaklyDiagonalControlTerm(diffusion, brownian_motion)
+        )
+        solver = _SOLVER_KEYS[self.solver]()
+        saveat = SaveAt(ts=ts_save)
         sol = diffeqsolve(
             terms, solver, 
             t0, t1, dt0=self.dt0, 
