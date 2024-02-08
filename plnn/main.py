@@ -15,8 +15,9 @@ import optax
 
 from plnn.dataset import get_dataloaders
 from plnn.models import DeepPhiPLNN, GMMPhiPLNN
+from plnn.loss_functions import select_loss_function
+from plnn.optimizers import get_optimizer_args, select_optimizer
 from plnn.model_training import train_model
-from plnn.helpers import mean_diff_loss, mean_cov_loss, kl_divergence_loss
 
 
 def parse_args(args):
@@ -35,7 +36,6 @@ def parse_args(args):
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
     parser.add_argument('-b', '--batch_size', type=int, default=25)
     parser.add_argument('--report_every', type=int, default=10)
-    parser.add_argument('--clip', type=float, default=None)
 
     # Model simulation
     parser.add_argument('-nd', '--ndims', type=int, default=2,
@@ -57,32 +57,36 @@ def parse_args(args):
                         help="Internal differential equation solver to use.")    
 
     # Model architecture
-    parser.add_argument('--confine', action="store_true")
-    parser.add_argument('--phi_hidden_dims', type=int, nargs='+', 
+    grp_ma = parser.add_argument_group(
+        title="model architecture", 
+        description="Specifications of the model structure."
+    )
+    grp_ma.add_argument('--confine', action="store_true")
+    grp_ma.add_argument('--phi_hidden_dims', type=int, nargs='+', 
                         default=[16, 32, 32, 16])
-    parser.add_argument('--phi_hidden_acts', type=str, nargs='+', 
+    grp_ma.add_argument('--phi_hidden_acts', type=str, nargs='+', 
                         default=4*['softplus'])
-    parser.add_argument('--phi_final_act', type=str, default='softplus')
-    parser.add_argument('--phi_layer_normalize', action='store_true')
+    grp_ma.add_argument('--phi_final_act', type=str, default='softplus')
+    grp_ma.add_argument('--phi_layer_normalize', action='store_true')
 
-    parser.add_argument('--tilt_hidden_dims', type=int, nargs='+', 
+    grp_ma.add_argument('--tilt_hidden_dims', type=int, nargs='+', 
                         default=[])
-    parser.add_argument('--tilt_hidden_acts', type=str, nargs='+', 
+    grp_ma.add_argument('--tilt_hidden_acts', type=str, nargs='+', 
                         default=None)
-    parser.add_argument('--tilt_final_act', type=str, default=None)
-    parser.add_argument('--tilt_layer_normalize', action='store_true')
+    grp_ma.add_argument('--tilt_final_act', type=str, default=None)
+    grp_ma.add_argument('--tilt_layer_normalize', action='store_true')
 
-    parser.add_argument('--infer_metric', action="store_true")
-    parser.add_argument('--metric_hidden_dims', type=int, nargs='+', 
+    grp_ma.add_argument('--infer_metric', action="store_true")
+    grp_ma.add_argument('--metric_hidden_dims', type=int, nargs='+', 
                         default=[8, 8, 8, 8])
-    parser.add_argument('--metric_hidden_acts', type=str, nargs='+', 
+    grp_ma.add_argument('--metric_hidden_acts', type=str, nargs='+', 
                         default=4*['softplus'])
-    parser.add_argument('--metric_final_act', type=str, default=None)
-    parser.add_argument('--metric_layer_normalize', action='store_true')
+    grp_ma.add_argument('--metric_final_act', type=str, default=None)
+    grp_ma.add_argument('--metric_layer_normalize', action='store_true')
 
-    parser.add_argument('--fix_noise', action="store_true",
+    grp_ma.add_argument('--fix_noise', action="store_true",
                         help="NOT IMPLEMENTED! Fix the model noise parameter.")
-    parser.add_argument('--sigma', type=float, default=1e-3,
+    grp_ma.add_argument('--sigma', type=float, default=1e-3,
                         help="Noise level if not inferring sigma. Otherwise, \
                             the initial value for the sigma parameter.")    
 
@@ -126,23 +130,36 @@ def parse_args(args):
                         help="Path to file with model parameters to load.")
     
     # Optimizer
-    parser.add_argument('--optimizer', type=str, default="sgd", 
+    grp_op = parser.add_argument_group(
+        title="optimization args",
+        description="Specifications of the optimization training algorithm."
+    )
+    grp_op.add_argument('--optimizer', type=str, default="sgd", 
                         choices=['sgd', 'adam', 'rms'])
-    parser.add_argument('--learning_rate', type=float, default=1e-3)
-    parser.add_argument('--momentum', type=float, default=0.9)
-    parser.add_argument('--weight_decay', type=float, default=0.)
-    parser.add_argument('--lr_schedule', type=str, default='exponential_decay',
-                        choices=['constant', 'exponential_decay'])
-    parser.add_argument('--transition_begin', type=int, default=50,
-                        help="Number of steps to train at initial learning \
-                            rate. Applicable to schedules: exponential_decay.")
-    parser.add_argument('--transition_steps', type=int, default=20,
-                        help="Number of steps over which to reduce the \
-                            learning rate. Applicable to schedules: \
-                                exponential_decay.")
-    parser.add_argument('--decay_rate', type=float, default=0.99,
-                        help="Decay rate of the learning rate hyperparameter. \
-                            Applicable to schedules: exponential_decay.")
+    grp_op.add_argument('--momentum', type=float, default=0.9)
+    grp_op.add_argument('--weight_decay', type=float, default=0.)
+    grp_op.add_argument('--clip', type=float, default=1.0)
+    grp_op.add_argument('--lr_schedule', type=str, default='exponential_decay',
+                        choices=['constant', 'exponential_decay', 
+                                 'warmup_cosine_decay'])
+    grp_op.add_argument('--learning_rate', type=float, default=1e-3)
+    grp_op.add_argument('--nepochs_warmup', type=int, default=1,
+                        help="Number of warmup epochs. Applicable to \
+                            schedules: exponential_decay.")
+    grp_op.add_argument('--nepochs_decay', type=int, default=-1,
+                        help="Number of epochs over which to transition. \
+                            Applicable to schedules: exponential_decay, \
+                                warmup_cosine_decay.")
+    grp_op.add_argument('--final_learning_rate', type=float, default=0.001,
+                        help="Value to which the learning rate will decay. \
+                            Applicable to schedules: exponential_decay, \
+                                warmup_cosine_decay.")
+    grp_op.add_argument('--peak_learning_rate', type=float, default=0.02,
+                        help="Peak value of the learning rate. \
+                            Applicable to schedules: warmup_cosine_decay.")
+    grp_op.add_argument('--warmup_cosine_decay_exponent', type=float, 
+                        default=1.0,
+                        help="Exponent in the warmup cosine decay schedule")
     
     # Misc. options
     parser.add_argument('--plot', action="store_true")
@@ -201,16 +218,6 @@ def main(args):
     batch_size = args.batch_size
     num_epochs = args.num_epochs
     optimization_method = args.optimizer
-    optimizer_args = {
-        'learning_rate'     : args.learning_rate,
-        'momentum'          : args.momentum,
-        'weight_decay'      : args.weight_decay,
-        'lr_schedule'       : args.lr_schedule,
-        'clip'              : args.clip,
-        'transition_begin'  : args.transition_begin,
-        'transition_steps'  : args.transition_steps,
-        'decay_rate'        : args.decay_rate,
-    }
     cont_path = args.continuation
     loss_fn_key = args.loss
     signal_function_key = args.signal_function
@@ -218,51 +225,77 @@ def main(args):
     seed = args.seed
     dtype = jnp.float32 if args.dtype == 'float32' else jnp.float64
     do_plot = args.plot
+
+    os.makedirs(outdir, exist_ok=True)
+    logfpath = f"{outdir}/log.txt"
+
+    def logprint(s, end='\n', flush=True):
+        print(s, end=end, flush=flush)
+        with open(logfpath, 'a') as f:
+            f.write(s + end)
     
-    testarray = jnp.ones([2, 2], dtype=jnp.float64)
-    assert testarray.dtype == dtype, \
-        f"Test array is not of type {dtype} as expected. Got {testarray.dtype}."
+    def log_and_raise_runtime_error(msg):
+        logprint("ERROR:\n" + msg)
+        raise RuntimeError(msg)
+
+    print(f"Writing to logfile: {logfpath}", flush=True)
+    
+    # Type test
+    testarray = jnp.ones([2, 2], dtype=dtype)
+    if testarray.dtype != dtype:
+        msg = f"Test array is not of type {dtype}. Got {testarray.dtype}."
+        log_and_raise_runtime_error(msg)
         
+    # GPU test
     if args.enforce_gpu:
         try:
             _ = jax.device_put(jnp.ones(1), device=jax.devices('gpu')[0])
         except RuntimeError as e:
-            raise RuntimeError(f"Could not utilize GPU as requested:\n{e}")
-        
+            msg = f"Could not utilize GPU as requested:\n{e}"
+            log_and_raise_runtime_error(msg)
+    
+    # Select model type
     if model_type == 'deep_phi':
         model_class = DeepPhiPLNN
     elif model_type == 'gmm_phi':
         model_class = GMMPhiPLNN
     else:
-        raise RuntimeError(f"Unknown model class {model_type}.")
+        msg = f"Unknown model class {model_type}."
+        log_and_raise_runtime_error(msg)
         
+    # Handle random number generators and seeds
     seed = seed if seed else np.random.randint(2**32)
     rng = np.random.default_rng(seed=seed)
     torch.manual_seed(int(rng.integers(2**32)))
     key = jrandom.PRNGKey(int(rng.integers(2**32)))
     key, modelkey, initkey, trainkey = jrandom.split(key, 4)
-    print(f"Using seed: {seed}", flush=True)
+    logprint(f"Using seed: {seed}")
 
     if cont_path: 
-        print(f"Continuing training of model {cont_path}", flush=True)
+        logprint(f"Continuing training of model {cont_path}")
     
     if args.timestamp:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         outdir = outdir + "_" + timestamp
 
     # Get training and validation dataloaders
-    train_dataloader, valid_dataloader = get_dataloaders(
+    train_dataloader, valid_dataloader, train_dset, _ = get_dataloaders(
         datdir_train, datdir_valid, nsims_train, nsims_valid, 
         batch_size_train=batch_size, batch_size_valid=batch_size, 
-        ndims=ndims, dtype=dtype, return_datasets=False,
+        ndims=ndims, dtype=dtype, return_datasets=True,
     )
 
     # Get signal specification
     signal_type, nsigparams = get_signal_spec(signal_function_key)
     
+    # Load previous model or construct new model
     if cont_path:
         model, hyperparams = model_class.load(cont_path, dtype=dtype)
     else:
+        # TODO: This may only work properly for a DeepPhiPLNN.
+        # Either add a construction method to the PLNN parent class, or 
+        # use a separate make function for each model type. Same may apply for
+        # model initialization?
         model, hyperparams = model_class.make_model(
             key=modelkey,
             dtype=dtype,
@@ -312,16 +345,23 @@ def main(args):
             init_metric_bias_args=init_metric_bias_args,
         )
 
+    # Get the loss function
     loss_fn = select_loss_function(loss_fn_key)
-    optimizer = select_optimizer(optimization_method, optimizer_args)
+
+    # Optimizer construction
+    optimizer_args = get_optimizer_args(args, num_epochs)
+    optimizer = select_optimizer(
+        optimization_method, optimizer_args,
+        batch_size=batch_size, dataset_size=len(train_dset),
+    )
     
-    os.makedirs(outdir, exist_ok=True)
     if do_plot:
         os.makedirs(f"{outdir}/images", exist_ok=True)
 
     log_args(outdir, args)
     log_model(outdir, model)
 
+    # Train the model
     train_model(
         model,
         loss_fn, 
@@ -338,8 +378,14 @@ def main(args):
         plotting=do_plot,
         plotting_opts={},  # Default plotting options
         report_every=args.report_every,
+        logprint=logprint,
+        error_raiser=log_and_raise_runtime_error,
     )
-    
+
+
+########################
+##  Helper Functions  ##
+########################
 
 def get_signal_spec(key):
     if key == 'jump':
@@ -350,68 +396,6 @@ def get_signal_spec(key):
         msg = f"Unknown signal function identifier {key}."
         raise RuntimeError(msg)
     return key, nsigparams
-
-
-def select_loss_function(key):
-    if key == 'kl':
-        return kl_divergence_loss
-    elif key == 'mcd':
-        return mean_cov_loss
-    elif key == 'md':
-        return mean_diff_loss
-    else:
-        msg = f"Unknown loss function identifier {key}."
-        raise RuntimeError(msg)
-
-
-def select_optimizer(optimization_method, args):
-
-    if args.get('lr_schedule') == "exponential_decay":
-        # Exponentially decaying schedule
-        lr_sched = optax.exponential_decay(
-            init_value=args.get('learning_rate'),
-            transition_begin=args.get('transition_begin'),
-            transition_steps=args.get('transition_steps'),
-            decay_rate=args.get('decay_rate'),
-        )
-    elif args.get('lr_schedule') == "cosine_warmup_decay":
-        # Cosine schedule with warmup and decay
-        raise NotImplementedError("cosine_warmup_decay not yet implemented.")
-    else:
-        # Constant schedule
-        lr_sched = optax.constant_schedule(args.get('learning_rate'))
-
-    if optimization_method == 'sgd':
-        optimizer = optax.inject_hyperparams(optax.sgd)(
-            learning_rate=lr_sched, 
-            momentum=args.get('momentum'),
-        )
-    elif optimization_method == 'adam':
-        optimizer = optax.inject_hyperparams(optax.adam)(
-            learning_rate=lr_sched, 
-        )
-    elif optimization_method == 'rms':
-        optimizer = optax.inject_hyperparams(optax.rmsprop)(
-            learning_rate=lr_sched,
-            momentum=args.get('momentum'),
-            decay=args.get('weight_decay'),
-        )
-    else:
-        msg = f"{optimization_method} optimization not implemented."
-        raise RuntimeError(msg)
-
-    if args.get('clip') is not None and args.get('clip') > 0:
-        optimizer = optax.chain(
-            optax.clip(args.get('clip')), 
-            optimizer, 
-        )
-    else:
-        optimizer = optax.chain(
-            optax.clip(1000.), 
-            optimizer, 
-        )
-    
-    return optimizer
 
 
 def log_args(outdir, args):
@@ -431,6 +415,10 @@ def log_model(outdir, model):
 def read_nsims(datdir):
     return np.genfromtxt(f"{datdir}/nsims.txt", dtype=int)
 
+
+#####################
+##  Main Entrance  ##
+#####################
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])

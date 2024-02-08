@@ -41,7 +41,20 @@ def train_model(
     plotting_opts = kwargs.get('plotting_opts', {})
     report_every = kwargs.get('report_every', 10)
     verbosity = kwargs.get('verbosity', 1)
+    logprint = kwargs.get('logprint', None)
+    error_raiser = kwargs.get('error_raiser', None)
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+    if logprint is None:
+        def logprint(s, flush=True):
+            print(s, flush=flush)
+
+    if error_raiser is None:
+        def log_and_raise_runtime_error(msg):
+            raise RuntimeError(msg)
+    else:
+        log_and_raise_runtime_error = error_raiser
+
 
     time0 = time.time()
 
@@ -82,10 +95,13 @@ def train_model(
             batch_size=batch_size,
             report_every=report_every,
             verbosity=verbosity,
+            logprint=logprint,
+            error_raiser=error_raiser,
         )
 
         if np.isnan(avg_tloss):
-            raise RuntimeError("nan encountered in training (training loss).")
+            msg = f"nan encountered in epoch {epoch} (training loss)."
+            log_and_raise_runtime_error(msg)
 
         # Validation pass
         avg_vloss = validate_post_epoch(
@@ -96,7 +112,8 @@ def train_model(
         )
 
         if np.isnan(avg_vloss):
-            raise RuntimeError("nan encountered in training (validation loss).")
+            msg = f"nan encountered in epoch {epoch} (validation loss)."
+            log_and_raise_runtime_error(msg)
         
         if hasattr(opt_state[1], 'hyperparams'):
             lr = opt_state[1].hyperparams['learning_rate']
@@ -104,9 +121,10 @@ def train_model(
             lr = 0
 
         if verbosity:
-            if lr: print(f"\tLearning Rate: {lr:.6g}")
-            print(f"\tLOSS [training: {avg_tloss} | validation: {avg_vloss}]")
-            print(f"\tTIME [epoch: {time.time() - etime0:.3g} sec]", flush=True)
+            if lr: 
+                logprint(f"\tLearning Rate: {lr:.6g}")
+            logprint(f"\tLOSS [training: {avg_tloss} | validation: {avg_vloss}]")
+            logprint(f"\tTIME [epoch: {time.time() - etime0:.3g} sec]")
         
         loss_hist_train.append(avg_tloss)
         loss_hist_valid.append(avg_vloss)
@@ -121,7 +139,7 @@ def train_model(
         # Save the model's state
         if avg_vloss < best_vloss or save_all:
             model_path = f"{outdir}/states/{model_name}_{epoch + 1}.pth"
-            if verbosity: print(f"\tSaving model to: {model_path}")
+            if verbosity: logprint(f"\tSaving model to: {model_path}")
             model.save(model_path, hyperparams)
 
         # Plotting, if specified
@@ -131,11 +149,11 @@ def train_model(
         # Track best performance
         if avg_vloss < best_vloss:
             best_vloss = avg_vloss
-            if verbosity: print(f"\tModel improved!!!", flush=True)
+            if verbosity: logprint(f"\tModel improved!!!")
         
         
     time1 = time.time()
-    if verbosity: print(f"Finished training in {time1-time0:.3f} seconds.")
+    if verbosity: logprint(f"Finished training in {time1-time0:.3f} seconds.")
     return model
 
 
@@ -150,6 +168,7 @@ def train_one_epoch(
         batch_size=1,
         report_every=10,  # print running loss every 10 batches.
         verbosity=1,  # 0: none. 1: default. 2: debug.
+        **kwargs
     ):
     """One epoch of training.
 
@@ -169,6 +188,20 @@ def train_one_epoch(
         float: average training loss across all batches.
         PyTree: optimizer state
     """
+    #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
+    logprint = kwargs.get('logprint', None)
+    error_raiser = kwargs.get('error_raiser', None)
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+    if logprint is None:
+        def logprint(s, flush=True):
+            print(s, flush=flush)
+
+    if error_raiser is None:
+        def log_and_raise_runtime_error(msg):
+            raise RuntimeError(msg)
+    else:
+        log_and_raise_runtime_error = error_raiser
 
     epoch_running_loss = 0.
     batch_running_loss = 0.
@@ -178,7 +211,7 @@ def train_one_epoch(
 
     # Train over batches
     if verbosity:
-        print("\tTraining over batches...")
+        logprint("\tTraining over batches...")
     for bidx, data in enumerate(dataloader):
         inputs, y1 = data
         key, subkey = jrandom.split(key, 2)
@@ -195,7 +228,7 @@ def train_one_epoch(
                 if hasattr(opt_state[1], 'hyperparams'):
                     lr = opt_state[1].hyperparams['learning_rate']
                     msg += f"\t\t[learning rate: {lr:.5g}]"
-                print(msg, flush=True)
+                logprint(msg)
             batch_running_loss = 0.
 
     avg_epoch_loss = epoch_running_loss / n

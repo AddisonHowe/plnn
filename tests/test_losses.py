@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import jax.numpy as jnp
-from plnn.helpers import mean_cov_loss, mean_diff_loss, kl_divergence_loss
+from plnn.loss_functions import mean_cov_loss, mean_diff_loss, kl_divergence_loss
 
 @pytest.mark.parametrize('y_sim, y_obs, loss_exp', [
     [   
