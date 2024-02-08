@@ -7,7 +7,7 @@ import optax
 from plnn.models import DeepPhiPLNN
 from plnn.model_training import train_model
 from plnn.dataset import get_dataloaders
-from plnn.helpers import mean_diff_loss
+from plnn.loss_functions import mean_diff_loss
 
 #####################
 ##  Configuration  ##
