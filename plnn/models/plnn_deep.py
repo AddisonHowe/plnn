@@ -98,7 +98,7 @@ class DeepPhiPLNN(PLNN):
     ##  Core Landscape Methods  ##
     ##############################
     
-    @eqx.filter_jit
+    # @eqx.filter_jit
     def eval_phi(
         self, 
         y: Float[Array, "ndims"]
@@ -112,7 +112,7 @@ class DeepPhiPLNN(PLNN):
         """
         return self.eval_confinement(y) + self.phi_module(y).squeeze(-1)
 
-    @eqx.filter_jit
+    # @eqx.filter_jit
     def eval_grad_phi(
         self, 
         t: Float, 

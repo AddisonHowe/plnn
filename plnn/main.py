@@ -226,6 +226,10 @@ def main(args):
     dtype = jnp.float32 if args.dtype == 'float32' else jnp.float64
     do_plot = args.plot
 
+    if args.timestamp:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        outdir = outdir + "_" + timestamp
+
     os.makedirs(outdir, exist_ok=True)
     logfpath = f"{outdir}/log.txt"
 
@@ -239,6 +243,9 @@ def main(args):
         raise RuntimeError(msg)
 
     print(f"Writing to logfile: {logfpath}", flush=True)
+    
+    logprint("Args:")
+    logprint(str(args) + "\n")
     
     # Type test
     testarray = jnp.ones([2, 2], dtype=dtype)
@@ -273,10 +280,6 @@ def main(args):
 
     if cont_path: 
         logprint(f"Continuing training of model {cont_path}")
-    
-    if args.timestamp:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        outdir = outdir + "_" + timestamp
 
     # Get training and validation dataloaders
     train_dataloader, valid_dataloader, train_dset, _ = get_dataloaders(

@@ -317,7 +317,6 @@ class PLNN(eqx.Module):
     ##  Simulation Methods  ##
     ##########################
 
-    @eqx.filter_jit
     def simulate_forward(
         self,
         t0: Float,
@@ -342,7 +341,6 @@ class PLNN(eqx.Module):
         vecsim = jax.vmap(self.simulate_path, (None, None, 0, None, 0))
         return vecsim(t0, t1, y0, sigparams, subkeys).squeeze(1)
     
-    @eqx.filter_jit
     def simulate_dense_forward(
         self,
         t0: Float,
@@ -367,7 +365,6 @@ class PLNN(eqx.Module):
         vecsim = jax.vmap(self.simulate_dense_path, (None, None, 0, None, 0))
         return vecsim(t0, t1, y0, sigparams, subkeys)
     
-    @eqx.filter_jit
     def simulate_ensemble_with_saves(
         self,
         t0: Float,
@@ -394,7 +391,6 @@ class PLNN(eqx.Module):
         vecsim = jax.vmap(self.simulate_path_with_saves, (None, None, 0, None, None, 0))
         return vecsim(t0, t1, y0, sigparams, ts_save, subkeys)
     
-    @eqx.filter_jit
     def simulate_path(
         self,
         t0: Float,
@@ -436,7 +432,6 @@ class PLNN(eqx.Module):
         )
         return sol.ys
     
-    @eqx.filter_jit
     def simulate_dense_path(
         self,
         t0: Float,
@@ -478,7 +473,6 @@ class PLNN(eqx.Module):
         )
         return sol.ts, sol.ys
     
-    @eqx.filter_jit
     def simulate_path_with_saves(
         self,
         t0: Float,
@@ -526,7 +520,6 @@ class PLNN(eqx.Module):
     ##  Core Landscape Methods  ##
     ##############################
 
-    @eqx.filter_jit
     def eval_f(
         self, 
         t: Float, 
@@ -546,7 +539,6 @@ class PLNN(eqx.Module):
         gtilt = self.grad_tilt(t, sigparams)
         return -(gphi + gtilt)
 
-    @eqx.filter_jit
     def eval_g(
         self, 
         t: Float, 
@@ -564,7 +556,6 @@ class PLNN(eqx.Module):
         """
         return jnp.exp(self.logsigma) * jnp.ones(y.shape)
     
-    @eqx.filter_jit
     def eval_metric(
         self,
         t: Float,
@@ -589,7 +580,6 @@ class PLNN(eqx.Module):
             dm = 0
         return jnp.eye(self.ndims) + dm
     
-    @eqx.filter_jit
     def eval_confinement(
         self,
         y: Float[Array, "ndims"]
@@ -605,7 +595,6 @@ class PLNN(eqx.Module):
             return jnp.sum(jnp.power(y, 4))
         return 0.
 
-    @eqx.filter_jit
     def eval_grad_confinement(
         self,
         y: Float[Array, "ndims"]
@@ -651,7 +640,6 @@ class PLNN(eqx.Module):
         """
         raise NotImplementedError()
     
-    @eqx.filter_jit
     def grad_tilt(
         self, 
         t: Float, 
@@ -671,7 +659,6 @@ class PLNN(eqx.Module):
             signal_vals = self.sigmoid_signal_function(t, sigparams)
         return self.tilt_module(signal_vals)
     
-    @eqx.filter_jit
     def eval_tilted_phi(
         self, 
         t: Float, 
@@ -695,7 +682,6 @@ class PLNN(eqx.Module):
     ##  Vectorized Landscape Methods  ##
     ####################################
     
-    @eqx.filter_jit
     def f(
         self, 
         t: Float, 
@@ -713,7 +699,6 @@ class PLNN(eqx.Module):
         """
         return jax.vmap(self.eval_f, (None, 0, None))(t, y, sigparams)
 
-    @eqx.filter_jit
     def g(
         self, 
         t: Float, 
@@ -729,7 +714,6 @@ class PLNN(eqx.Module):
         """
         return jax.vmap(self.eval_g, (None, 0))(t, y)
     
-    @eqx.filter_jit
     def phi(
         self, 
         y: Float[Array, "ncells ndims"]
@@ -743,7 +727,6 @@ class PLNN(eqx.Module):
         """
         return jax.vmap(self.eval_phi, 0)(y)
 
-    @eqx.filter_jit
     def grad_phi(
         self, 
         t: Float, 
@@ -759,7 +742,6 @@ class PLNN(eqx.Module):
         """
         return jax.vmap(self.eval_grad_phi, (None, 0))(t, y)
     
-    @eqx.filter_jit
     def tilted_phi(
         self, 
         t: Float, 
@@ -781,7 +763,6 @@ class PLNN(eqx.Module):
     ##  Signal Functions  ##
     ########################
 
-    @eqx.filter_jit
     def binary_signal_function(
         self, 
         t: Float, 
@@ -800,7 +781,6 @@ class PLNN(eqx.Module):
         p1 = sigparams[...,2]
         return (t < tcrit) * p0 + (t >= tcrit) * p1
     
-    @eqx.filter_jit
     def sigmoid_signal_function(
         self, 
         t: Float, 
@@ -1289,7 +1269,6 @@ class PLNN(eqx.Module):
     ##  Helper Methods  ##
     ######################
 
-    @eqx.filter_jit
     def _sample_y0(self, key, y0):
         y0_samp = jnp.empty([y0.shape[0], self.ncells, y0.shape[2]])
         if y0.shape[1] < self.ncells:
