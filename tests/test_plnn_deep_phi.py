@@ -1,3 +1,7 @@
+"""Tests for DeepPhiPLNN methods.
+
+"""
+
 import pytest
 import numpy as np
 import jax
@@ -30,11 +34,23 @@ WT1 = np.array([
     [-1, 1],
 ], dtype=float)
 
-def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1, 
-              sample_cells=False, signal_type='binary', nsigparams=3):
-    # Construct the model
+def get_model(
+        ws, wts, dtype, 
+        sigma=0, 
+        seed=None, 
+        ncells=4, 
+        dt=0.1, 
+        sample_cells=False, 
+        signal_type='binary', 
+        nsigparams=3,
+        confine=False,
+) -> DeepPhiPLNN:
+    """Get an initialized model for testing purposes."""
+    nprng = np.random.default_rng(seed)
+    key_model = jrandom.PRNGKey(nprng.integers(2**32))
+    key_init = jrandom.PRNGKey(nprng.integers(2**32))
     model = DeepPhiPLNN(
-        key=jrandom.PRNGKey(seed),
+        key=key_model,
         dtype=dtype,
         ndims=2, 
         nparams=2, 
@@ -44,10 +60,9 @@ def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1,
         ncells=ncells, 
         sigma_init=sigma,
         dt0=dt,
-        confine=False,
+        confine=confine,
         include_phi_bias=False, 
         include_tilt_bias=False, 
-        include_metric_bias=False, 
         phi_hidden_dims=[3,3],
         phi_hidden_acts='tanh',
         phi_final_act=None,
@@ -56,16 +71,11 @@ def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1,
         tilt_hidden_acts=None,
         tilt_final_act=None,
         tilt_layer_normalize=False,
-        metric_hidden_dims=[3,3],
-        metric_hidden_acts='tanh',
-        metric_final_act=None,
-        metric_layer_normalize=False,
         sample_cells=sample_cells,
-        infer_metric=True,
         solver='euler'
     )
     model = model.initialize(
-        jrandom.PRNGKey(seed+1),
+        key_init,
         dtype=dtype,
         init_phi_weights_method='explicit',
         init_phi_weights_args=[ws],
@@ -75,10 +85,6 @@ def get_model(ws, wts, dtype, sigma=0, seed=0, ncells=4, dt=0.1,
         init_tilt_weights_args=[wts],
         init_tilt_bias_method='none',
         init_tilt_bias_args=[],
-        init_metric_weights_method='constant',
-        init_metric_weights_args=[0.],
-        init_metric_bias_method='constant',
-        init_metric_bias_args=[0.],
     )
     return model
 
@@ -113,8 +119,8 @@ class TestBatchedCoreLandscapeMethods:
     ])
     def test_f(self, dtype, ws, wts, sigparams, t, x, 
                f_exp, f_shape_exp):
-        rtol = 1e-5 if dtype == jnp.float64 else 1e-3
-        atol = 1e-8 if dtype == jnp.float64 else 1e-3
+        rtol = 1e-5 if dtype == jnp.float64 else 1e-5
+        atol = 1e-8 if dtype == jnp.float64 else 1e-8
         sigparams = jnp.array(sigparams, dtype=dtype)
         t = jnp.array(t, dtype=dtype)
         x = jnp.array(x, dtype=dtype)
@@ -172,8 +178,8 @@ class TestBatchedCoreLandscapeMethods:
           [3.2478696918,3.99340437124,2.69505521004,0.0]], (2, 4)],
     ])
     def test_phi(self, dtype, ws, x, phi_exp, phi_shape_exp):
-        rtol = 1e-5 if dtype == jnp.float64 else 1e-3
-        atol = 1e-8 if dtype == jnp.float64 else 1e-3
+        rtol = 1e-5 if dtype == jnp.float64 else 1e-5
+        atol = 1e-8 if dtype == jnp.float64 else 1e-8
         model = get_model(ws, [WT1], dtype=dtype)
         x = jnp.array(x, dtype=dtype)
         phi_act = jax.vmap(model.phi, 0)(x)
@@ -210,8 +216,8 @@ class TestBatchedCoreLandscapeMethods:
          [[1.11945, 2.71635], [-3.5586, -0.83997]]], (3, 2, 2)],
     ])
     def test_grad_phi(self, dtype, ws, x, grad_phi_exp, shape_exp):
-        rtol = 1e-5 if dtype == jnp.float64 else 1e-3
-        atol = 1e-8 if dtype == jnp.float64 else 1e-3
+        rtol = 1e-5 if dtype == jnp.float64 else 1e-4
+        atol = 1e-8 if dtype == jnp.float64 else 1e-6
         model = get_model(ws, [WT1], dtype)
         x = jnp.array(x, dtype=dtype)
         t = jnp.array(x.shape[0]*[0], dtype=dtype)

@@ -97,10 +97,8 @@ class TestTraining:
             dt0=0.1,
             confine=False,
             sample_cells=False,
-            infer_metric=False,
             include_phi_bias=False, 
             include_tilt_bias=False, 
-            include_metric_bias=False, 
             phi_hidden_dims=[3,3],
             phi_hidden_acts='tanh',
             phi_final_act=None,
@@ -109,10 +107,6 @@ class TestTraining:
             tilt_hidden_acts=None,
             tilt_final_act=None,
             tilt_layer_normalize=False,
-            metric_hidden_dims=[],
-            metric_hidden_acts=None,
-            metric_final_act=None,
-            metric_layer_normalize=False,
             key=jrandom.PRNGKey(0),
         )
         model = model.initialize(
@@ -126,10 +120,6 @@ class TestTraining:
             init_tilt_weights_args=[[WT1]],
             init_tilt_bias_method='none',
             init_tilt_bias_args=[],
-            init_metric_weights_method='constant',
-            init_metric_weights_args=[0.],
-            init_metric_bias_method='none',
-            init_metric_bias_args=[],
         )
         return model
     

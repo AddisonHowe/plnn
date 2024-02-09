@@ -11,10 +11,9 @@ import torch
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
-import optax
 
 from plnn.dataset import get_dataloaders
-from plnn.models import DeepPhiPLNN, GMMPhiPLNN
+from plnn.models import DeepPhiPLNN, GMMPhiPLNN, NEDeepPhiPLNN, NEGMMPhiPLNN
 from plnn.loss_functions import select_loss_function
 from plnn.optimizers import get_optimizer_args, select_optimizer
 from plnn.model_training import train_model
@@ -30,7 +29,8 @@ def parse_args(args):
     parser.add_argument('-t', '--training_data', type=str, required=True)
     parser.add_argument('-v', '--validation_data', type=str, required=True)
     parser.add_argument('--model_type', type=str, default="deep_phi",
-                        choices=['deep_phi', 'gmm_phi'])
+                        choices=['deep_phi', 'gmm_phi', 
+                                 'ne_deep_phi', 'ne_gmm_phi'])
     parser.add_argument('-nt', '--nsims_training', type=int, default=None)
     parser.add_argument('-nv', '--nsims_validation', type=int, default=None)
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
@@ -38,23 +38,27 @@ def parse_args(args):
     parser.add_argument('--report_every', type=int, default=10)
 
     # Model simulation
-    parser.add_argument('-nd', '--ndims', type=int, default=2,
-                        help="Number of state space dimensions for the data.")
-    parser.add_argument('-np', '--nparams', type=int, default=2, 
-                        help="Number of landscape parameters.")
-    parser.add_argument('-ns', '--nsigs', type=int, default=2, 
-                        help="Number of signals in the system.")
-    parser.add_argument('-nc', '--ncells', type=int, default=100, 
-                        help="Number of cells to evolve internally.")
-    parser.add_argument('-dt', '--dt', type=float, default=1e-3,
-                        help="Euler timestep to use internally.")
-    parser.add_argument('--signal_function', type=str, default='jump',
-                        choices=['jump', 'sigmoid'], 
-                        help="Identifier for the signal function.")
-    parser.add_argument('--solver', type=str, default='euler',
-                        choices=['euler', 'reversible_heun', 
-                                 'ito_milstein', 'heun'], 
-                        help="Internal differential equation solver to use.")    
+    grp_sim = parser.add_argument_group(
+        title="simulation args",
+        description="Simulation options."
+    )
+    grp_sim.add_argument('-nd', '--ndims', type=int, default=2,
+                         help="Number of state space dimensions for the data.")
+    grp_sim.add_argument('-np', '--nparams', type=int, default=2, 
+                         help="Number of landscape parameters.")
+    grp_sim.add_argument('-ns', '--nsigs', type=int, default=2, 
+                         help="Number of signals in the system.")
+    grp_sim.add_argument('-nc', '--ncells', type=int, default=100, 
+                         help="Number of cells to evolve internally.")
+    grp_sim.add_argument('-dt', '--dt', type=float, default=1e-3,
+                         help="Euler timestep to use internally.")
+    grp_sim.add_argument('--signal_function', type=str, default='jump',
+                         choices=['jump', 'sigmoid'], 
+                         help="Identifier for the signal function.")
+    grp_sim.add_argument('--solver', type=str, default='euler',
+                         choices=['euler', 'reversible_heun', 
+                                  'ito_milstein', 'heun'], 
+                         help="Internal differential equation solver to use.")    
 
     # Model architecture
     grp_ma = parser.add_argument_group(
@@ -91,43 +95,45 @@ def parse_args(args):
                             the initial value for the sigma parameter.")    
 
     # Model initialization
-    parser.add_argument('--init_phi_weights_method', type=str, 
-                        default='xavier_uniform', 
-                        choices=[None, 'xavier_uniform', 'constant', 'normal'])
-    parser.add_argument('--init_phi_weights_args', type=float, nargs='*', 
-                        default=[])
-    parser.add_argument('--init_phi_bias_method', type=str, 
-                        default='constant', 
-                        choices=[None, 'constant', 'normal'])
-    parser.add_argument('--init_phi_bias_args', type=float, nargs='*', 
-                        default=0.)
-    parser.add_argument('--init_tilt_weights_method', type=str, 
-                        default='xavier_uniform', 
-                        choices=[None, 'xavier_uniform', 'constant', 'normal'])
-    parser.add_argument('--init_tilt_weights_args', type=float, nargs='*', 
-                        default=[])
-    parser.add_argument('--init_tilt_bias_method', type=str, 
-                        default=None, 
-                        choices=[None, 'constant', 'normal'])
-    parser.add_argument('--init_tilt_bias_args', type=float, nargs='*', 
-                        default=None)
-    parser.add_argument('--init_metric_weights_method', type=str, 
-                        default='xavier_uniform', 
-                        choices=[None, 'xavier_uniform', 'constant', 'normal'])
-    parser.add_argument('--init_metric_weights_args', type=float, nargs='*', 
-                        default=[])
-    parser.add_argument('--init_metric_bias_method', type=str, 
-                        default=None, 
-                        choices=[None, 'constant', 'normal'])
-    parser.add_argument('--init_metric_bias_args', type=float, nargs='*', 
-                        default=None)
+    grp_init = parser.add_argument_group(
+        title="initialization args",
+        description="Model initialization options."
+    )
+    grp_init.add_argument('--init_phi_weights_method', type=str, 
+                          default='xavier_uniform', 
+                          choices=[None, 'xavier_uniform', 'constant', 'normal'])
+    grp_init.add_argument('--init_phi_weights_args', type=float, nargs='*', 
+                          default=[])
+    grp_init.add_argument('--init_phi_bias_method', type=str, 
+                          default='constant', 
+                          choices=[None, 'constant', 'normal'])
+    grp_init.add_argument('--init_phi_bias_args', type=float, nargs='*', 
+                          default=0.)
+    grp_init.add_argument('--init_tilt_weights_method', type=str, 
+                          default='xavier_uniform', 
+                          choices=[None, 'xavier_uniform', 'constant', 'normal'])
+    grp_init.add_argument('--init_tilt_weights_args', type=float, nargs='*', 
+                          default=[])
+    grp_init.add_argument('--init_tilt_bias_method', type=str, 
+                          default=None, 
+                          choices=[None, 'constant', 'normal'])
+    grp_init.add_argument('--init_tilt_bias_args', type=float, nargs='*', 
+                          default=None)
+    grp_init.add_argument('--init_metric_weights_method', type=str, 
+                          default='xavier_uniform', 
+                          choices=[None, 'xavier_uniform', 'constant', 'normal'])
+    grp_init.add_argument('--init_metric_weights_args', type=float, nargs='*', 
+                          default=[])
+    grp_init.add_argument('--init_metric_bias_method', type=str, 
+                          default=None, 
+                          choices=[None, 'constant', 'normal'])
+    grp_init.add_argument('--init_metric_bias_args', type=float, nargs='*', 
+                          default=None)
 
     # Loss function
     parser.add_argument('--loss', type=str, default="kl", 
                         choices=['kl', 'mcd'], 
                         help='kl: KL divergence est; mcd: mean+cov difference.')
-    parser.add_argument('--continuation', type=str, default=None, 
-                        help="Path to file with model parameters to load.")
     
     # Optimizer
     grp_op = parser.add_argument_group(
@@ -162,14 +168,20 @@ def parse_args(args):
                         help="Exponent in the warmup cosine decay schedule")
     
     # Misc. options
-    parser.add_argument('--plot', action="store_true")
-    parser.add_argument('--dtype', type=str, default="float32", 
-                        choices=['float32', 'float64'])
-    parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--timestamp', action="store_true",
-                        help="Add timestamp to out directory.")
-    parser.add_argument('--save_all', action="store_true")
-    parser.add_argument('--enforce_gpu', action="store_true")
+    grp_misc = parser.add_argument_group(
+        title="misc. args",
+        description="Miscellaneous arguments."
+    )
+    grp_misc.add_argument('--plot', action="store_true")
+    grp_misc.add_argument('--dtype', type=str, default="float32", 
+                          choices=['float32', 'float64'])
+    grp_misc.add_argument('--seed', type=int, default=0)
+    grp_misc.add_argument('--timestamp', action="store_true",
+                          help="Add timestamp to out directory.")
+    grp_misc.add_argument('--save_all', action="store_true")
+    grp_misc.add_argument('--enforce_gpu', action="store_true")
+    grp_misc.add_argument('--continuation', type=str, default=None, 
+                          help="Path to file with model parameters to load.")
 
     return parser.parse_args(args)
 
@@ -183,45 +195,13 @@ def main(args):
     nsims_valid = args.nsims_validation if args.nsims_validation else read_nsims(datdir_valid)
     model_type = args.model_type
     ndims = args.ndims
-    nparams = args.nparams
-    nsigs = args.nsigs
-    dt = args.dt
-    ncells = args.ncells
-    confine = args.confine
-    phi_hidden_dims = args.phi_hidden_dims
-    phi_hidden_acts = args.phi_hidden_acts
-    phi_final_act = args.phi_final_act
-    phi_layer_normalize = args.phi_layer_normalize
-    tilt_hidden_dims = args.tilt_hidden_dims
-    tilt_hidden_acts = args.tilt_hidden_acts
-    tilt_final_act = args.tilt_final_act
-    tilt_layer_normalize = args.tilt_layer_normalize
-    infer_metric = args.infer_metric
-    metric_hidden_dims = args.metric_hidden_dims
-    metric_hidden_acts = args.metric_hidden_acts
-    metric_final_act = args.metric_final_act
-    metric_layer_normalize = args.metric_layer_normalize
-    init_phi_weights_method = args.init_phi_weights_method
-    init_phi_weights_args = args.init_phi_weights_args
-    init_phi_bias_method = args.init_phi_bias_method
-    init_phi_bias_args = args.init_phi_bias_args
-    init_tilt_weights_method = args.init_tilt_weights_method
-    init_tilt_weights_args = args.init_tilt_weights_args
-    init_tilt_bias_method = args.init_tilt_bias_method
-    init_tilt_bias_args = args.init_tilt_bias_args
-    init_metric_weights_method = args.init_metric_weights_method
-    init_metric_weights_args = args.init_metric_weights_args
-    init_metric_bias_method = args.init_metric_bias_method
-    init_metric_bias_args = args.init_metric_bias_args
     fix_noise = args.fix_noise  # not implemented
-    sigma = args.sigma
     batch_size = args.batch_size
     num_epochs = args.num_epochs
     optimization_method = args.optimizer
     cont_path = args.continuation
     loss_fn_key = args.loss
     signal_function_key = args.signal_function
-    solver = args.solver
     seed = args.seed
     dtype = jnp.float32 if args.dtype == 'float32' else jnp.float64
     do_plot = args.plot
@@ -231,6 +211,7 @@ def main(args):
         outdir = outdir + "_" + timestamp
 
     os.makedirs(outdir, exist_ok=True)
+    if do_plot: os.makedirs(f"{outdir}/images", exist_ok=True)
     logfpath = f"{outdir}/log.txt"
 
     def logprint(s, end='\n', flush=True):
@@ -266,6 +247,10 @@ def main(args):
         model_class = DeepPhiPLNN
     elif model_type == 'gmm_phi':
         model_class = GMMPhiPLNN
+    elif model_type == 'ne_deep_phi':
+        model_class = NEDeepPhiPLNN
+    elif model_type == 'ne_gmm_phi':
+        model_class = NEGMMPhiPLNN
     else:
         msg = f"Unknown model class {model_type}."
         log_and_raise_runtime_error(msg)
@@ -291,61 +276,19 @@ def main(args):
     # Get signal specification
     signal_type, nsigparams = get_signal_spec(signal_function_key)
     
-    # Load previous model or construct new model
     if cont_path:
+        # Load previous model
         model, hyperparams = model_class.load(cont_path, dtype=dtype)
     else:
-        # TODO: This may only work properly for a DeepPhiPLNN.
-        # Either add a construction method to the PLNN parent class, or 
-        # use a separate make function for each model type. Same may apply for
-        # model initialization?
+        # Construct and initialize the model
+        args_make, args_init = get_model_args(model_name, args)
         model, hyperparams = model_class.make_model(
-            key=modelkey,
-            dtype=dtype,
-            ndims=ndims, 
-            nparams=nparams, 
-            nsigs=nsigs, 
-            ncells=ncells, 
-            sigma_init=sigma,
-            signal_type=signal_type,
-            nsigparams=nsigparams,
-            confine=confine,
-            phi_hidden_dims=phi_hidden_dims,
-            phi_hidden_acts=phi_hidden_acts,
-            phi_final_act=phi_final_act,
-            phi_layer_normalize=phi_layer_normalize,
-            tilt_hidden_dims=tilt_hidden_dims,
-            tilt_hidden_acts=tilt_hidden_acts,
-            tilt_final_act=tilt_final_act,
-            tilt_layer_normalize=tilt_layer_normalize,
-            metric_hidden_dims=metric_hidden_dims,
-            metric_hidden_acts=metric_hidden_acts,
-            metric_final_act=metric_final_act,
-            metric_layer_normalize=metric_layer_normalize,
-            include_phi_bias=True,
-            include_tilt_bias=False,
-            include_metric_bias=True,
-            sample_cells=True,
-            infer_metric=infer_metric,
-            dt0=dt,
-            solver=solver,
+            key=modelkey, dtype=dtype, 
+            signal_type=signal_type, nsigparams=nsigparams,
+            **args_make
         )
-
         model = model.initialize(
-            initkey,
-            dtype=dtype,
-            init_phi_weights_method=init_phi_weights_method,
-            init_phi_weights_args=init_phi_weights_args,
-            init_phi_bias_method=init_phi_bias_method,
-            init_phi_bias_args=init_phi_bias_args,
-            init_tilt_weights_method=init_tilt_weights_method,
-            init_tilt_weights_args=init_tilt_weights_args,
-            init_tilt_bias_method=init_tilt_bias_method,
-            init_tilt_bias_args=init_tilt_bias_args,
-            init_metric_weights_method=init_metric_weights_method,
-            init_metric_weights_args=init_metric_weights_args,
-            init_metric_bias_method=init_metric_bias_method,
-            init_metric_bias_args=init_metric_bias_args,
+            initkey, dtype=dtype, **args_init
         )
 
     # Get the loss function
@@ -357,9 +300,6 @@ def main(args):
         optimization_method, optimizer_args,
         batch_size=batch_size, dataset_size=len(train_dset),
     )
-    
-    if do_plot:
-        os.makedirs(f"{outdir}/images", exist_ok=True)
 
     log_args(outdir, args)
     log_model(outdir, model)
@@ -419,9 +359,72 @@ def read_nsims(datdir):
     return np.genfromtxt(f"{datdir}/nsims.txt", dtype=int)
 
 
-#####################
-##  Main Entrance  ##
-#####################
+def get_model_args(model_name, args):
+    args_make = {
+        'ndims' : args.ndims, 
+        'nparams' : args.nparams, 
+        'nsigs' : args.nsigs, 
+        'ncells' : args.ncells, 
+        'sigma_init' : args.sigma,
+        'confine' : args.confine,
+        'include_tilt_bias' : False,
+        'tilt_hidden_dims' : args.tilt_hidden_dims,
+        'tilt_hidden_acts' : args.tilt_hidden_acts,
+        'tilt_final_act' : args.tilt_final_act,
+        'tilt_layer_normalize' : args.tilt_layer_normalize,
+        'dt0' : args.dt,
+        'solver' : args.solver,
+        'sample_cells' : True,
+    }
+    args_init = {
+        'init_tilt_weights_method' : args.init_tilt_weights_method,
+        'init_tilt_weights_args' : args.init_tilt_weights_args,
+        'init_tilt_bias_method' : args.init_tilt_bias_method,
+        'init_tilt_bias_args' : args.init_tilt_bias_args,
+    }
+
+    # Add extra args based on Deep or GMM PLNN
+    if model_name == 'deep_phi' or model_name == 'ne_deep_phi':
+        args_make.update({
+            'include_phi_bias' : True,
+            'phi_hidden_dims' : args.phi_hidden_dims,
+            'phi_hidden_acts' : args.phi_hidden_acts,
+            'phi_final_act' : args.phi_final_act,
+            'phi_layer_normalize' : args.phi_layer_normalize,
+        })
+        args_init.update({
+            'init_phi_weights_method' : args.init_phi_weights_method,
+            'init_phi_weights_args' : args.init_phi_weights_args,
+            'init_phi_bias_method' : args.init_phi_bias_method,
+            'init_phi_bias_args' : args.init_phi_bias_args,
+        })
+    elif model_name == 'gmm_phi' or model_name == 'ne_gmm_phi':
+        args_make.update({})
+        args_init.update({})
+        raise NotImplementedError()
+    
+    # Add extra args for non euclidean PLNN
+    if model_name == 'ne_deep_phi' or model_name == 'ne_gmm_phi':
+        args_make.update({
+            'metric_hidden_dims' : args.metric_hidden_dims,
+            'metric_hidden_acts' : args.metric_hidden_acts,
+            'metric_final_act' : args.metric_final_act,
+            'metric_layer_normalize' : args.metric_layer_normalize,
+            'include_metric_bias' : True,
+            'infer_metric' : args.infer_metric,
+        })
+        args_init.update({
+            'init_metric_weights_method' : args.init_metric_weights_method,
+            'init_metric_weights_args' : args.init_metric_weights_args,
+            'init_metric_bias_method' : args.init_metric_bias_method,
+            'init_metric_bias_args' : args.init_metric_bias_args,
+        })
+    return args_make, args_init
+
+
+#######################
+##  Main Entrypoint  ##
+#######################
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])

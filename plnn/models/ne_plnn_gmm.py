@@ -1,4 +1,4 @@
-"""GMM Parameterized Landscape.
+"""Non-Euclidean GMM Parameterized Landscape.
 
 """
 
@@ -10,10 +10,11 @@ import jax.tree_util as jtu
 import equinox as eqx
 from jaxtyping import Array, Float
 
-from .plnn import PLNN, _get_nn_init_args, _get_nn_init_func
+from .plnn import _get_nn_init_args, _get_nn_init_func
+from .ne_plnn import NEPLNN
 
 
-class GMMPhiPLNN(PLNN):
+class NEGMMPhiPLNN(NEPLNN):
 
     ncomponents: int
 
@@ -163,7 +164,7 @@ class GMMPhiPLNN(PLNN):
         metric_hidden_acts='softplus', 
         metric_final_act=None, 
         metric_layer_normalize=False, 
-    ) -> tuple['GMMPhiPLNN', dict]:
+    ) -> tuple['NEGMMPhiPLNN', dict]:
         """Construct a model and store all hyperparameters.
         
         Args:
@@ -198,11 +199,11 @@ class GMMPhiPLNN(PLNN):
             metric_layer_normalize
         
         Returns:
-            GMMPhiPLNN: Model instance.
+            NEGMMPhiPLNN: Model instance.
             dict: Dictionary of hyperparameters.
         """
         raise NotImplementedError()
-        model = GMMPhiPLNN(
+        model = NEGMMPhiPLNN(
             key=key,
             dtype=dtype,
             ndims=ndims, 
@@ -259,7 +260,7 @@ class GMMPhiPLNN(PLNN):
             init_metric_weights_args=[],
             init_metric_bias_method='constant',
             init_metric_bias_args=[0.],
-    ) -> 'GMMPhiPLNN':
+    ) -> 'NEGMMPhiPLNN':
         """Return an initialized version of the model.
 
         Args:
@@ -279,7 +280,7 @@ class GMMPhiPLNN(PLNN):
             init_metric_bias_args
 
         Returns:
-            GMMPhiPLNN : Initialized model instance.
+            NEGMMPhiPLNN : Initialized model instance.
         """        
         key, subkey = jrandom.split(key, 2)
         model = super().initialize(
@@ -304,7 +305,7 @@ class GMMPhiPLNN(PLNN):
     ############################
 
     @staticmethod
-    def load(fname:str, dtype=jnp.float32) -> tuple['GMMPhiPLNN', dict]:
+    def load(fname:str, dtype=jnp.float32) -> tuple['NEGMMPhiPLNN', dict]:
         """Load a model from a binary parameter file.
         
         Args:
@@ -312,12 +313,12 @@ class GMMPhiPLNN(PLNN):
             dtype : Datatype. Either jnp.float32 or jnp.float64.
 
         Returns:
-            GMMPhiPLNN: Model instance.
+            NEGMMPhiPLNN: Model instance.
             dict: Model hyperparameters.
         """
         with open(fname, "rb") as f:
             hyperparams = json.loads(f.readline().decode())
-            model, _ = GMMPhiPLNN.make_model(
+            model, _ = NEGMMPhiPLNN.make_model(
                 key=jrandom.PRNGKey(0), dtype=dtype, **hyperparams
             )
             return eqx.tree_deserialise_leaves(f, model), hyperparams
