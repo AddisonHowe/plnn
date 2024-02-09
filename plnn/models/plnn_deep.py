@@ -1,3 +1,7 @@
+"""Deep NN Parameterized Landscape.
+
+"""
+
 import json
 import jax
 import jax.numpy as jnp
@@ -74,7 +78,7 @@ class DeepPhiPLNN(PLNN):
         d['include_phi_bias'] = self.include_phi_bias
         return d
     
-    def get_linear_layer_parameters(self, include_metric=False) -> list[Array]:
+    def get_linear_layer_parameters(self) -> list[Array]:
         """Return a list of learnable parameters from linear layers.
         
         Args:
@@ -83,7 +87,7 @@ class DeepPhiPLNN(PLNN):
         Returns:
             list[Array] : List of linear layer learnable parameter arrays.
         """
-        params = super().get_linear_layer_parameters(include_metric)
+        params = super().get_linear_layer_parameters()
         def linear_layers(m):
             return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
         phi_linlayers  = linear_layers(self.phi_module)
@@ -98,7 +102,6 @@ class DeepPhiPLNN(PLNN):
     ##  Core Landscape Methods  ##
     ##############################
     
-    # @eqx.filter_jit
     def eval_phi(
         self, 
         y: Float[Array, "ndims"]
@@ -112,7 +115,6 @@ class DeepPhiPLNN(PLNN):
         """
         return self.eval_confinement(y) + self.phi_module(y).squeeze(-1)
 
-    # @eqx.filter_jit
     def eval_grad_phi(
         self, 
         t: Float, 
@@ -148,10 +150,8 @@ class DeepPhiPLNN(PLNN):
         dt0=1e-2, 
         confine=False,
         sample_cells=True, 
-        infer_metric=True,
         include_phi_bias=True, 
         include_tilt_bias=False,
-        include_metric_bias=True,
         phi_hidden_dims=[16,32,32,16], 
         phi_hidden_acts='softplus', 
         phi_final_act=None, 
@@ -160,10 +160,6 @@ class DeepPhiPLNN(PLNN):
         tilt_hidden_acts=None,
         tilt_final_act=None,
         tilt_layer_normalize=False,
-        metric_hidden_dims=[8,8,8,8], 
-        metric_hidden_acts='softplus', 
-        metric_final_act=None, 
-        metric_layer_normalize=False, 
     ) -> tuple['DeepPhiPLNN', dict]:
         """Construct a model and store all hyperparameters.
         
@@ -181,7 +177,6 @@ class DeepPhiPLNN(PLNN):
             dt0
             confine
             sample_cells
-            infer_metric
             include_phi_bias
             include_tilt_bias
             include_metric_bias
@@ -193,10 +188,6 @@ class DeepPhiPLNN(PLNN):
             tilt_hidden_acts
             tilt_final_act
             tilt_layer_normalize
-            metric_hidden_dims
-            metric_hidden_acts
-            metric_final_act
-            metric_layer_normalize
         
         Returns:
             DeepPhiPLNN: Model instance.
@@ -216,10 +207,8 @@ class DeepPhiPLNN(PLNN):
             dt0=dt0, 
             confine=confine, 
             sample_cells=sample_cells,
-            infer_metric=infer_metric,
             include_phi_bias=include_phi_bias,
             include_tilt_bias=include_tilt_bias,
-            include_metric_bias=include_metric_bias,
             phi_hidden_dims=phi_hidden_dims, 
             phi_hidden_acts=phi_hidden_acts, 
             phi_final_act=phi_final_act,
@@ -228,10 +217,6 @@ class DeepPhiPLNN(PLNN):
             tilt_hidden_acts=tilt_hidden_acts, 
             tilt_final_act=tilt_final_act,
             tilt_layer_normalize=tilt_layer_normalize,
-            metric_hidden_dims=metric_hidden_dims, 
-            metric_hidden_acts=metric_hidden_acts, 
-            metric_final_act=metric_final_act,
-            metric_layer_normalize=metric_layer_normalize,
         )
         hyperparams = model.get_hyperparameters()
         # Append to dictionary those hyperparams not stored internally.
@@ -244,10 +229,6 @@ class DeepPhiPLNN(PLNN):
             'tilt_hidden_acts' : tilt_hidden_acts,
             'tilt_final_act' : tilt_final_act,
             'tilt_layer_normalize' : tilt_layer_normalize,
-            'metric_hidden_dims' : metric_hidden_dims,
-            'metric_hidden_acts' : metric_hidden_acts,
-            'metric_final_act' : metric_final_act,
-            'metric_layer_normalize' : metric_layer_normalize,
         })
         model = jtu.tree_map(
             lambda x: x.astype(dtype) if eqx.is_array(x) else x, model
@@ -268,10 +249,6 @@ class DeepPhiPLNN(PLNN):
             init_tilt_weights_args=[],
             init_tilt_bias_method='constant',
             init_tilt_bias_args=[0.],
-            init_metric_weights_method='xavier_uniform',
-            init_metric_weights_args=[],
-            init_metric_bias_method='constant',
-            init_metric_bias_args=[0.],
     ) -> 'DeepPhiPLNN':
         """Return an initialized version of the model.
 
@@ -304,10 +281,6 @@ class DeepPhiPLNN(PLNN):
             init_tilt_weights_args=init_tilt_weights_args,
             init_tilt_bias_method=init_tilt_bias_method,
             init_tilt_bias_args=init_tilt_bias_args,
-            init_metric_weights_method=init_metric_weights_method,
-            init_metric_weights_args=init_metric_weights_args,
-            init_metric_bias_method=init_metric_bias_method,
-            init_metric_bias_args=init_metric_bias_args,
         )
         
         key, key1, key2 = jrandom.split(key, 3)

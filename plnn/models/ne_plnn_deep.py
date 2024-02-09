@@ -1,4 +1,4 @@
-"""GMM Parameterized Landscape.
+"""Non-Euclidean Deep NN Parameterized Landscape.
 
 """
 
@@ -7,34 +7,44 @@ import jax
 import jax.numpy as jnp
 import jax.random as jrandom
 import jax.tree_util as jtu
-import equinox as eqx
 from jaxtyping import Array, Float
+import equinox as eqx
 
-from .plnn import PLNN, _get_nn_init_args, _get_nn_init_func
+from .plnn import _get_nn_init_args, _get_nn_init_func
+from .ne_plnn import NEPLNN
 
 
-class GMMPhiPLNN(PLNN):
+class NEDeepPhiPLNN(NEPLNN):
 
-    ncomponents: int
+    include_phi_bias: bool
 
     def __init__(
             self, 
             key, dtype=jnp.float32, *,
-            ncomponents,
+            include_phi_bias=True,
+            phi_hidden_dims=[16, 32, 32, 16],
+            phi_hidden_acts='softplus',
+            phi_final_act=None,
+            phi_layer_normalize=False,
             **kwargs
     ):
         key, subkey = jrandom.split(key, 2)
         super().__init__(subkey, dtype=dtype, **kwargs)
-
-        self.model_type = "gmm_plnn"
-        self.ncomponents = ncomponents
+        
+        self.model_type = "deep_phi_plnn"
+        self.include_phi_bias = include_phi_bias
 
         key, subkey = jrandom.split(key, 2)
         self.phi_module = self._construct_phi_module(
             subkey, 
+            phi_hidden_dims, 
+            phi_hidden_acts, 
+            phi_final_act, 
+            phi_layer_normalize,
+            bias=include_phi_bias, 
             dtype=dtype
         )
-    
+
     ######################
     ##  Getter Methods  ##
     ######################
@@ -52,7 +62,6 @@ class GMMPhiPLNN(PLNN):
         d = super().get_parameters()
         def linear_layers(m):
             return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
-        raise NotImplementedError()
         phi_linlayers  = linear_layers(self.phi_module)
         d.update({
             'phi.w' : [l.weight for l in phi_linlayers],
@@ -67,10 +76,10 @@ class GMMPhiPLNN(PLNN):
             dict: dictionary of hyperparameters.
         """
         d = super().get_hyperparameters()
-        d['ncomponents'] = self.ncomponents
+        d['include_phi_bias'] = self.include_phi_bias
         return d
     
-    def get_linear_layer_parameters(self, include_metric=False) -> list[Array]:
+    def get_linear_layer_parameters(self) -> list[Array]:
         """Return a list of learnable parameters from linear layers.
         
         Args:
@@ -79,10 +88,9 @@ class GMMPhiPLNN(PLNN):
         Returns:
             list[Array] : List of linear layer learnable parameter arrays.
         """
-        params = super().get_linear_layer_parameters(include_metric)
+        params = super().get_linear_layer_parameters()
         def linear_layers(m):
             return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
-        raise NotImplementedError()
         phi_linlayers  = linear_layers(self.phi_module)
         phi_params = []
         for layer in phi_linlayers:
@@ -90,12 +98,11 @@ class GMMPhiPLNN(PLNN):
             if layer.bias is not None:
                 phi_params.append(layer.bias)
         return phi_params + params
-    
+
     ##############################
     ##  Core Landscape Methods  ##
     ##############################
-
-    @eqx.filter_jit
+    
     def eval_phi(
         self, 
         y: Float[Array, "ndims"]
@@ -107,10 +114,8 @@ class GMMPhiPLNN(PLNN):
         Returns:
             Array of shape (1,).
         """
-        raise NotImplementedError()
         return self.eval_confinement(y) + self.phi_module(y).squeeze(-1)
 
-    @eqx.filter_jit
     def eval_grad_phi(
         self, 
         t: Float, 
@@ -124,10 +129,9 @@ class GMMPhiPLNN(PLNN):
         Returns:
             Array of shape (d,).
         """
-        raise NotImplementedError()
         return self.eval_grad_confinement(y) + \
                jax.jacrev(self.phi_module)(y).squeeze(0)
-
+    
     ##########################
     ##  Model Construction  ##
     ##########################
@@ -147,10 +151,8 @@ class GMMPhiPLNN(PLNN):
         dt0=1e-2, 
         confine=False,
         sample_cells=True, 
-        infer_metric=True,
         include_phi_bias=True, 
         include_tilt_bias=False,
-        include_metric_bias=True,
         phi_hidden_dims=[16,32,32,16], 
         phi_hidden_acts='softplus', 
         phi_final_act=None, 
@@ -159,11 +161,7 @@ class GMMPhiPLNN(PLNN):
         tilt_hidden_acts=None,
         tilt_final_act=None,
         tilt_layer_normalize=False,
-        metric_hidden_dims=[8,8,8,8], 
-        metric_hidden_acts='softplus', 
-        metric_final_act=None, 
-        metric_layer_normalize=False, 
-    ) -> tuple['GMMPhiPLNN', dict]:
+    ) -> tuple['NEDeepPhiPLNN', dict]:
         """Construct a model and store all hyperparameters.
         
         Args:
@@ -180,7 +178,6 @@ class GMMPhiPLNN(PLNN):
             dt0
             confine
             sample_cells
-            infer_metric
             include_phi_bias
             include_tilt_bias
             include_metric_bias
@@ -192,17 +189,12 @@ class GMMPhiPLNN(PLNN):
             tilt_hidden_acts
             tilt_final_act
             tilt_layer_normalize
-            metric_hidden_dims
-            metric_hidden_acts
-            metric_final_act
-            metric_layer_normalize
         
         Returns:
-            GMMPhiPLNN: Model instance.
+            NEDeepPhiPLNN: Model instance.
             dict: Dictionary of hyperparameters.
         """
-        raise NotImplementedError()
-        model = GMMPhiPLNN(
+        model = NEDeepPhiPLNN(
             key=key,
             dtype=dtype,
             ndims=ndims, 
@@ -216,50 +208,49 @@ class GMMPhiPLNN(PLNN):
             dt0=dt0, 
             confine=confine, 
             sample_cells=sample_cells,
-            infer_metric=infer_metric,
+            include_phi_bias=include_phi_bias,
             include_tilt_bias=include_tilt_bias,
-            include_metric_bias=include_metric_bias,
+            phi_hidden_dims=phi_hidden_dims, 
+            phi_hidden_acts=phi_hidden_acts, 
+            phi_final_act=phi_final_act,
+            phi_layer_normalize=phi_layer_normalize,
             tilt_hidden_dims=tilt_hidden_dims, 
             tilt_hidden_acts=tilt_hidden_acts, 
             tilt_final_act=tilt_final_act,
             tilt_layer_normalize=tilt_layer_normalize,
-            metric_hidden_dims=metric_hidden_dims, 
-            metric_hidden_acts=metric_hidden_acts, 
-            metric_final_act=metric_final_act,
-            metric_layer_normalize=metric_layer_normalize,
         )
         hyperparams = model.get_hyperparameters()
         # Append to dictionary those hyperparams not stored internally.
         hyperparams.update({
+            'phi_hidden_dims' : phi_hidden_dims,
+            'phi_hidden_acts' : phi_hidden_acts,
+            'phi_final_act' : phi_final_act,
+            'phi_layer_normalize' : phi_layer_normalize,
             'tilt_hidden_dims' : tilt_hidden_dims,
             'tilt_hidden_acts' : tilt_hidden_acts,
             'tilt_final_act' : tilt_final_act,
             'tilt_layer_normalize' : tilt_layer_normalize,
-            'metric_hidden_dims' : metric_hidden_dims,
-            'metric_hidden_acts' : metric_hidden_acts,
-            'metric_final_act' : metric_final_act,
-            'metric_layer_normalize' : metric_layer_normalize,
         })
         model = jtu.tree_map(
             lambda x: x.astype(dtype) if eqx.is_array(x) else x, model
         )
         return model, hyperparams
-    
+
     #############################
     ##  Initialization Method  ##
     #############################
-
+    
     def initialize(self, 
             key, dtype=jnp.float32, *,
+            init_phi_weights_method='xavier_uniform',
+            init_phi_weights_args=[],
+            init_phi_bias_method='constant',
+            init_phi_bias_args=[0.],
             init_tilt_weights_method='xavier_uniform',
             init_tilt_weights_args=[],
             init_tilt_bias_method='constant',
             init_tilt_bias_args=[0.],
-            init_metric_weights_method='xavier_uniform',
-            init_metric_weights_args=[],
-            init_metric_bias_method='constant',
-            init_metric_bias_args=[0.],
-    ) -> 'GMMPhiPLNN':
+    ) -> 'NEDeepPhiPLNN':
         """Return an initialized version of the model.
 
         Args:
@@ -279,8 +270,11 @@ class GMMPhiPLNN(PLNN):
             init_metric_bias_args
 
         Returns:
-            GMMPhiPLNN : Initialized model instance.
-        """        
+            NEDeepPhiPLNN : Initialized model instance.
+        """
+        if init_phi_bias_method == 'xavier_uniform':
+            raise RuntimeError("Cannot initialize bias using `xavier_uniform`")
+        
         key, subkey = jrandom.split(key, 2)
         model = super().initialize(
             subkey, dtype=dtype, 
@@ -288,23 +282,53 @@ class GMMPhiPLNN(PLNN):
             init_tilt_weights_args=init_tilt_weights_args,
             init_tilt_bias_method=init_tilt_bias_method,
             init_tilt_bias_args=init_tilt_bias_args,
-            init_metric_weights_method=init_metric_weights_method,
-            init_metric_weights_args=init_metric_weights_args,
-            init_metric_bias_method=init_metric_bias_method,
-            init_metric_bias_args=init_metric_bias_args,
         )
-        raise NotImplementedError()
+        
         key, key1, key2 = jrandom.split(key, 3)
         is_linear = lambda x: isinstance(x, eqx.nn.Linear)
+        
+        # Initialize PhiNN Weights
+        get_weights = lambda m: [
+                x.weight 
+                for x in jax.tree_util.tree_leaves(m.phi_module, is_leaf=is_linear) 
+                if is_linear(x)
+            ]
+        init_fn_args = _get_nn_init_args(init_phi_weights_args)
+        init_fn_handle = _get_nn_init_func(init_phi_weights_method)
+        if init_fn_handle:
+            init_fn = init_fn_handle(*init_fn_args)
+            weights = get_weights(model)
+            new_weights = [
+                init_fn(subkey, w.shape, dtype) 
+                for w, subkey in zip(weights, jrandom.split(key1, len(weights)))
+            ]
+            model = eqx.tree_at(get_weights, model, new_weights)
 
-        return model
-
+        # Initialize PhiNN Bias if applicable
+        get_biases = lambda m: [
+                x.bias 
+                for x in jax.tree_util.tree_leaves(m.phi_module, is_leaf=is_linear) 
+                if is_linear(x) and x.use_bias
+            ]
+        init_fn_args = _get_nn_init_args(init_phi_bias_args)
+        init_fn_handle = _get_nn_init_func(init_phi_bias_method)
+        if init_fn_handle and model.include_phi_bias:
+            init_fn = init_fn_handle(*init_fn_args)
+            biases = get_biases(model)
+            new_biases = [
+                init_fn(subkey, b.shape, dtype) 
+                for b, subkey in zip(biases, jrandom.split(key2, len(biases)))
+            ]
+            model = eqx.tree_at(get_biases, model, new_biases)
+        
+        return model  
+    
     ############################
     ##  Model Saving/Loading  ##
     ############################
 
     @staticmethod
-    def load(fname:str, dtype=jnp.float32) -> tuple['GMMPhiPLNN', dict]:
+    def load(fname:str, dtype=jnp.float32) -> tuple['NEDeepPhiPLNN', dict]:
         """Load a model from a binary parameter file.
         
         Args:
@@ -312,12 +336,12 @@ class GMMPhiPLNN(PLNN):
             dtype : Datatype. Either jnp.float32 or jnp.float64.
 
         Returns:
-            GMMPhiPLNN: Model instance.
+            NEDeepPhiPLNN: Model instance.
             dict: Model hyperparameters.
         """
         with open(fname, "rb") as f:
             hyperparams = json.loads(f.readline().decode())
-            model, _ = GMMPhiPLNN.make_model(
+            model, _ = NEDeepPhiPLNN.make_model(
                 key=jrandom.PRNGKey(0), dtype=dtype, **hyperparams
             )
             return eqx.tree_deserialise_leaves(f, model), hyperparams
@@ -325,6 +349,10 @@ class GMMPhiPLNN(PLNN):
     ######################
     ##  Helper Methods  ##
     ######################
-
-    def _construct_phi_module(self, key, dtype=jnp.float32):
-        raise NotImplementedError()
+    
+    def _construct_phi_module(self, key, hidden_dims, hidden_acts, final_act, 
+                              layer_normalize, bias=True, dtype=jnp.float32):
+        return self._construct_ffn(
+            key, self.ndims, 1,
+            hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
+        )
