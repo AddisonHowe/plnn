@@ -34,7 +34,6 @@ def select_loss_function(key)->callable:
 ##  Loss Functions  ##
 ######################
     
-@jax.jit
 def kl_divergence_loss(q_samps, p_samps) -> float:
     """Estimate the KL divergence. Returns the average over all batches.
 
@@ -51,7 +50,6 @@ def kl_divergence_loss(q_samps, p_samps) -> float:
     """
     return jnp.mean(jax.vmap(kl_divergence_est)(q_samps, p_samps))
 
-@jax.jit
 def mean_cov_loss(y_sim, y_obs) -> float:
     """Loss function based on the difference of first and second moments.
 
@@ -70,7 +68,6 @@ def mean_cov_loss(y_sim, y_obs) -> float:
     cov_err = jnp.sum(jnp.square(cov_sim - cov_obs), axis=(1,2))
     return jnp.mean(mu_err + cov_err)
 
-@jax.jit
 def mean_diff_loss(y_sim, y_obs) -> float:
     """Loss function based on the difference of first moments.
 
@@ -91,11 +88,9 @@ def mean_diff_loss(y_sim, y_obs) -> float:
 ##  Helper Functions  ##
 ########################
 
-@jax.jit
 def euclidean_distance(x, y):
     return jnp.sqrt(jnp.sum(jnp.square(x - y)))
 
-@jax.jit
 def batch_cov(batch_points):
     """
     Returns:
@@ -103,12 +98,10 @@ def batch_cov(batch_points):
     """
     return jax.vmap(jnp.cov, 0)(batch_points.transpose((0, 2, 1)))
 
-@jax.jit
 def cdist(x, y):
     return jax.vmap(lambda x1: jax.vmap(
         lambda y1: euclidean_distance(x1, y1))(y))(x)
 
-@jax.jit
 def kl_divergence_est(q_samp, p_samp):
     """Estimate the KL divergence.
     

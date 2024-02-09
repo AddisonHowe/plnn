@@ -1,9 +1,9 @@
 """Model Training Script
+
 """
 
 import os
 import time
-import json
 import numpy as np
 import jax.random as jrandom
 import equinox as eqx
@@ -70,16 +70,16 @@ def train_model(
     if plotting:
         make_plots(0, model, outdir, plotting_opts)
 
-    if verbosity: print(f"\nTraining model...\n")
+    if verbosity: logprint(f"\nTraining model...\n")
     
     # Save initial model state
     os.makedirs(f"{outdir}/states", exist_ok=True)
     model_path = f"{outdir}/states/{model_name}_0.pth"
-    if verbosity: print(f"Saving initial model state to: {model_path}")
+    if verbosity: logprint(f"Saving initial model state to: {model_path}")
     model.save(model_path, hyperparams)
 
     for epoch in range(num_epochs):
-        if verbosity: print(f'EPOCH {epoch + 1}/{num_epochs}:', flush=True)
+        if verbosity: logprint(f'EPOCH {epoch + 1}/{num_epochs}:')
         etime0 = time.time()
         key, trainkey, validkey = jrandom.split(key, 3)
 
@@ -261,7 +261,6 @@ def validate_post_epoch(
     return avg_vloss
 
 
-@eqx.filter_jit
 @eqx.filter_value_and_grad
 def compute_loss(model, x, y, loss_fn, key):
     t0, y0, t1, sigparams = x
