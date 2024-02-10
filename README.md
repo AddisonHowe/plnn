@@ -51,6 +51,14 @@ pip install -e .
 ### Notebooks
 
 ### Testing
+Tests are located in the directory `tests/` and organized as follows.
+
+* Model tests in `tests/test_models/`:
+    * `DeepPhiPLNN`: `tests/test_models/test_deep_phi_plnn.py`
+    * `NEDeepPhiPLNN`: `tests/test_models/test_ne_deep_phi_plnn.py`
+* Temporary data should be stored in the directory `tests/tmp/`.
+* Benchmarking tests in directory `tests/benchmarking/`.
+* Miscellaneous data in `tests/data/`.
 
 ### Benchmarking
 

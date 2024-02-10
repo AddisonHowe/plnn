@@ -4,6 +4,9 @@ import pytest
 ##  Configuration  ##
 #####################
 
+DATDIR = "tests/_datadir"  # data directory for all tests.
+TMPDIR = "tests/_tmp"  # output directory for all tests.
+
 def pytest_addoption(parser):
     parser.addoption(
         "--benchmark", action="store_true", default=False, 
