@@ -10,7 +10,7 @@ import jax.numpy as jnp
 import jax.random as jrandom
 import optax
 
-from tests.conftest import DATDIR, TMPDIR
+from tests.conftest import DATDIR, TMPDIR, remove_dir
 
 from plnn.models import DeepPhiPLNN
 from plnn.model_training import train_model
@@ -188,6 +188,8 @@ class TestTwoStepSimulation:
                 msg = f"Error in w{i}:\nExpected:\n{newparam_exp}\nGot:\n{newparam_act}"
                 errors1.append(msg)
 
+        remove_dir(OUTDIR)
+
         assert not errors1, \
             "Errors occurred in epoch 1:\n{}".format("\n".join(errors1))
         
@@ -311,6 +313,8 @@ class TestTwoStepSimulation:
             if not np.allclose(new_param_exp, newparam_act, atol=atol):
                 msg = f"Error in w{i}:\nExpected:\n{new_param_exp}\nGot:\n{newparam_act}"
                 errors2.append(msg)
+
+        remove_dir(OUTDIR)
 
         assert not errors1, \
             "Errors occurred in epoch 1:\n{}".format("\n".join(errors1))

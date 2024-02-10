@@ -1,11 +1,15 @@
 import pytest
+import shutil
+
+DATDIR = "tests/_data"  # data directory for all tests.
+TMPDIR = "tests/_tmp"  # output directory for all tests.
+
+def remove_dir(dir):
+    shutil.rmtree(dir)
 
 #####################
 ##  Configuration  ##
 #####################
-
-DATDIR = "tests/_datadir"  # data directory for all tests.
-TMPDIR = "tests/_tmp"  # output directory for all tests.
 
 def pytest_addoption(parser):
     parser.addoption(

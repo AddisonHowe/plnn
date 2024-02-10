@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PYTESTDATDIR=$(python -c "from tests.conftest import DATDIR; print(DATDIR)")
+
 runname="benchmark_data_1a"
 
 landscape="phi1"
@@ -36,7 +38,7 @@ echo Logging information to logs/${runname}.o
 echo "Generating training data..."
 
 python plnn/data_generation/generate_data.py \
-    -o data/benchmark_data/${runname}/training \
+    -o $PYTESTDATDIR/benchmark_data/${runname}/training \
     --nsims $nsims_train \
     --tfin $tfin --dt $dt --dt_save $dt_save --ncells $ncells --burnin $burnin \
     --landscape_name ${landscape} \
@@ -61,7 +63,7 @@ python plnn/data_generation/generate_data.py \
 echo "Generating validation data..."
 
 python plnn/data_generation/generate_data.py \
-    -o data/benchmark_data/${runname}/validation \
+    -o $PYTESTDATDIR/benchmark_data/${runname}/validation \
     --nsims $nsims_valid \
     --tfin $tfin --dt $dt --dt_save $dt_save --ncells $ncells --burnin $burnin \
     --landscape_name ${landscape} \
