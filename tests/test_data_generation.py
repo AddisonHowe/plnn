@@ -6,7 +6,7 @@ import pytest
 import shutil
 import numpy as np
 
-from tests.conftest import DATDIR, TMPDIR
+from tests.conftest import DATDIR, TMPDIR, remove_dir
 from plnn.data_generation.generate_data import parse_args, main
 
 #####################
@@ -19,9 +19,6 @@ def get_args(fpath):
         arglist = argstring.split(" ")
         return arglist
     
-def _remove_dir(dir):
-    shutil.rmtree(dir)
-
 ###############################################################################
 ###############################   BEGIN TESTS   ###############################
 ###############################################################################
@@ -57,4 +54,4 @@ def test_data_generation(argstring_fpath):
             msg = f"Mismatch between x values at tsim={tsim}, tani={tani}."
             errors.append(msg)
     assert not errors, "Errors occurred:\n{}".format("\n".join(errors))    
-    _remove_dir(f"{TMPDIR}/tmp_test_data_generation")
+    remove_dir(f"{TMPDIR}/tmp_test_data_generation")
