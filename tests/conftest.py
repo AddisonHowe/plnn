@@ -1,10 +1,19 @@
+"""Pytest Configuration File
+
+"""
+
 import pytest
 import shutil
 
 DATDIR = "tests/_data"  # data directory for all tests.
 TMPDIR = "tests/_tmp"  # output directory for all tests.
 
-def remove_dir(dir):
+def remove_dir(dir:str):
+    """Helper function to remove a directory recursively."""
+    if not dir.startswith(TMPDIR):
+        msg = f"Can only use function `remove_dir` from tests.conftest to \
+        remove directories in the directory {TMPDIR}. Got: {dir}"
+        raise RuntimeError(msg)
     shutil.rmtree(dir)
 
 #####################

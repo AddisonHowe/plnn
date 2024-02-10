@@ -7,7 +7,7 @@ import shutil
 import jax.numpy as jnp
 import numpy as np
 
-from tests.conftest import DATDIR, TMPDIR
+from tests.conftest import DATDIR, TMPDIR, remove_dir
 
 from plnn.main import parse_args, main
 from plnn.models import DeepPhiPLNN
@@ -21,10 +21,7 @@ def get_args(fpath):
         argstring = f.readline()
         arglist = argstring.split(" ")
         return arglist
-    
-def _remove_dir(dir):
-    shutil.rmtree(dir)
-    
+        
 ###############################################################################
 ###############################   BEGIN TESTS   ###############################
 ###############################################################################
@@ -42,7 +39,7 @@ def test_main(argstring_fpath):
     args.training_data = f"{DATDIR}/{args.training_data}"
     args.validation_data = f"{DATDIR}/{args.validation_data}"
     main(args)
-    _remove_dir(args.outdir)
+    remove_dir(args.outdir)
 
 
 @pytest.mark.parametrize('argstring_fpath, modelname, dtype', [
@@ -64,14 +61,14 @@ def test_reproducibility(argstring_fpath, modelname, dtype):
         f"{args.outdir}/states/{modelname}_1.pth",
         dtype=dtype
     )
-    _remove_dir(f"{TMPDIR}/tmp_test_main")
+    remove_dir(f"{TMPDIR}/tmp_test_main")
     # Re-run main
     main(args)
     model2, hp2 = DeepPhiPLNN.load(
         f"{args.outdir}/states/{modelname}_1.pth",
         dtype=dtype
     )
-    _remove_dir(f"{TMPDIR}/tmp_test_main")
+    remove_dir(f"{TMPDIR}/tmp_test_main")
 
     w1 = model1.get_parameters()['phi.w']
     w2 = model2.get_parameters()['phi.w']
