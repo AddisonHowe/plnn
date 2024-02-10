@@ -1,3 +1,7 @@
+"""Training Test Case 1
+
+"""
+
 import pytest
 import os, glob
 import numpy as np
@@ -5,6 +9,9 @@ import jax
 import jax.numpy as jnp
 import jax.random as jrandom
 import optax
+
+from tests.conftest import DATDIR, TMPDIR
+
 from plnn.models import DeepPhiPLNN
 from plnn.model_training import train_model
 from plnn.dataset import get_dataloaders
@@ -36,12 +43,12 @@ WT1 = np.array([
 ], dtype=float)
 
 
-TRAINDIR = "tests/simtest1/data_train"
-VALIDDIR = "tests/simtest1/data_valid"
+TRAINDIR = f"{DATDIR}/simtest1/data_train"
+VALIDDIR = f"{DATDIR}/simtest1/data_valid"
 NSIMS_TRAIN = 4
 NSIMS_VALID = 4
 
-OUTDIR = "tests/simtest1/tmp_out"
+OUTDIR = f"{TMPDIR}/simtest1"
 
 ###############################################################################
 ###############################   BEGIN TESTS   ###############################

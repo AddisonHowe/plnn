@@ -1,9 +1,16 @@
+"""Training Test Case 2
+
+"""
+
 import pytest
 import os, glob
 import numpy as np
 import jax.numpy as jnp
 import jax.random as jrandom
 import optax
+
+from tests.conftest import DATDIR, TMPDIR
+
 from plnn.models import DeepPhiPLNN
 from plnn.model_training import train_model
 from plnn.dataset import get_dataloaders
@@ -34,13 +41,12 @@ WT1 = np.array([
     [-1, 1],
 ], dtype=float)
 
-
-TRAINDIR = "tests/simtest2/data_train"
-VALIDDIR = "tests/simtest2/data_valid"
+TRAINDIR = f"{DATDIR}/simtest2/data_train"
+VALIDDIR = f"{DATDIR}/simtest2/data_valid"
 NSIMS_TRAIN = 4
 NSIMS_VALID = 4
 
-OUTDIR = "tests/simtest2/tmp_out"
+OUTDIR = f"{TMPDIR}/simtest1"
 
 ###############################################################################
 ###############################   BEGIN TESTS   ###############################
@@ -172,6 +178,7 @@ class TestTraining:
             if not np.allclose(newparam_exp, newparam_act, atol=atol):
                 msg = f"Error in w{i}:\nExpected:\n{newparam_exp}\nGot:\n{newparam_act}"
                 errors1.append(msg)
+
 
         assert not errors1, \
             "Errors occurred in epoch 1:\n{}".format("\n".join(errors1))

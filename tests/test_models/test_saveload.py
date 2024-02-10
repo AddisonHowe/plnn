@@ -1,10 +1,19 @@
+"""Model Saving and Loading Tests.
+
+"""
+
 import pytest
 import jax.numpy as jnp
 import jax.random as jrandom
 import os, shutil
 import numpy as np
+
+from tests.conftest import TMPDIR, DATDIR
 from plnn.models import DeepPhiPLNN
 
+#####################
+##  Configuration  ##
+#####################
 
 def get_make_args(fpath):
     with open(fpath, 'r') as f:
@@ -13,8 +22,12 @@ def get_make_args(fpath):
     key = jrandom.PRNGKey(0)
     return args, key
 
+###############################################################################
+###############################   BEGIN TESTS   ###############################
+###############################################################################
+
 @pytest.mark.parametrize('arg_fpath', [
-    "tests/make_args/make_args1.txt",
+    f"{DATDIR}/make_args/make_args1.txt",
 ])
 @pytest.mark.parametrize('dtype', [jnp.float32, jnp.float64])
 @pytest.mark.parametrize('initialize', [True, False])
@@ -41,7 +54,7 @@ class TestMakeSaveLoad:
         model, _ = DeepPhiPLNN.make_model(key, dtype=dtype, **args)
         if initialize: 
             model = model.initialize(key, dtype=dtype)
-        tmpdir = "tests/tmp_make_save"
+        tmpdir = f"{TMPDIR}/tmp_make_save"
         fpath = f"{tmpdir}/tmp_model.pth"
         os.makedirs(tmpdir, exist_ok=True)
         model.save(fpath, args)
@@ -53,7 +66,7 @@ class TestMakeSaveLoad:
         model, _ = DeepPhiPLNN.make_model(key, dtype=dtype, **args)
         if initialize: 
             model = model.initialize(key, dtype=dtype)
-        tmpdir = "tests/tmp_make_save_load"
+        tmpdir = f"{TMPDIR}/tmp_make_save_load"
         fpath = f"{tmpdir}/tmp_model.pth"
         os.makedirs(tmpdir, exist_ok=True)
         model.save(fpath, args)

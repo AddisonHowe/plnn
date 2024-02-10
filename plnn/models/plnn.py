@@ -35,7 +35,8 @@ def _explicit_initilizer(values):
     counter = 0
     def init_fn(key, shape, dtype):
         nonlocal counter
-        v = jnp.array(values[counter], dtype=dtype)
+        v = jnp.empty(shape, dtype=dtype)
+        v = v.at[:].set(jnp.array(values[counter], dtype=dtype))
         counter += 1
         return v
     return init_fn
@@ -43,9 +44,9 @@ def _explicit_initilizer(values):
 _INIT_METHOD_KEYS = {
     'none' : None,
     'xavier_uniform' : jax.nn.initializers.glorot_uniform,  # no parameters
-    'constant' : jax.nn.initializers.constant,  # parameters: constant value
-    'normal' : jax.nn.initializers.normal,  # parameters: mean, std
-    'explicit' : _explicit_initilizer, # parameters: values
+    'constant' : jax.nn.initializers.constant,  # parameters (1): constant value
+    'normal' : jax.nn.initializers.normal,  # parameters (1): std
+    'explicit' : _explicit_initilizer, # parameters (1): values
 }
 
 def _get_nn_init_func(init_method):
@@ -230,9 +231,7 @@ class PLNN(eqx.Module):
             dict: Dictionary containing learnable parameters.
                 
         """
-        def linear_layers(m):
-            return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
-        tilt_linlayers = linear_layers(self.tilt_module)
+        tilt_linlayers = self._get_linear_module_layers(self.tilt_module)
         d = {
             'tilt.w' : [l.weight for l in tilt_linlayers],
             'tilt.b' : [l.bias for l in tilt_linlayers],
@@ -267,9 +266,7 @@ class PLNN(eqx.Module):
         Returns:
             list[Array] : List of linear layer learnable parameter arrays.
         """
-        def linear_layers(m):
-            return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
-        tilt_linlayers = linear_layers(self.tilt_module)
+        tilt_linlayers = self._get_linear_module_layers(self.tilt_module)
         tilt_params = []
         for layer in tilt_linlayers:
             tilt_params.append(layer.weight)
@@ -818,53 +815,122 @@ class PLNN(eqx.Module):
             init_tilt_bias_method='constant',
             init_tilt_bias_args=[0.],
     ) -> 'PLNN':
-        if init_tilt_bias_method == 'xavier_uniform':
-            raise RuntimeError("Cannot initialize bias using `xavier_uniform`")
-        
-        model = self
+        """Initializes the tilt module of a PLNN model instance.
 
-        key, key1, key2 = jrandom.split(key, 3)
-        is_linear = lambda x: isinstance(x, eqx.nn.Linear)
-        
-        # Initialize TiltNN Weights
-        get_weights = lambda m: [
-                x.weight 
-                for x in jax.tree_util.tree_leaves(m.tilt_module, is_leaf=is_linear) 
-                if is_linear(x)
-            ]
-        init_fn_args = _get_nn_init_args(init_tilt_weights_args)
-        init_fn_handle = _get_nn_init_func(init_tilt_weights_method)
-        if init_fn_handle:
-            init_fn = init_fn_handle(*init_fn_args)
-            weights = get_weights(model)
-            new_weights = [
-                init_fn(subkey, w.shape, dtype) 
-                for w, subkey in zip(weights, jrandom.split(key1, len(weights)))
-            ]
-            model = eqx.tree_at(get_weights, model, new_weights)
+        Args:
+            key (_type_): TODO
+            dtype (_type_, optional): TODO. Defaults to jnp.float32.
+            init_tilt_weights_method (str, optional): TODO. Defaults to 'xavier_uniform'.
+            init_tilt_weights_args (list, optional): TODO. Defaults to [].
+            init_tilt_bias_method (str, optional): TODO. Defaults to 'constant'.
+            init_tilt_bias_args (list, optional): TODO. Defaults to [0.].
 
-        # Initialize TiltNN Bias if applicable
-        get_biases = lambda m: [
-                x.bias 
-                for x in jax.tree_util.tree_leaves(m.tilt_module, is_leaf=is_linear) 
-                if is_linear(x) and x.use_bias
-            ]
-        init_fn_args = _get_nn_init_args(init_tilt_bias_args)
-        init_fn_handle = _get_nn_init_func(init_tilt_bias_method)
-        if init_fn_handle and model.include_tilt_bias:
-            init_fn = init_fn_handle(*init_fn_args)
-            biases = get_biases(model)
-            new_biases = [
-                init_fn(subkey, b.shape, dtype) 
-                for b, subkey in zip(biases, jrandom.split(key2, len(biases)))
-            ]
-            model = eqx.tree_at(get_biases, model, new_biases)
-
-        return model
+        Returns:
+            PLNN: Model with initialized weights and biases of the tilt module.
+        """
+        # Initialize tilt module
+        return self._initialize_linear_module(
+            key, dtype, self, 'tilt_module', 
+            init_weights_method=init_tilt_weights_method,
+            init_weights_args=init_tilt_weights_args,
+            init_biases_method=init_tilt_bias_method,
+            init_biases_args=init_tilt_bias_args,
+            include_biases=self.include_tilt_bias,
+        )
     
     ###################################
     ##  Construction Helper Methods  ##
     ###################################
+
+    @staticmethod
+    def _initialize_linear_module(
+            key,
+            dtype,
+            model,
+            module_attribute_name,
+            init_weights_method,
+            init_weights_args,
+            init_biases_method,
+            init_biases_args,
+            include_biases,
+    ) -> 'PLNN':
+        """Initialize the weights and biases of a specific model submodule.
+
+        Args:
+            key (PRNGKey) : TODO
+            dtype () : TODO
+            model (PLNN) : TODO
+            module_attribute_name (str) : TODO
+            init_weights_method (str) : TODO
+            init_weights_args () : TODO
+            init_biases_method (str) : TODO
+            init_biases_args () : TODO
+            include_biases (bool) : TODO
+        
+        Returns:
+            (PLNN) Model instance with initialized weights and biases.
+        """
+
+        if init_biases_method == 'xavier_uniform':
+            msg = "Cannot initialize bias using method: xavier_uniform"
+            raise RuntimeError(msg)
+
+        key, key_w, key_b = jrandom.split(key, 3)
+        is_linear = lambda x: isinstance(x, eqx.nn.Linear)
+
+        # Initialize weights
+        get_weights = lambda m: [
+                x.weight for x in jax.tree_util.tree_leaves(
+                    getattr(m, module_attribute_name), is_leaf=is_linear
+                ) if is_linear(x)
+            ]
+        init_fn_handle = _get_nn_init_func(init_weights_method)
+        init_fn_args = _get_nn_init_args(init_weights_args)
+        if init_fn_handle:
+            init_fn = init_fn_handle(*init_fn_args)
+            weights = get_weights(model)
+            old_shapes = [None if w is None else w.shape for w in weights]
+            new_weights = [
+                init_fn(subkey, w.shape, dtype) for w, subkey 
+                in zip(weights, jrandom.split(key_w, len(weights)))
+            ]
+            new_shapes = [None if w is None else w.shape for w in new_weights]
+            if old_shapes != new_shapes:
+                msg = f"Weights changed shape during initialization \
+                    of module {module_attribute_name}."
+                msg += f"\nOld:\n{old_shapes}\nNew:\n{new_shapes}"
+                raise RuntimeError(msg)
+            model = eqx.tree_at(get_weights, model, new_weights)
+
+        # Initialize biases if specified
+        if not include_biases:
+            return model
+        
+        get_biases = lambda m: [
+                x.bias 
+                for x in jax.tree_util.tree_leaves(
+                    getattr(m, module_attribute_name), is_leaf=is_linear) 
+                if is_linear(x) and x.use_bias
+            ]
+        init_fn_handle = _get_nn_init_func(init_biases_method)
+        init_fn_args = _get_nn_init_args(init_biases_args)
+        if init_fn_handle:
+            init_fn = init_fn_handle(*init_fn_args)
+            biases = get_biases(model)
+            old_shapes = [None if b is None else b.shape for b in biases]
+            new_biases = [
+                # init_fn(subkey, b.shape, dtype) for b, subkey 
+                None if b is None else init_fn(subkey, b.shape, dtype) for b, subkey 
+                in zip(biases, jrandom.split(key_b, len(biases)))
+            ]
+            new_shapes = [None if b is None else b.shape for b in new_biases]
+            if old_shapes != new_shapes:
+                msg = f"Biases changed shape during initialization."
+                msg += f"\nOld:\n{old_shapes}\nNew:\n{new_shapes}"
+                raise RuntimeError(msg)
+            model = eqx.tree_at(get_biases, model, new_biases)
+        
+        return model
 
     def _check_hidden_layers(self, hidden_dims, hidden_acts, final_act):
         """Check the model architecture.
@@ -1197,6 +1263,10 @@ class PLNN(eqx.Module):
     ######################
     ##  Helper Methods  ##
     ######################
+
+    @staticmethod
+    def _get_linear_module_layers(m):
+        return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
 
     def _sample_y0(self, key, y0):
         y0_samp = jnp.empty([y0.shape[0], self.ncells, y0.shape[2]])

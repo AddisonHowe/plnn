@@ -10,7 +10,7 @@ import jax.tree_util as jtu
 from jaxtyping import Array, Float
 import equinox as eqx
 
-from .plnn import _get_nn_init_args, _get_nn_init_func
+from .plnn_deep import DeepPhiPLNN
 from .ne_plnn import NEPLNN
 
 
@@ -60,9 +60,7 @@ class NEDeepPhiPLNN(NEPLNN):
             dict: Dictionary containing learnable parameters.
         """
         d = super().get_parameters()
-        def linear_layers(m):
-            return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
-        phi_linlayers  = linear_layers(self.phi_module)
+        phi_linlayers  = self._get_linear_module_layers(self.phi_module)
         d.update({
             'phi.w' : [l.weight for l in phi_linlayers],
             'phi.b' : [l.bias for l in phi_linlayers],
@@ -89,9 +87,7 @@ class NEDeepPhiPLNN(NEPLNN):
             list[Array] : List of linear layer learnable parameter arrays.
         """
         params = super().get_linear_layer_parameters()
-        def linear_layers(m):
-            return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
-        phi_linlayers  = linear_layers(self.phi_module)
+        phi_linlayers  = self._get_linear_module_layers(self.phi_module)
         phi_params = []
         for layer in phi_linlayers:
             phi_params.append(layer.weight)
@@ -161,6 +157,12 @@ class NEDeepPhiPLNN(NEPLNN):
         tilt_hidden_acts=None,
         tilt_final_act=None,
         tilt_layer_normalize=False,
+        infer_metric=True,
+        include_metric_bias=True,
+        metric_hidden_dims=[],
+        metric_hidden_acts=None,
+        metric_final_act=None,
+        metric_layer_normalize=False,
     ) -> tuple['NEDeepPhiPLNN', dict]:
         """Construct a model and store all hyperparameters.
         
@@ -218,6 +220,12 @@ class NEDeepPhiPLNN(NEPLNN):
             tilt_hidden_acts=tilt_hidden_acts, 
             tilt_final_act=tilt_final_act,
             tilt_layer_normalize=tilt_layer_normalize,
+            infer_metric=infer_metric,
+            include_metric_bias=include_metric_bias,
+            metric_hidden_dims=metric_hidden_dims, 
+            metric_hidden_acts=metric_hidden_acts, 
+            metric_final_act=metric_final_act,
+            metric_layer_normalize=metric_layer_normalize,
         )
         hyperparams = model.get_hyperparameters()
         # Append to dictionary those hyperparams not stored internally.
@@ -226,10 +234,10 @@ class NEDeepPhiPLNN(NEPLNN):
             'phi_hidden_acts' : phi_hidden_acts,
             'phi_final_act' : phi_final_act,
             'phi_layer_normalize' : phi_layer_normalize,
-            'tilt_hidden_dims' : tilt_hidden_dims,
-            'tilt_hidden_acts' : tilt_hidden_acts,
-            'tilt_final_act' : tilt_final_act,
-            'tilt_layer_normalize' : tilt_layer_normalize,
+            'metric_hidden_dims' : metric_hidden_dims,
+            'metric_hidden_acts' : metric_hidden_acts,
+            'metric_final_act' : metric_final_act,
+            'metric_layer_normalize' : metric_layer_normalize,
         })
         model = jtu.tree_map(
             lambda x: x.astype(dtype) if eqx.is_array(x) else x, model
@@ -272,9 +280,6 @@ class NEDeepPhiPLNN(NEPLNN):
         Returns:
             NEDeepPhiPLNN : Initialized model instance.
         """
-        if init_phi_bias_method == 'xavier_uniform':
-            raise RuntimeError("Cannot initialize bias using `xavier_uniform`")
-        
         key, subkey = jrandom.split(key, 2)
         model = super().initialize(
             subkey, dtype=dtype, 
@@ -283,45 +288,15 @@ class NEDeepPhiPLNN(NEPLNN):
             init_tilt_bias_method=init_tilt_bias_method,
             init_tilt_bias_args=init_tilt_bias_args,
         )
-        
-        key, key1, key2 = jrandom.split(key, 3)
-        is_linear = lambda x: isinstance(x, eqx.nn.Linear)
-        
-        # Initialize PhiNN Weights
-        get_weights = lambda m: [
-                x.weight 
-                for x in jax.tree_util.tree_leaves(m.phi_module, is_leaf=is_linear) 
-                if is_linear(x)
-            ]
-        init_fn_args = _get_nn_init_args(init_phi_weights_args)
-        init_fn_handle = _get_nn_init_func(init_phi_weights_method)
-        if init_fn_handle:
-            init_fn = init_fn_handle(*init_fn_args)
-            weights = get_weights(model)
-            new_weights = [
-                init_fn(subkey, w.shape, dtype) 
-                for w, subkey in zip(weights, jrandom.split(key1, len(weights)))
-            ]
-            model = eqx.tree_at(get_weights, model, new_weights)
 
-        # Initialize PhiNN Bias if applicable
-        get_biases = lambda m: [
-                x.bias 
-                for x in jax.tree_util.tree_leaves(m.phi_module, is_leaf=is_linear) 
-                if is_linear(x) and x.use_bias
-            ]
-        init_fn_args = _get_nn_init_args(init_phi_bias_args)
-        init_fn_handle = _get_nn_init_func(init_phi_bias_method)
-        if init_fn_handle and model.include_phi_bias:
-            init_fn = init_fn_handle(*init_fn_args)
-            biases = get_biases(model)
-            new_biases = [
-                init_fn(subkey, b.shape, dtype) 
-                for b, subkey in zip(biases, jrandom.split(key2, len(biases)))
-            ]
-            model = eqx.tree_at(get_biases, model, new_biases)
-        
-        return model  
+        return self._initialize_linear_module(
+            key, dtype, model, 'phi_module', 
+            init_weights_method=init_phi_weights_method,
+            init_weights_args=init_phi_weights_args,
+            init_biases_method=init_phi_bias_method,
+            init_biases_args=init_phi_bias_args,
+            include_biases=self.include_phi_bias,
+        )
     
     ############################
     ##  Model Saving/Loading  ##

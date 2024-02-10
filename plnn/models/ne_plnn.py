@@ -8,7 +8,7 @@ import jax.random as jrandom
 from jaxtyping import Array, Float
 import equinox as eqx
 
-from .plnn import PLNN, _get_nn_init_args, _get_nn_init_func
+from .plnn import PLNN
 
 ##############################################################################
 ########################  Abstract NEPLNN Base Class  ########################
@@ -66,9 +66,7 @@ class NEPLNN(PLNN):
             dict: Dictionary containing learnable parameters.
         """
         d = super().get_parameters()
-        def linear_layers(m):
-            return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
-        metric_linlayers = linear_layers(self.metric_module)
+        metric_linlayers = self._get_linear_module_layers(self.metric_module)
         d.update({
             'metric.w' : [l.weight for l in metric_linlayers],
             'metric.b' : [l.bias for l in metric_linlayers],
@@ -96,9 +94,7 @@ class NEPLNN(PLNN):
             list[Array] : List of linear layer learnable parameter arrays.
         """
         params = super().get_linear_layer_parameters()
-        def linear_layers(m):
-            return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
-        metric_linlayers  = linear_layers(self.metric_module)
+        metric_linlayers  = self._get_linear_module_layers(self.metric_module)
         metric_params = []
         for layer in metric_linlayers:
             metric_params.append(layer.weight)
@@ -185,96 +181,20 @@ class NEPLNN(PLNN):
             init_metric_bias_method='constant',
             init_metric_bias_args=[0.],
             **kwargs
-    ) -> 'PLNN':
-        if init_metric_bias_method == 'xavier_uniform':
-            raise RuntimeError("Cannot initialize bias using `xavier_uniform`")
-        
+    ) -> 'NEPLNN':
         key, subkey = jrandom.split(key, 2)
         model = super().initialize(
-            subkey, dtype=dtype, 
-            init_tilt_weights_method=init_tilt_weights_method,
-            init_tilt_weights_args=init_tilt_weights_args,
-            init_tilt_bias_method=init_tilt_bias_method,
-            init_tilt_bias_args=init_tilt_bias_args,
-            # init_metric_weights_method=init_metric_weights_method,
-            # init_metric_weights_args=init_metric_weights_args,
-            # init_metric_bias_method=init_metric_bias_method,
-            # init_metric_bias_args=init_metric_bias_args,
+            subkey, dtype=dtype, **kwargs
         )
-        model = self
-
-        key, key1, key2, key3, key4 = jrandom.split(key, 5)
-        is_linear = lambda x: isinstance(x, eqx.nn.Linear)
-        
-        # Initialize TiltNN Weights
-        get_weights = lambda m: [
-                x.weight 
-                for x in jax.tree_util.tree_leaves(m.tilt_module, is_leaf=is_linear) 
-                if is_linear(x)
-            ]
-        init_fn_args = _get_nn_init_args(init_tilt_weights_args)
-        init_fn_handle = _get_nn_init_func(init_tilt_weights_method)
-        if init_fn_handle:
-            init_fn = init_fn_handle(*init_fn_args)
-            weights = get_weights(model)
-            new_weights = [
-                init_fn(subkey, w.shape, dtype) 
-                for w, subkey in zip(weights, jrandom.split(key1, len(weights)))
-            ]
-            model = eqx.tree_at(get_weights, model, new_weights)
-
-        # Initialize TiltNN Bias if applicable
-        get_biases = lambda m: [
-                x.bias 
-                for x in jax.tree_util.tree_leaves(m.tilt_module, is_leaf=is_linear) 
-                if is_linear(x) and x.use_bias
-            ]
-        init_fn_args = _get_nn_init_args(init_tilt_bias_args)
-        init_fn_handle = _get_nn_init_func(init_tilt_bias_method)
-        if init_fn_handle and model.include_tilt_bias:
-            init_fn = init_fn_handle(*init_fn_args)
-            biases = get_biases(model)
-            new_biases = [
-                init_fn(subkey, b.shape, dtype) 
-                for b, subkey in zip(biases, jrandom.split(key2, len(biases)))
-            ]
-            model = eqx.tree_at(get_biases, model, new_biases)
-
-        # Initialize MetricNN Weights
-        get_weights = lambda m: [
-                x.weight 
-                for x in jax.tree_util.tree_leaves(m.metric_module, is_leaf=is_linear) 
-                if is_linear(x)
-            ]
-        init_fn_args = _get_nn_init_args(init_metric_weights_args)
-        init_fn_handle = _get_nn_init_func(init_metric_weights_method)
-        if init_fn_handle:
-            init_fn = init_fn_handle(*init_fn_args)
-            weights = get_weights(model)
-            new_weights = [
-                init_fn(subkey, w.shape, dtype) 
-                for w, subkey in zip(weights, jrandom.split(key3, len(weights)))
-            ]
-            model = eqx.tree_at(get_weights, model, new_weights)
-
-        # Initialize MetricNN Bias if applicable
-        get_biases = lambda m: [
-                x.bias 
-                for x in jax.tree_util.tree_leaves(m.metric_module, is_leaf=is_linear) 
-                if is_linear(x) and x.use_bias
-            ]
-        init_fn_args = _get_nn_init_args(init_metric_bias_args)
-        init_fn_handle = _get_nn_init_func(init_metric_bias_method)
-        if init_fn_handle and model.include_metric_bias:
-            init_fn = init_fn_handle(*init_fn_args)
-            biases = get_biases(model)
-            new_biases = [
-                init_fn(subkey, b.shape, dtype) 
-                for b, subkey in zip(biases, jrandom.split(key4, len(biases)))
-            ]
-            model = eqx.tree_at(get_biases, model, new_biases)
-
-        return model
+        # Initialize metric module
+        return self._initialize_linear_module(
+            key, dtype, model, 'metric_module', 
+            init_weights_method=init_metric_weights_method,
+            init_weights_args=init_metric_weights_args,
+            init_biases_method=init_metric_bias_method,
+            init_biases_args=init_metric_bias_args,
+            include_biases=self.include_metric_bias,
+        )
     
     ###################################
     ##  Construction Helper Methods  ##

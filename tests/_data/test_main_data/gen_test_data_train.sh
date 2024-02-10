@@ -5,8 +5,10 @@ p20_range="-1 1"
 p11_range="-1 1"
 p21_range="-1 1"
 
+PYTESTDATDIR=$(python -c "from tests.conftest import DATDIR; print(DATDIR)")
+
 python plnn/data_generation/generate_data.py \
-    -o tests/test_main_data/training_data \
+    -o $PYTESTDATDIR/test_main_data/training_data \
     --nsims 20 \
     -t 10 --dt 0.01 --dt_save 2.0 --ncells 50 --burnin 50 \
     --landscape_name phi1 \
@@ -20,7 +22,7 @@ python plnn/data_generation/generate_data.py \
     --seed 123
 
 python plnn/data_generation/generate_data.py \
-    -o tests/test_main_data/validation_data \
+    -o $PYTESTDATDIR/test_main_data/validation_data \
     --nsims 10 \
     -t 10 --dt 0.01 --dt_save 2.0 --ncells 50 --burnin 50 \
     --landscape_name phi1 \
