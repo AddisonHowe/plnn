@@ -1,6 +1,6 @@
 """Benchmarking Tests
 
-pytest -s --benchmark tests/benchmark.py
+pytest -s --benchmark tests/benchmarking/benchmark.py
 
 """
 
@@ -10,19 +10,32 @@ import timeit
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
+
+from tests.conftest import DATDIR, TMPDIR
+
 from plnn.models import DeepPhiPLNN
 from plnn.model_training import train_model
 from plnn.main import select_loss_function, select_optimizer
 from plnn.dataset import get_dataloaders
 
-MODEL_FPATH = "data/benchmark_data/benchmark_model.pth"
-TRAINDIR = "data/benchmark_data/benchmark_data_1a/training"
-VALIDDIR = "data/benchmark_data/benchmark_data_1a/validation"
+#####################
+##  Configuration  ##
+#####################
+
+BMDIR = f"{DATDIR}/benchmark_data"
+
+MODEL_FPATH = f"{BMDIR}/benchmark_model.pth"
+TRAINDIR = f"{BMDIR}/benchmark_data_1a/training"
+VALIDDIR = f"{BMDIR}/benchmark_data_1a/validation"
+
 NSIMS_TRAIN = 20
 NSIMS_VALID = 5
 
-OUTDIR = "tests/benchmark/tmp_out"
+OUTDIR = f"{TMPDIR}/benchmarks"
 
+##############################################################################
+###########################   BEGIN BENCHMARKING   ###########################
+##############################################################################
 
 @pytest.mark.benchmark
 class TestBenchmarkModel:
