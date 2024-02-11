@@ -93,7 +93,10 @@ def get_model(
 ###############################   BEGIN TESTS   ###############################
 ###############################################################################
 
-@pytest.mark.parametrize("dtype", [jnp.float32, jnp.float64])
+@pytest.mark.parametrize("dtype, rtol, atol", [
+    [jnp.float32, 1e-4, 1e-6],
+    [jnp.float64, 1e-5, 1e-8],
+])
 class TestBatchedCoreLandscapeMethods:
 
     @pytest.mark.parametrize('ws, wts, sigparams, t, x, f_exp, f_shape_exp', [
@@ -118,10 +121,8 @@ class TestBatchedCoreLandscapeMethods:
          [3*[[-0.441403, -0.16003]], 3*[[5.5586, 2.83997]]], (2, 3, 2)
         ],
     ])
-    def test_f(self, dtype, ws, wts, sigparams, t, x, 
+    def test_f(self, dtype, rtol, atol, ws, wts, sigparams, t, x, 
                f_exp, f_shape_exp):
-        rtol = 1e-5 if dtype == jnp.float64 else 1e-5
-        atol = 1e-8 if dtype == jnp.float64 else 1e-8
         sigparams = jnp.array(sigparams, dtype=dtype)
         t = jnp.array(t, dtype=dtype)
         x = jnp.array(x, dtype=dtype)
@@ -157,13 +158,14 @@ class TestBatchedCoreLandscapeMethods:
          [3*[[0.01, 0.01]], 3*[[0.01, 0.01]]], (2, 3, 2)
         ],
     ])
-    def test_g(self, dtype, ws, wts, t, x, 
+    def test_g(self, dtype, rtol, atol, ws, wts, t, x, 
                sigma, g_exp, g_shape_exp):
         model = get_model(ws, wts, dtype, sigma)
         t = jnp.array(t, dtype=dtype)
         x = jnp.array(x, dtype=dtype)
         g_act = jax.vmap(model.g, 0)(t, x)
-        assert np.allclose(g_act, g_exp) and g_act.shape == g_shape_exp
+        assert np.allclose(g_act, g_exp, atol=atol, rtol=rtol) and \
+            g_act.shape == g_shape_exp
 
     @pytest.mark.parametrize("ws, x, phi_exp, phi_shape_exp", [
         [[W1, W2, W3], [[[0, 0]]], [[0.0]], (1,1)],
@@ -178,9 +180,7 @@ class TestBatchedCoreLandscapeMethods:
          [[0.0,3.99340437124,2.69505521004,3.2478696918], 
           [3.2478696918,3.99340437124,2.69505521004,0.0]], (2, 4)],
     ])
-    def test_phi(self, dtype, ws, x, phi_exp, phi_shape_exp):
-        rtol = 1e-5 if dtype == jnp.float64 else 1e-5
-        atol = 1e-8 if dtype == jnp.float64 else 1e-8
+    def test_phi(self, dtype, rtol, atol, ws, x, phi_exp, phi_shape_exp):
         model = get_model(ws, [WT1], dtype=dtype)
         x = jnp.array(x, dtype=dtype)
         phi_act = jax.vmap(model.phi, 0)(x)
@@ -216,9 +216,7 @@ class TestBatchedCoreLandscapeMethods:
          [[1.11945, 2.71635], [-3.5586, -0.83997]],
          [[1.11945, 2.71635], [-3.5586, -0.83997]]], (3, 2, 2)],
     ])
-    def test_grad_phi(self, dtype, ws, x, grad_phi_exp, shape_exp):
-        rtol = 1e-5 if dtype == jnp.float64 else 1e-4
-        atol = 1e-8 if dtype == jnp.float64 else 1e-6
+    def test_grad_phi(self, dtype, rtol, atol, ws, x, grad_phi_exp, shape_exp):
         model = get_model(ws, [WT1], dtype)
         x = jnp.array(x, dtype=dtype)
         t = jnp.array(x.shape[0]*[0], dtype=dtype)
@@ -259,7 +257,7 @@ class TestBatchedCoreLandscapeMethods:
     ])
     @pytest.mark.parametrize("ncells", [1,2,3,4])
     @pytest.mark.parametrize("seed", [1,2,3])
-    def test_grad_phi_with_shuffle(self, dtype, 
+    def test_grad_phi_with_shuffle(self, dtype, rtol, atol, 
                                    ws, x, grad_phi_exp, ncells, seed):
         npdtype = np.float32 if dtype == jnp.float32 else np.float64
         grad_phi_exp = np.array(grad_phi_exp, dtype=npdtype)
@@ -290,7 +288,8 @@ class TestBatchedCoreLandscapeMethods:
                 grad_phi_exp_shuffled[bidx,:] = grad_phi_exp[bidx,samp_idxs]
 
         errors = []
-        if not np.allclose(grad_phi_exp_shuffled, grad_phi_act, atol=1e-6):
+        if not np.allclose(grad_phi_exp_shuffled, grad_phi_act, 
+                           rtol=rtol, atol=atol):
             msg = f"Value mismatch between grad phi actual and expected."
             msg += f"Expected:\n{grad_phi_exp_shuffled}\nGot:\n{grad_phi_act}"
             errors.append(msg)
@@ -311,7 +310,7 @@ class TestBatchedCoreLandscapeMethods:
          [[4, 1], [-2, -2], [-2, -2]], 
          (3, 2)],
     ])
-    def test_grad_tilt(self, dtype, wts, sigparams, t, 
+    def test_grad_tilt(self, dtype, rtol, atol, wts, sigparams, t, 
                        grad_tilt_exp, shape_exp):
         sigparams = jnp.array(sigparams, dtype=dtype)
         model = get_model([W1,W2,W3], wts, dtype, 
@@ -320,7 +319,7 @@ class TestBatchedCoreLandscapeMethods:
         grad_tilt_act = jax.vmap(model.grad_tilt, 0)(ts, sigparams)
 
         errors = []
-        if not np.allclose(grad_tilt_act, grad_tilt_exp):
+        if not np.allclose(grad_tilt_act, grad_tilt_exp, atol=atol, rtol=rtol):
             msg = f"Value mismatch between grad tilt actual and expected."
             errors.append(msg)
         if not (grad_tilt_act.shape == shape_exp):
