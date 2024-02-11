@@ -428,5 +428,4 @@ def get_model_args(model_name, args):
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
-    print('args:', args, flush=True)
     main(args)
