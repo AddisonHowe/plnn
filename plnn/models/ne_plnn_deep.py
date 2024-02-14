@@ -146,6 +146,7 @@ class NEDeepPhiPLNN(NEPLNN):
         solver='euler', 
         dt0=1e-2, 
         confine=False,
+        confinement_factor=1.,
         sample_cells=True, 
         include_phi_bias=True, 
         include_tilt_bias=False,
@@ -179,6 +180,7 @@ class NEDeepPhiPLNN(NEPLNN):
             solver
             dt0
             confine
+            confinement_factor
             sample_cells
             include_phi_bias
             include_tilt_bias
@@ -209,6 +211,7 @@ class NEDeepPhiPLNN(NEPLNN):
             solver=solver, 
             dt0=dt0, 
             confine=confine, 
+            confinement_factor=confinement_factor,
             sample_cells=sample_cells,
             include_phi_bias=include_phi_bias,
             include_tilt_bias=include_tilt_bias,

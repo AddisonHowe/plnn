@@ -45,6 +45,7 @@ def get_model(
         signal_type='binary', 
         nsigparams=3,
         confine=False,
+        confinement_factor=1.0,
 ) -> DeepPhiPLNN:
     """Get an initialized model for testing purposes."""
     nprng = np.random.default_rng(seed)
@@ -62,6 +63,7 @@ def get_model(
         sigma_init=sigma,
         dt0=dt,
         confine=confine,
+        confinement_factor=confinement_factor,
         include_phi_bias=False, 
         include_tilt_bias=False, 
         phi_hidden_dims=[3,3],

@@ -88,6 +88,7 @@ class PLNN(eqx.Module):
     solver: str
     dt0: float
     confine: bool
+    confinement_factor: float
     sample_cells: bool
     include_tilt_bias: bool
 
@@ -105,6 +106,7 @@ class PLNN(eqx.Module):
         solver,
         dt0,
         confine,
+        confinement_factor,
         sample_cells,
         include_tilt_bias,
         tilt_hidden_dims,
@@ -124,6 +126,7 @@ class PLNN(eqx.Module):
         self.solver = solver
         self.dt0 = dt0
         self.confine = confine
+        self.confinement_factor = confinement_factor
         self.sample_cells = sample_cells
         self.include_tilt_bias = include_tilt_bias
 
@@ -256,6 +259,7 @@ class PLNN(eqx.Module):
             'solver' : self.solver,
             'dt0' : self.dt0,
             'confine' : self.confine,
+            'confinement_factor' : self.confinement_factor,
             'sample_cells' : self.sample_cells,
             'include_tilt_bias' : self.include_tilt_bias,
         }
@@ -563,7 +567,7 @@ class PLNN(eqx.Module):
             Array of shape (1,).
         """
         if self.confine:
-            return jnp.sum(jnp.power(y, 4))
+            return self.confinement_factor * jnp.sum(jnp.power(y, 4))
         return 0.
 
     def eval_grad_confinement(
@@ -578,7 +582,7 @@ class PLNN(eqx.Module):
             Array of shape (d,).
         """
         if self.confine:
-            return 4. * jnp.power(y, 3)
+            return 4. * self.confinement_factor * jnp.power(y, 3)
         return y * 0.
 
     @abstractmethod

@@ -91,6 +91,7 @@ class TestTwoStepSimulation:
             solver='euler',
             dt0=0.1,
             confine=False,
+            confinement_factor=1.0,
             sample_cells=False,
             include_phi_bias=False, 
             include_tilt_bias=False, 
