@@ -1,0 +1,72 @@
+__annotations__ : {'include_phi_bias': <class 'bool'>}
+__doc__ : "DeepPhiPLNN(key, dtype=<class 'jax.numpy.float32'>, *, include_phi_bias=True, phi_hidden_dims=[16, 32, 32, 16], phi_hidden_acts='softplus', phi_final_act=None, phi_layer_normalize=False, **kwargs)"
+__module__ : 'plnn.models.plnn_deep'
+confine : True
+dt0 : 0.01
+include_phi_bias : True
+include_tilt_bias : False
+logsigma : Array(-2.99573227, dtype=float64)
+model_type : 'deep_phi_plnn'
+ncells : 100
+ndims : 2
+nparams : 2
+nsigparams : 4
+nsigs : 2
+phi_module : Sequential(
+  layers=(
+    Linear(
+      weight=f64[16,2],
+      bias=f64[16],
+      in_features=2,
+      out_features=16,
+      use_bias=True
+    ),
+    Lambda(fn=<wrapped function softplus>),
+    Linear(
+      weight=f64[32,16],
+      bias=f64[32],
+      in_features=16,
+      out_features=32,
+      use_bias=True
+    ),
+    Lambda(fn=<wrapped function softplus>),
+    Linear(
+      weight=f64[32,32],
+      bias=f64[32],
+      in_features=32,
+      out_features=32,
+      use_bias=True
+    ),
+    Lambda(fn=<wrapped function softplus>),
+    Linear(
+      weight=f64[16,32],
+      bias=f64[16],
+      in_features=32,
+      out_features=16,
+      use_bias=True
+    ),
+    Lambda(fn=<wrapped function softplus>),
+    Linear(
+      weight=f64[1,16],
+      bias=f64[1],
+      in_features=16,
+      out_features=1,
+      use_bias=True
+    )
+  )
+)
+sample_cells : True
+sigma_init : 0.05
+signal_type : 'sigmoid'
+solver : 'heun'
+tilt_module : Sequential(
+  layers=(
+    Linear(
+      weight=f64[2,2],
+      bias=None,
+      in_features=2,
+      out_features=2,
+      use_bias=False
+    ),
+  )
+)

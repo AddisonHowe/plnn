@@ -10,6 +10,7 @@ import timeit
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
+import equinox as eqx
 
 from tests.conftest import DATDIR, TMPDIR
 
@@ -24,9 +25,10 @@ from plnn.dataset import get_dataloaders
 
 BMDIR = f"{DATDIR}/benchmark_data"
 
-MODEL_FPATH = f"{BMDIR}/benchmark_model.pth"
-TRAINDIR = f"{BMDIR}/benchmark_data_1a/training"
-VALIDDIR = f"{BMDIR}/benchmark_data_1a/validation"
+MODEL_FPATH = f"{BMDIR}/benchmark_models/benchmark_model_1b.pth"
+
+TRAINDIR = f"{BMDIR}/benchmark_data_1b/training"
+VALIDDIR = f"{BMDIR}/benchmark_data_1b/validation"
 
 NSIMS_TRAIN = 20
 NSIMS_VALID = 5
@@ -38,53 +40,9 @@ OUTDIR = f"{TMPDIR}/benchmarks"
 ##############################################################################
 
 @pytest.mark.benchmark
-class TestBenchmarkModel:
+class TestTensorboardProfile:
 
-    def test_compare_phi_computation(self):
-        model, hyperparams = DeepPhiPLNN.load(MODEL_FPATH)
-        print("model dt:", model.dt0)
-
-        key = jrandom.PRNGKey(0)
-
-        train_dataloader, _ = get_dataloaders(
-            TRAINDIR, VALIDDIR, NSIMS_TRAIN, NSIMS_VALID,
-            batch_size_train=100,
-            batch_size_valid=100,
-            dtype=jnp.float32,
-            shuffle_train=False,
-            shuffle_valid=False,
-            return_datasets=False
-        )
-
-        batch_data = next(iter(train_dataloader))
-        data_in, y1 = batch_data
-        
-        t0, y0, t1, sigparams = data_in
-        print("t interval:", t1[0] - t0[0])
-
-        niters = 1
-
-        # Warmup
-        time0 = timeit.default_timer()
-        y_init = model(t0, t1, y0, sigparams, key)
-        jax.block_until_ready(y_init)
-        time1 = timeit.default_timer()
-        total_time_compile = time1 - time0
-        
-        # Time with JAX
-        time0 = timeit.default_timer()
-        for i in range(niters - 1):
-            y_pred = model(t0, t1, y0, sigparams, key)
-        
-        y = model(t0, t1, y0, sigparams, key)
-        jax.block_until_ready(y)
-        time1 = timeit.default_timer()
-        total_time_with_jax = time1 - time0
-
-        print(f"Compilation time: {total_time_compile:.8g}")
-        print(f"Time with JAX: {total_time_with_jax / niters:.8g}")
-
-
+    @pytest.mark.parametrize("dtype", [jnp.float32, jnp.float64])
     @pytest.mark.parametrize(
             'id, batch_size, ncells, dt_save, dt, solver, confine, sample', [
         ['run0',    50,     100,    10.,   1e-1,   'euler',    True,   True],
@@ -100,7 +58,7 @@ class TestBenchmarkModel:
         ['run10',   100,    100,    20.,   1e-2,   'euler',    True,   True],
         ['run11',   100,    100,    100.,  1e-2,   'euler',    True,   True],
     ])
-    def test_tensorboard_profile(self, id, batch_size, ncells, dt_save, dt, 
+    def test_tensorboard_profile(self, dtype, id, batch_size, ncells, dt_save, dt, 
                                  solver, confine, sample):
 
         NSIGS = 2
@@ -110,7 +68,7 @@ class TestBenchmarkModel:
         key = jrandom.PRNGKey(0)
 
         model, hyperparams = DeepPhiPLNN.make_model(
-            key, dtype=jnp.float32,
+            key, dtype=dtype,
             ndims=2, 
             nparams=2,
             nsigs=NSIGS, 
@@ -122,10 +80,8 @@ class TestBenchmarkModel:
             dt0=dt, 
             confine=confine,
             sample_cells=sample, 
-            infer_metric=False,
             include_phi_bias=True, 
             include_tilt_bias=False,
-            include_metric_bias=True,
             phi_hidden_dims=[16,32,32,16], 
             phi_hidden_acts='softplus', 
             phi_final_act=None, 
@@ -134,15 +90,11 @@ class TestBenchmarkModel:
             tilt_hidden_acts=None,
             tilt_final_act=None,
             tilt_layer_normalize=False,
-            metric_hidden_dims=[8,8,8,8], 
-            metric_hidden_acts='softplus', 
-            metric_final_act=None, 
-            metric_layer_normalize=False, 
         )
 
         model = model.initialize(
             key,
-            dtype=jnp.float32,
+            dtype=dtype,
             init_phi_weights_method='xavier_uniform',
             init_phi_weights_args=None,
             init_phi_bias_method='constant',
@@ -151,15 +103,11 @@ class TestBenchmarkModel:
             init_tilt_weights_args=None,
             init_tilt_bias_method='constant',
             init_tilt_bias_args=0.,
-            init_metric_weights_method='xavier_uniform',
-            init_metric_weights_args=None,
-            init_metric_bias_method='constant',
-            init_metric_bias_args=0.,
         )
 
         print("model dt:", model.dt0)        
 
-        t0 = jnp.arange(batch_size, dtype=jnp.float32)
+        t0 = jnp.arange(batch_size, dtype=dtype)
         t1 = dt_save + t0
         y0 = 0.1 * jrandom.normal(key, [batch_size, ncells, 2])
         sigparams = jrandom.uniform(key, [batch_size, NSIGS, NSIGPARAMS])
