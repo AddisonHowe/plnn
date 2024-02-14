@@ -66,6 +66,8 @@ def parse_args(args):
         description="Specifications of the model structure."
     )
     grp_ma.add_argument('--confine', action="store_true")
+    grp_ma.add_argument('--confinement_factor', type=float, default=1.0)
+
     grp_ma.add_argument('--phi_hidden_dims', type=int, nargs='+', 
                         default=[16, 32, 32, 16])
     grp_ma.add_argument('--phi_hidden_acts', type=str, nargs='+', 
@@ -319,7 +321,7 @@ def main(args):
         outdir=outdir,
         save_all=args.save_all,
         plotting=do_plot,
-        plotting_opts={},  # Default plotting options
+        plotting_opts={'equal_axes': True},  # Plotting kwargs
         report_every=args.report_every,
         logprint=logprint,
         error_raiser=log_and_raise_runtime_error,
@@ -367,6 +369,7 @@ def get_model_args(model_name, args):
         'ncells' : args.ncells, 
         'sigma_init' : args.sigma,
         'confine' : args.confine,
+        'confinement_factor' : args.confinement_factor,
         'include_tilt_bias' : False,
         'tilt_hidden_dims' : args.tilt_hidden_dims,
         'tilt_hidden_acts' : args.tilt_hidden_acts,
