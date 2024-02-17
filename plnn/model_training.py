@@ -6,7 +6,10 @@ import os
 import time
 import numpy as np
 import jax.random as jrandom
+import jax.tree_util as jtu
 import equinox as eqx
+
+from plnn.models.plnn import PLNN
 
 def train_model(
     model, 
@@ -17,9 +20,10 @@ def train_model(
     key,
     num_epochs=50,
     batch_size=1,
+    fix_noise=False,
     hyperparams={},
     **kwargs
-):
+) -> PLNN:
     """Train a PLNN model.
 
     Args:
@@ -31,6 +35,7 @@ def train_model(
         key (PRNGKey): Random number generator key.
         num_epochs (int, optional): Number of training epochs. Defaults to 50.
         batch_size (int, optional): Batch size. Defaults to 1.
+        fix_noise (boolean, optional): Whether to fix the noise parameter.
         hyperparams (dict, optional): Hyperparameters. Defaults to {}.
     """
     #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
@@ -63,6 +68,15 @@ def train_model(
     loss_hist_valid = []
     learn_rate_hist = []
     sigma_hist = []
+
+    if fix_noise:
+        filter_spec = jtu.tree_map(lambda _: True, model)
+        filter_spec = eqx.tree_at(
+            lambda m: m.logsigma, filter_spec, 
+            replace=False
+        )
+    else:
+        filter_spec = None
 
     opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
 
@@ -97,6 +111,8 @@ def train_model(
             verbosity=verbosity,
             logprint=logprint,
             error_raiser=error_raiser,
+            fix_noise=fix_noise,
+            filter_spec=filter_spec,
         )
 
         if np.isnan(avg_tloss):
@@ -166,6 +182,8 @@ def train_one_epoch(
         dataloader, 
         key,
         batch_size=1,
+        fix_noise=False,
+        filter_spec=None,
         report_every=10,  # print running loss every 10 batches.
         verbosity=1,  # 0: none. 1: default. 2: debug.
         **kwargs
@@ -181,7 +199,7 @@ def train_one_epoch(
         opt_state (TODO): ...
         dataloader (DataLoader): ...
         batch_size (int): Default 1.
-        device (str): Default 'cpu'.
+        fix_noise (bool): ...
 
     Returns:
         PLNN: updated model.
@@ -215,9 +233,15 @@ def train_one_epoch(
     for bidx, data in enumerate(dataloader):
         inputs, y1 = data
         key, subkey = jrandom.split(key, 2)
-        model, opt_state, loss = make_step(
-            model, inputs, y1, optimizer, opt_state, loss_fn, subkey
-        )
+        if fix_noise:
+            model, opt_state, loss = make_step_partitioned(
+                model, inputs, y1, optimizer, opt_state, loss_fn, subkey, 
+                filter_spec
+            )
+        else:
+            model, opt_state, loss = make_step(
+                model, inputs, y1, optimizer, opt_state, loss_fn, subkey, 
+            )
         
         epoch_running_loss += loss.item()
         batch_running_loss += loss.item()
@@ -271,6 +295,26 @@ def compute_loss(model, x, y, loss_fn, key):
 @eqx.filter_jit
 def make_step(model, x, y, optimizer, opt_state, loss_fn, key):
     loss, grads = compute_loss(model, x, y, loss_fn, key)
+    updates, opt_state = optimizer.update(grads, opt_state)
+    model = eqx.apply_updates(model, updates)
+    return model, opt_state, loss
+
+
+@eqx.filter_value_and_grad
+def compute_loss_partitioned(diff_model, static_model, x, y, loss_fn, key):
+    model = eqx.combine(diff_model, static_model)
+    t0, y0, t1, sigparams = x
+    y_pred = model(t0, t1, y0, sigparams, key)
+    return loss_fn(y_pred, y)
+
+
+@eqx.filter_jit
+def make_step_partitioned(model, x, y, optimizer, opt_state, loss_fn, key, 
+                          filter_spec):
+    diff_model, static_model = eqx.partition(model, filter_spec)
+    loss, grads = compute_loss_partitioned(
+        diff_model, static_model, x, y, loss_fn, key
+    )
     updates, opt_state = optimizer.update(grads, opt_state)
     model = eqx.apply_updates(model, updates)
     return model, opt_state, loss
