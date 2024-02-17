@@ -11,6 +11,8 @@ import torch
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
+import jax.tree_util as jtu
+import equinox as eqx
 
 from plnn.dataset import get_dataloaders
 from plnn.models import DeepPhiPLNN, GMMPhiPLNN, NEDeepPhiPLNN, NEGMMPhiPLNN
@@ -316,6 +318,7 @@ def main(args):
         key=trainkey,
         num_epochs=num_epochs,
         batch_size=batch_size,
+        fix_noise=fix_noise,
         model_name=model_name,
         hyperparams=hyperparams,
         outdir=outdir,
@@ -326,6 +329,8 @@ def main(args):
         logprint=logprint,
         error_raiser=log_and_raise_runtime_error,
     )
+
+    return model
 
 
 ########################
