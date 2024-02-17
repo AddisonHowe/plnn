@@ -14,8 +14,9 @@ import jax.random as jrandom
 from jaxtyping import Array, Float
 import diffrax
 from diffrax import diffeqsolve, WeaklyDiagonalControlTerm, MultiTerm, ODETerm
-from diffrax import VirtualBrownianTree, SaveAt
+from diffrax import VirtualBrownianTree, SaveAt, SubSaveAt
 import equinox as eqx
+
 
 _ACTIVATION_KEYS = {
     'none' : None,
@@ -411,7 +412,7 @@ class PLNN(eqx.Module):
         t1: Float,
         y0: Float[Array, "ncells ndims"],
         sigparams: Float[Array, "nsigs nsigparams"],
-        ts_save: Float[Array, "?"],
+        saveat: SaveAt,
         key: Array,
     )->Float[Array, "? ncells ndims"]:
         """Evolve an ensemble forward in time and return all evaluated states.
@@ -421,7 +422,7 @@ class PLNN(eqx.Module):
             t1 (Array) : End time. Shape (1,).
             y0 (Array) : Initial condition. Shape (n,d).
             sigparams (Array) : Signal parameters. Shape (nsigs,nsigparams).
-            ts_save (Array) : Times at which to save.
+            saveat (diffrax.SaveAt) : Times at which to save.
             key (Array) : PRNGKey.
 
         Returns:
@@ -429,7 +430,7 @@ class PLNN(eqx.Module):
         """
         subkeys = jrandom.split(key, len(y0))
         vecsim = jax.vmap(self.simulate_path_with_saves, (None, None, 0, None, None, 0))
-        return vecsim(t0, t1, y0, sigparams, ts_save, subkeys)
+        return vecsim(t0, t1, y0, sigparams, saveat, subkeys)
     
     def simulate_dense_path(
         self,
@@ -478,7 +479,7 @@ class PLNN(eqx.Module):
         t1: Float,
         y0: Float[Array, "ndims"],
         sigparams: Float[Array, "nsigs nsigparams"],
-        ts_save: Float[Array, "?"],
+        saveat: SaveAt,
         key: Array,
     )->Float[Array, "? ndims"]:
         """Evolve a single cell forward in time and return all evaluated states.
@@ -488,7 +489,7 @@ class PLNN(eqx.Module):
             t1 (Array) : End time. Shape (1,).
             y0 (Array) : Initial condition. Shape (d,).
             sigparams (Array) : Signal parameters. Shape (nsigs,nsigparams).
-            ts_save (Array) : Times at which to save.
+            saveat (diffrax.SaveAt) : Times at which to save.
             key (Array) : PRNGKey.
 
         Returns:
@@ -506,7 +507,6 @@ class PLNN(eqx.Module):
             WeaklyDiagonalControlTerm(diffusion, brownian_motion)
         )
         solver = _SOLVER_KEYS[self.solver]()
-        saveat = SaveAt(ts=ts_save)
         sol = diffeqsolve(
             terms, solver, 
             t0, t1, dt0=self.dt0, 
@@ -514,6 +514,48 @@ class PLNN(eqx.Module):
             saveat=saveat
         )
         return sol.ts, sol.ys
+    
+    def simulate_landscape(
+            self,
+            x0,
+            tfin,
+            dt_save,
+            sigparams,
+            key,
+    ):
+        """TODO: Documentation
+        """
+        if isinstance(dt_save, (float, int)):
+            dt_save = [dt_save]
+
+        subsaves_list = []
+        for dt_save_val in dt_save:
+            ts_save = jnp.linspace(0, tfin, 1 + int(tfin // dt_save_val))
+            subsaves_list.append(
+                SubSaveAt(ts=ts_save, fn=lambda t, y, args: y)
+            )
+        saveat = SaveAt(subs=subsaves_list)
+
+        key, subkey = jax.random.split(key, 2)
+        
+        ts, ys = self.simulate_ensemble_with_saves(
+            0, tfin, x0, sigparams, saveat, subkey
+        )
+
+        ts = [tt[0] for tt in ts]
+        sigs = [
+            jax.vmap(self.compute_signal, (0, None))(tt, sigparams) 
+            for tt in ts
+        ]
+
+        ps = [
+            jax.vmap(self.eval_tilt_params, (0, None))(tt, sigparams) 
+            for tt in ts
+        ]
+
+        ys = [y.transpose([1, 0, 2]) for y in ys]
+
+        return ts, ys, sigs, ps
     
     ##############################
     ##  Core Landscape Methods  ##
@@ -620,7 +662,9 @@ class PLNN(eqx.Module):
         t: Float, 
         sigparams: Float[Array, "nsigs nsigparams"]
     ) -> Float[Array, "ndims"]:
-        """Evaluate gradient of linear tilt function. 
+        """Evaluate gradient of linear tilt function.
+        
+        Equal to the tilt vector tau, also given by method eval_tilt_params.
 
         Args:
             t (Scalar) : Time.
@@ -628,10 +672,7 @@ class PLNN(eqx.Module):
         Returns:
             Array of shape (ndims,).
         """
-        if self.signal_type in ('jump', 'step', 'binary'):
-            signal_vals = self.binary_signal_function(t, sigparams)
-        elif self.signal_type == "sigmoid":
-            signal_vals = self.sigmoid_signal_function(t, sigparams)
+        signal_vals = self.compute_signal(t, sigparams)
         return self.tilt_module(signal_vals)
     
     def eval_tilted_phi(
@@ -733,11 +774,129 @@ class PLNN(eqx.Module):
             Array of shape (n,1).
         """
         return jax.vmap(self.eval_tilted_phi, (None, 0, None))(t, y, sigparams)
+    
+    #######################################
+    ##  Convenience Landscape Functions  ##
+    #######################################
+
+    def eval_phi_with_signal(
+            self, 
+            t: Float, 
+            y: Float[Array, "ndims"], 
+            signal: Float[Array, "nsigs"]
+    ) -> Float:
+        """Convenience function. Landscape level with tilt based on signal.
+
+        Acts on individual particle. TODO: Test.
+
+        Args:
+            t (Scalar)     : Time.
+            y (Array)      : State. Shape (d,).
+            signal (Array) : Signal parameters. Shape (nsigs,).
+        Returns:
+            Array of shape (1,).
+        """
+        phi = self.eval_phi(y)
+        tau = self.tilt_module(signal)
+        return phi + jnp.dot(tau, y)
+    
+    def eval_phi_with_tilts(
+            self, 
+            t: Float, 
+            y: Float[Array, "ndims"], 
+            tilts: Float[Array, "ndims"]
+    ) -> Float:
+        """Convenience function. Landscape level with tilt given directly.
+
+        Acts on individual particle. TODO: Test.
+
+        Args:
+            t (Scalar)    : Time.
+            y (Array)     : State. Shape (d,).
+            tilts (Array) : Tilt parameters. Shape (nsigs,).
+        Returns:
+            Array of shape (1,).
+        """
+        return self.eval_phi(y) + jnp.dot(tilts, y)
+
+    def phi_with_signal(
+            self,
+            t: Float, 
+            y: Float[Array, "ncells ndims"],
+            signal: Float[Array, "nsigs"]
+    ) -> Float[Array, "ncells"]:
+        """Convenience function. Landscape level with tilt based on signal.
+
+        Vectorized across a number of particles. TODO: Test.
+
+        Args:
+            t (Scalar)     : Time.
+            y (Array)      : State. Shape (n,d).
+            signal (Array) : Signal values. Shape (nsigs,).
+        Returns:
+            Array of shape (n,1).
+        """
+        return jax.vmap(self.eval_phi_with_signal, (None, 0, None))(t, y, signal)
+    
+    def phi_with_tilts(
+            self,
+            t: Float, 
+            y: Float[Array, "ncells ndims"],
+            tilts: Float[Array, "ndims"]
+    ) -> Float[Array, "ncells"]:
+        """Convenience function. Landscape level with tilt given directly.
+
+        Vectorized across a number of particles. TODO: Test.
+
+        Args:
+            t (Scalar)    : Time.
+            y (Array)     : State. Shape (n,d).
+            tilts (Array) : Tilt values. Shape (ndims,).
+        Returns:
+            Array of shape (n,1).
+        """
+        return jax.vmap(self.eval_phi_with_tilts, (None, 0, None))(t, y, tilts)
         
     ########################
     ##  Signal Functions  ##
     ########################
 
+    def eval_tilt_params(
+            self,
+            t: Float,
+            sigparams: Float[Array, "nsigs nsigparams"]
+    ) -> Float[Array, "ndims"]:
+        """Evaluates the tilt vector tau at time t.
+
+        Args:
+            t (Scalar) : Time.
+            sigparams (Array) : Signal parameters. Shape (nparams, nsigparams)
+        Returns:
+            Array of shape (ndims,)
+        """
+        signal_vals = self.compute_signal(t, sigparams)
+        return self.tilt_module(signal_vals)
+
+    def compute_signal(
+            self,
+            t: Float,
+            sigparams: Float[Array, "nsigs nsigparams"]
+    ) -> Float[Array, "nsigs"]:
+        """Evaluates the signal vector at time t.
+
+        Args:
+            t (Scalar) : Time.
+            sigparams (Array) : Signal parameters. Shape (nparams, nsigparams)
+        Returns:
+            Array of shape (nsigs,)
+        """
+        if self.signal_type in ('jump', 'step', 'binary'):
+            return self.binary_signal_function(t, sigparams)
+        elif self.signal_type == "sigmoid":
+            return self.sigmoid_signal_function(t, sigparams)
+        else:
+            raise RuntimeError()
+            
     def binary_signal_function(
         self, 
         t: Float, 
@@ -774,7 +933,6 @@ class PLNN(eqx.Module):
         p1 = sigparams[...,2]
         r = sigparams[...,3]
         return p0 + 0.5*(p1 - p0) * (1 + jnp.tanh(r * (t - tcrit)))
-        
     
     ############################
     ##  Model Saving/Loading  ##
@@ -1048,7 +1206,17 @@ class PLNN(eqx.Module):
     ##  Plotting Methods  ##
     ########################
 
-    def plot_phi(self, signal=None, r=4, res=50, plot3d=False, **kwargs):
+    def plot_phi(
+            self, 
+            tilt=None,
+            signal=None,
+            sigparams=None,
+            eval_time=None,
+            r=4, 
+            res=50, 
+            plot3d=False, 
+            **kwargs
+    ):
         """Plot the scalar function phi.
         Args:
             r (int) : 
@@ -1108,22 +1276,33 @@ class PLNN(eqx.Module):
         if equal_axes:
             ax.set_aspect('equal')
 
-        # Handle signal value
-        eval_time = 0.
-        if signal is None:
-            if self.signal_type == 'jump':
-                signal = self.nsigs * [[1, 0, 0]]
-            elif self.signal_type == 'sigmoid':
-                signal = self.nsigs * [[1, 0, 0, 0]]
-        signal_params = jnp.array(signal)
-
-        # Compute phi
+        # Get grid
         x = np.linspace(-r, r, res)
         y = np.linspace(-r, r, res)
         xs, ys = np.meshgrid(x, y)
         z = np.array([xs.flatten(), ys.flatten()]).T
         z = jnp.array(z, dtype=jnp.float32)
-        phi = np.array(self.tilted_phi(eval_time, z, signal_params))
+
+        # Determine tilt based on given information
+        if tilt is not None:
+            # Tilt given directly
+            phi = self.phi_with_tilts(eval_time, z, jnp.array(tilt))
+        elif signal is not None:
+            # Signal values given directly
+            phi = self.phi_with_signal(eval_time, z, jnp.array(signal))
+        elif (sigparams is not None) and (eval_time is not None):
+            # Signal parameters and evaluation time given.
+            phi = self.tilted_phi(eval_time, z, jnp.array(sigparams))
+        else:
+            # Plot landscape with no tilt
+            if self.signal_type == 'jump':
+                sigparams = self.nsigs * [[1, 0, 0]]
+            elif self.signal_type == 'sigmoid':
+                sigparams = self.nsigs * [[1, 0, 0, 0]]
+            phi = self.phi(z)
+
+        # Convert phi to an array
+        phi = np.array(phi)
         
         # Normalization
         if normalize:
