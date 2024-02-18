@@ -46,7 +46,7 @@ def get_model(
         sigma=0, 
         seed=None, 
         ncells=4, 
-        dt=0.1, 
+        dt=0.5, 
         sample_cells=False, 
         signal_type='binary', 
         nsigparams=3,

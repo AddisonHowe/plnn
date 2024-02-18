@@ -5,9 +5,11 @@
 import os
 import time
 import numpy as np
+import jax.numpy as jnp
 import jax.random as jrandom
 import jax.tree_util as jtu
 import equinox as eqx
+from optax import skip_not_finite
 
 from plnn.models.plnn import PLNN
 
@@ -233,15 +235,30 @@ def train_one_epoch(
     for bidx, data in enumerate(dataloader):
         inputs, y1 = data
         key, subkey = jrandom.split(key, 2)
-        if fix_noise:
-            model, opt_state, loss = make_step_partitioned(
-                model, inputs, y1, optimizer, opt_state, loss_fn, subkey, 
-                filter_spec
-            )
-        else:
-            model, opt_state, loss = make_step(
-                model, inputs, y1, optimizer, opt_state, loss_fn, subkey, 
-            )
+        old_model = model
+        stepped = False
+        attempts = 0
+        while not stepped:
+            if fix_noise:
+                model, opt_state, loss = make_step_partitioned(
+                    model, inputs, y1, optimizer, opt_state, loss_fn, subkey, 
+                    filter_spec
+                )
+            else:
+                model, opt_state, loss = make_step(
+                    model, inputs, y1, optimizer, opt_state, loss_fn, subkey, 
+                )
+
+            if jnp.isfinite(loss):
+                stepped = True
+            else:
+                where = lambda m: m.dt0
+                model = eqx.tree_at(where, old_model, old_model.dt0/2)
+                msg = "Encountered nan in loss. Reverting update."
+                msg += f" New model dt0: {model.dt0}"
+                logprint(msg)
+                old_model = model
+                attempts += 1
         
         epoch_running_loss += loss.item()
         batch_running_loss += loss.item()
