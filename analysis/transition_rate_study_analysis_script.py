@@ -28,6 +28,8 @@ def parse_args(args):
                         default="data/transition_rate_study_results")
     parser.add_argument('--datdir', type=str, 
                         default="transition_rate_study_model_training_kl1")
+    parser.add_argument('--studydir', type=str, 
+                        default="tr_study1")
     parser.add_argument('--outdir', type=str, 
                         default="out/transition_rate_study_analysis")
     parser.add_argument('--training_datdir', type=str,
@@ -130,39 +132,41 @@ def run_analysis(
 
 
 def main(args):
-    datdir = f"{args.trsdir}/{args.datdir}"
+    datdir = f"{args.trsdir}/{args.datdir}/{args.studydir}"
     outdir = args.outdir
     training_datdir = args.training_datdir
     load_index = args.load_index
 
     os.makedirs(outdir, exist_ok=True)
 
-    trial_list = os.listdir(datdir)
+    # trial_list = os.listdir(datdir)
+    # print(trial_list)
 
-    for trial_name in trial_list:
-        trial_dir = f"{datdir}/{trial_name}"
-        model_training_id_list = os.listdir(trial_dir)
-        for model_training_id in model_training_id_list:
-            model_name, ridx, tstamp = _parse_model_training_id(
-                model_training_id, trial_name)
-            modeldir = f"{trial_dir}/{model_training_id}"
-            trndirbase = f"{training_datdir}/{trial_name}"
-            datdir_train = f"{trndirbase}/{trial_name}_training/r{ridx}"
-            datdir_valid = f"{trndirbase}/{trial_name}_validation/r{ridx}"
+    # for trial_name in trial_list:
+    trial_name = args.studydir
+    trial_dir = datdir#f"{datdir}/{trial_name}"
+    model_training_id_list = os.listdir(trial_dir)
+    for model_training_id in model_training_id_list:
+        model_name, ridx, tstamp = _parse_model_training_id(
+            model_training_id, trial_name)
+        modeldir = f"{trial_dir}/{model_training_id}"
+        trndirbase = f"{training_datdir}/{trial_name}"
+        datdir_train = f"{trndirbase}/{trial_name}_training/r{ridx}"
+        datdir_valid = f"{trndirbase}/{trial_name}_validation/r{ridx}"
 
-            imgdir = f"{outdir}/{model_training_id}"
-            os.makedirs(imgdir, exist_ok=True)
+        imgdir = f"{outdir}/{model_training_id}"
+        os.makedirs(imgdir, exist_ok=True)
 
-            run_analysis(
-                trial_name,
-                ridx,
-                modeldir,
-                model_name,
-                datdir_train,
-                datdir_valid,
-                load_index=load_index,
-                outdir=imgdir,
-            )
+        run_analysis(
+            trial_name,
+            ridx,
+            modeldir,
+            model_name,
+            datdir_train,
+            datdir_valid,
+            load_index=load_index,
+            outdir=imgdir,
+        )
 
 
             
