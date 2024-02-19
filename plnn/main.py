@@ -328,6 +328,10 @@ def main(args):
         report_every=args.report_every,
         logprint=logprint,
         error_raiser=log_and_raise_runtime_error,
+        reduce_dt_on_nan=False,
+        reduce_confinement_factor_on_nan=True,
+        dt_reduction_factor=0.5,
+        cf_reduction_factor=0.1,
     )
 
     return model
