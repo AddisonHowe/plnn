@@ -1,3 +1,9 @@
+"""Bifurcation diagram for the binary choice landscape (phi1).
+
+"""
+
+import sys
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from cont.continuation import trace_curve
@@ -75,10 +81,21 @@ def get_binary_choice_curves(p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS):
     return curves_p, colors
 
 
-def main():
-    plot_starts = False
-    plot_first_steps = False
-    plot_failed_to_converge_points = False
+def parse_args(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--plot_starts', action="store_true")
+    parser.add_argument('--plot_first_steps', action="store_true")
+    parser.add_argument('--plot_failed_to_converge_points', action="store_true")
+    parser.add_argument('--show', action="store_true")
+    parser.add_argument('-s', '--saveas', type=str, 
+                        default="bifcurves_binary_choice.pdf")
+    return parser.parse_args(args)
+
+
+def main(args):
+    plot_starts = args.plot_starts
+    plot_first_steps = args.plot_first_steps
+    plot_failed_to_converge_points =args.plot_failed_to_converge_points
 
     fig1, [ax1, ax2] = plt.subplots(1, 2, figsize=(8,4))
 
@@ -138,8 +155,15 @@ def main():
     ax2.set_xlabel('$x$')
     ax2.set_ylabel('$y$')
 
-    plt.show()
+    plt.tight_layout()
+
+    if args.saveas:
+        plt.savefig(args.saveas, bbox_inches='tight')
+
+    if args.show:
+        plt.show()
+
 
 if __name__ == "__main__":
-    main()
-    
+    args = parse_args(sys.argv[1:])
+    main(args)

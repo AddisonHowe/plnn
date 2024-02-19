@@ -1,57 +1,47 @@
-"""Bifurcation diagram for the binary flip landscape (phi2).
+"""Bifurcation diagram for trained PLNN.
 
 """
 
-import sys
+import os, sys
 import argparse
+from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
+import jax
+import jax.numpy as jnp
+
+from plnn.models import DeepPhiPLNN
+from plnn.helpers import load_model_from_file
 from cont.continuation import trace_curve
 
-F = lambda x, p: -np.array([
-        4*x[0]**3 + 3*x[0]**2 - 2*x[1]**2 - 2*x[0] + p[0], 
-        4*x[1]**3 - 4*x[0]*x[1] + p[1],
-    ])
 
-Fx = lambda x: np.array([
-        [-12*x[0]**2 - 6*x[0] + 2,      4*x[1]],
-        [4*x[1],                        4*x[0] - 12*x[1]**2],
-    ])
+XSTARTS = []
 
-dxFxPhi = lambda x, phi: np.array([
-        [-(24*x[0]+6)*phi[0],   4*phi[1]],
-        [4*phi[1],              4*phi[0]-24*x[1]*phi[1]],
-    ])
+# for x in XSTARTS:
+#     print("(x,y):", jnp.array(x[0]))
+#     print("F(x,y):", F(jnp.array(x[0]), jnp.zeros(2)))
 
-Fp = lambda x, p: np.array([[-1, 0], [0, -1]])
+# P1 = lambda x: 0.
+# P2 = lambda x: -1.8314285
 
-XSTARTS = [
-    [[-0.811,  0.965], 'brown'],
-    [[-0.811, -0.965], 'brown'],
-    [[0.147,  0.139], 'k'],
-    [[0.147, -0.139], 'k'],
-    [[ 0.050, -0.096], 'k',],    
-    [[0.896,  0.577], 'cyan'],
-    [[0.345,  1.034], 'cyan'],
-    [[0.896, -0.577], 'pink'],
-    [[0.345, -1.034], 'pink'],
-]
-
-P1 = lambda x: -4*x[0]**3 - 3*x[0]**2 + 2*x[1]**2 + 2*x[0]
-P2 = lambda x: 4*x[0]*x[1] - 4*x[1]**3
 
 maxiter = 10000
 ds = 1e-3
 min_ds = 1e-8
 max_ds = 1e-1
-max_delta_p = 1e-2
+max_delta_p = 1e-1
 rho = 1e-1
-P1LIMS = [-10, 10]
-P2LIMS = [-10, 10]
-P1_VIEW_LIMS = [-2, 1.5]
-P2_VIEW_LIMS = [-1.5, 1.5]
+P1LIMS = [-4, 4]
+P2LIMS = [-4, 4]
+P1_VIEW_LIMS = [-4, 4]
+P2_VIEW_LIMS = [-4, 4]
 
-def get_binary_flip_curves(p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS):
+def get_plnn_bifurcation_curves(
+        model, 
+        F, Fx, dxFxPhi, Fp,
+        p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS
+):
+    raise NotImplementedError()
     p1lims = p1lims.copy()
     p2lims = p2lims.copy()
     p1lims[0] = min(p1lims[0], P1LIMS[0])
@@ -84,20 +74,81 @@ def get_binary_flip_curves(p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS):
 
 def parse_args(args):
     parser = argparse.ArgumentParser()
+    parser.add_argument('--model_fpath', type=str, default=None)
+    parser.add_argument('--modeldir', type=str, default=None)
+
+    parser.add_argument('-n', '--num_starts', type=int, default=100, 
+                        help="number of starting values of p0 to use.")
     parser.add_argument('--plot_starts', action="store_true")
     parser.add_argument('--plot_first_steps', action="store_true")
     parser.add_argument('--plot_failed_to_converge_points', action="store_true")
     parser.add_argument('--show', action="store_true")
     parser.add_argument('-s', '--saveas', type=str, 
-                        default="bifcurves_binary_flip.pdf")
+                        default="bifcurves_plnn.pdf")
+    parser.add_argument('-v', '--verbosity', type=int, default=1)
+    parser.add_argument('--progress_bar', action="store_true")
+    parser.add_argument('--savedata', action="store_true")
+    parser.add_argument('--outdir', type=str, default=None)
+    parser.add_argument('--seed', type=int, default=None)
     return parser.parse_args(args)
 
 
 def main(args):
+
+    savedata = args.savedata
+    outdir = args.outdir
+    if savedata:
+        os.makedirs(outdir, exist_ok=True)
+
+    nprng = np.random.default_rng(seed=args.seed)
+
+    model_fpath = args.model_fpath
+    modeldir = args.modeldir
+    if model_fpath:
+        model, _ = DeepPhiPLNN.load(model_fpath, dtype=jnp.float64)
+    else:
+        model = load_model_from_file(
+            modeldir, model_class=DeepPhiPLNN, dtype=jnp.float64
+        )[0]
+    
     plot_starts = args.plot_starts
     plot_first_steps = args.plot_first_steps
     plot_failed_to_converge_points =args.plot_failed_to_converge_points
 
+    tilt_nn_w = model.get_parameters()['tilt.w'][0]
+    tilt_nn_b = model.get_parameters()['tilt.b'][0]
+    
+    if tilt_nn_b is None:
+        pass
+    else:
+        raise RuntimeError()
+        
+    @jax.jit
+    def F(x, p): 
+        return -(model.eval_grad_phi(0., x) + tilt_nn_w @ p)
+
+    @jax.jit
+    def Fx(x): 
+        return -jax.jacrev(model.eval_grad_phi, 1)(0., x)
+
+    @jax.jit
+    def dxFxPhi(x, phi):
+        jphi = lambda x1, phi1: Fx(x1) @ phi1
+        return jax.jacrev(jphi, 0)(x, phi)
+
+    Fp = lambda x, p: -tilt_nn_w
+
+
+    def solve_p(x):
+        return -jnp.linalg.inv(tilt_nn_w) @ model.eval_grad_phi(0., x)
+    
+    r = 2
+    grad_tol = 1e-4
+    while len(XSTARTS) < args.num_starts:
+        x_tmp = r * (2*nprng.random(2) - 1)  # uniform in interval [-r, r]
+        if np.linalg.norm(F(x_tmp, solve_p(x_tmp))) < grad_tol:
+            XSTARTS.append([x_tmp, 'k'])
+    
     fig1, [ax1, ax2] = plt.subplots(1, 2, figsize=(8,4))
 
     curves_x = []
@@ -106,10 +157,10 @@ def main(args):
     eigs = []
     failed_to_converge_xs = []
     failed_to_converge_ps = []
-    for i in range(len(XSTARTS)):
+    for i in tqdm(range(len(XSTARTS)), disable=(not args.progress_bar)):
         x0 = np.array(XSTARTS[i][0])
         col = XSTARTS[i][1]
-        p0 = np.array([P1(x0), P2(x0)])
+        p0 = np.array(solve_p(x0))
         for sign in [1, -1]:
             xs, ps, cps, d = trace_curve(
                 x0, p0, F, Fx, dxFxPhi, Fp,
@@ -120,7 +171,8 @@ def main(args):
                 max_delta_p=max_delta_p,
                 rho=rho,
                 plims=[P1LIMS, P2LIMS],
-                verbosity=1,
+                verbosity=args.verbosity,
+                random_p_increment=True,
             )
             curves_x.append(xs)
             curves_p.append(ps)
@@ -164,6 +216,12 @@ def main(args):
     if args.show:
         plt.show()
 
+    if savedata:
+        os.makedirs(outdir, exist_ok=True)
+        np.save(f"{outdir}/curves_x.npy", np.array(curves_x, dtype=object))
+        np.save(f"{outdir}/curves_p.npy", np.array(curves_p, dtype=object))
+        np.save(f"{outdir}/crit_ps.npy", np.array(crit_ps, dtype=object))
+        np.save(f"{outdir}/eigs.npy", np.array(eigs, dtype=object))
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
