@@ -10,8 +10,10 @@ import jax.random as jrandom
 import jax.tree_util as jtu
 import equinox as eqx
 from optax import skip_not_finite
+import matplotlib.pyplot as plt
 
 from plnn.models.plnn import PLNN
+from plnn.pl.plotting import plot_loss_history
 
 def train_model(
     model, 
@@ -24,6 +26,10 @@ def train_model(
     batch_size=1,
     fix_noise=False,
     hyperparams={},
+    reduce_dt_on_nan=False,
+    reduce_confinement_factor_on_nan=False,
+    dt_reduction_factor=0.5,
+    cf_reduction_factor=0.1,
     **kwargs
 ) -> PLNN:
     """Train a PLNN model.
@@ -115,6 +121,10 @@ def train_model(
             error_raiser=error_raiser,
             fix_noise=fix_noise,
             filter_spec=filter_spec,
+            reduce_dt_on_nan=reduce_dt_on_nan,
+            reduce_confinement_factor_on_nan=reduce_confinement_factor_on_nan,
+            dt_reduction_factor=dt_reduction_factor,
+            cf_reduction_factor=cf_reduction_factor,
         )
 
         if np.isnan(avg_tloss):
@@ -162,7 +172,12 @@ def train_model(
 
         # Plotting, if specified
         if plotting and (avg_vloss < best_vloss or save_all):
-            make_plots(epoch + 1, model, outdir, plotting_opts)
+            make_plots(
+                epoch + 1, model, outdir, plotting_opts,
+                plot_losses=True,
+                loss_hist_train=loss_hist_train,
+                loss_hist_valid=loss_hist_valid,
+            )
             
         # Track best performance
         if avg_vloss < best_vloss:
@@ -188,6 +203,10 @@ def train_one_epoch(
         filter_spec=None,
         report_every=10,  # print running loss every 10 batches.
         verbosity=1,  # 0: none. 1: default. 2: debug.
+        reduce_dt_on_nan=False,
+        reduce_confinement_factor_on_nan=False,
+        dt_reduction_factor=0.5,
+        cf_reduction_factor=0.1,
         **kwargs
     ):
     """One epoch of training.
@@ -252,12 +271,24 @@ def train_one_epoch(
             if jnp.isfinite(loss):
                 stepped = True
             else:
-                where = lambda m: m.dt0
-                model = eqx.tree_at(where, old_model, old_model.dt0/2)
                 msg = "Encountered nan in loss. Reverting update."
-                msg += f" New model dt0: {model.dt0}"
+                if reduce_dt_on_nan:
+                    where = lambda m: m.dt0
+                    model = eqx.tree_at(
+                        where, old_model, 
+                        old_model.dt0 * dt_reduction_factor
+                    )
+                    old_model = model
+                    msg += f"\n\tNew model dt0: {model.dt0}"
+                if reduce_confinement_factor_on_nan:
+                    where = lambda m: m.confinement_factor
+                    model = eqx.tree_at(
+                        where, old_model, 
+                        old_model.confinement_factor * cf_reduction_factor
+                    )
+                    old_model = model
+                    msg += f"\n\tNew model confinement_factor: {model.confinement_factor}"
                 logprint(msg)
-                old_model = model
                 attempts += 1
         
         epoch_running_loss += loss.item()
@@ -345,7 +376,7 @@ def validation_step(model, x, y, loss_fn, key):
     return vloss
     
 
-def make_plots(epoch, model, outdir, plotting_opts):
+def make_plots(epoch, model, outdir, plotting_opts, **kwargs):
     """Make plots at the end of each epoch.
     
     Args:
@@ -361,7 +392,24 @@ def make_plots(epoch, model, outdir, plotting_opts):
     plot_phi_landscape_norm = plotting_opts.get('plot_phi_landscape_norm', False)
     plot_phi_heatmap_lognorm = plotting_opts.get('plot_phi_heatmap_lognorm', True)
     plot_phi_landscape_lognorm = plotting_opts.get('plot_phi_landscape_lognorm', False)
+    plot_losses = kwargs.get('plot_losses', False)
+    loss_hist_train = kwargs.get('loss_hist_train', None)
+    loss_hist_valid = kwargs.get('loss_hist_valid', None)
 
+    do_plot_loss_hist = plot_losses and (loss_hist_train is not None) \
+                                    and (loss_hist_valid is not None)
+    if do_plot_loss_hist:
+        plot_loss_history(
+            np.array(loss_hist_train),
+            np.array(loss_hist_valid),
+            startidx=0, 
+            log=True, 
+            title="Loss History", 
+            alpha_train=0.9,
+            alpha_valid=0.5,
+            saveas=f"{outdir}/images/loss_history.png",
+        )
+        plt.close()
     if plot_phi_heatmap: 
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=False,
