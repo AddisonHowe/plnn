@@ -4,7 +4,7 @@ results_dir=$1
 
 for studydir in data/transition_rate_study_results/$results_dir/*; do 
     # echo $studydir
-    outdir=tmpbifs/$results_dir/$(basename $studydir)
+    outdir=out/bifs/$results_dir/$(basename $studydir)
     echo $outdir
     mkdir -p $outdir
     python analysis/transition_rate_study_analysis_script.py \
