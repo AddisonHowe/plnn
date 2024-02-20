@@ -26,10 +26,11 @@ def train_model(
     batch_size=1,
     fix_noise=False,
     hyperparams={},
-    reduce_dt_on_nan=False,
-    reduce_confinement_factor_on_nan=False,
-    dt_reduction_factor=0.5,
-    cf_reduction_factor=0.1,
+    reduce_dt_on_nan=False, 
+    dt_reduction_factor=0.5, 
+    reduce_cf_on_nan=False, 
+    cf_reduction_factor=0.5, 
+    nan_max_attempts=4,
     **kwargs
 ) -> PLNN:
     """Train a PLNN model.
@@ -122,9 +123,13 @@ def train_model(
             fix_noise=fix_noise,
             filter_spec=filter_spec,
             reduce_dt_on_nan=reduce_dt_on_nan,
-            reduce_confinement_factor_on_nan=reduce_confinement_factor_on_nan,
             dt_reduction_factor=dt_reduction_factor,
+            reduce_cf_on_nan=reduce_cf_on_nan,
             cf_reduction_factor=cf_reduction_factor,
+            nan_max_attempts=nan_max_attempts,
+            hyperparams=hyperparams,
+            model_name=model_name,
+            outdir=outdir,
         )
 
         if np.isnan(avg_tloss):
@@ -203,10 +208,14 @@ def train_one_epoch(
         filter_spec=None,
         report_every=10,  # print running loss every 10 batches.
         verbosity=1,  # 0: none. 1: default. 2: debug.
-        reduce_dt_on_nan=False,
-        reduce_confinement_factor_on_nan=False,
-        dt_reduction_factor=0.5,
-        cf_reduction_factor=0.1,
+        reduce_dt_on_nan=False, 
+        dt_reduction_factor=0.5, 
+        reduce_cf_on_nan=False, 
+        cf_reduction_factor=0.5, 
+        nan_max_attempts=4,
+        hyperparams=None,
+        model_name=None,
+        outdir=None,
         **kwargs
     ):
     """One epoch of training.
@@ -242,6 +251,8 @@ def train_one_epoch(
     else:
         log_and_raise_runtime_error = error_raiser
 
+    debug_dir = f"{outdir}/debug"
+
     epoch_running_loss = 0.
     batch_running_loss = 0.
     n = len(dataloader)
@@ -268,26 +279,46 @@ def train_one_epoch(
                     model, inputs, y1, optimizer, opt_state, loss_fn, subkey, 
                 )
 
-            if jnp.isfinite(loss):
+            if jnp.isfinite(loss.item()):
                 stepped = True
             else:
-                msg = "Encountered nan in loss. Reverting update."
+                
+                # Save the erroring model for debugging
+                if attempts == 0:    
+                    os.makedirs(debug_dir, exist_ok=True)
+                    model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_errored.pth"
+                    model.save(model_path, hyperparams)
+                    
+                # Raise an error if the number of attempts reaches the limit.
+                if attempts == nan_max_attempts:
+                    msg = "Encountered nan in loss and reached the maximum "
+                    msg += f"number of model alterations: {nan_max_attempts}."
+                    raise RuntimeError(msg)
+                
+                # Perform model surgery
+                msg = "Encountered nan in loss. Reverting update and performing model surgery."
                 if reduce_dt_on_nan:
                     where = lambda m: m.dt0
                     model = eqx.tree_at(
                         where, old_model, 
                         old_model.dt0 * dt_reduction_factor
                     )
+                    hyperparams['dt0'] = model.dt0
                     old_model = model
                     msg += f"\n\tNew model dt0: {model.dt0}"
-                if reduce_confinement_factor_on_nan:
+                if reduce_cf_on_nan:
                     where = lambda m: m.confinement_factor
                     model = eqx.tree_at(
                         where, old_model, 
                         old_model.confinement_factor * cf_reduction_factor
                     )
+                    hyperparams['confinement_factor'] = model.confinement_factor
                     old_model = model
                     msg += f"\n\tNew model confinement_factor: {model.confinement_factor}"
+                
+                # Save the resulting model
+                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_update{attempts}.pth"
+                model.save(model_path, hyperparams)
                 logprint(msg)
                 attempts += 1
         

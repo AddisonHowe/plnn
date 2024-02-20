@@ -38,6 +38,12 @@ def parse_args(args):
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
     parser.add_argument('-b', '--batch_size', type=int, default=25)
     parser.add_argument('--report_every', type=int, default=10)
+    parser.add_argument('--reduce_dt_on_nan', action="store_true")
+    parser.add_argument('--dt_reduction_factor', type=float, default=0.5)
+    parser.add_argument('--reduce_cf_on_nan', action="store_true")
+    parser.add_argument('--cf_reduction_factor', type=float, default=0.1)
+    parser.add_argument('--nan_max_attempts', type=int, default=1)
+
 
     # Model simulation
     grp_sim = parser.add_argument_group(
@@ -199,9 +205,14 @@ def main(args):
     nsims_valid = args.nsims_validation if args.nsims_validation else read_nsims(datdir_valid)
     model_type = args.model_type
     ndims = args.ndims
-    fix_noise = args.fix_noise  # not implemented
+    fix_noise = args.fix_noise
     batch_size = args.batch_size
     num_epochs = args.num_epochs
+    reduce_dt_on_nan = args.reduce_dt_on_nan
+    dt_reduction_factor = args.dt_reduction_factor
+    reduce_cf_on_nan = args.reduce_cf_on_nan
+    cf_reduction_factor = args.cf_reduction_factor
+    nan_max_attempts = args.nan_max_attempts
     optimization_method = args.optimizer
     cont_path = args.continuation
     loss_fn_key = args.loss
@@ -328,10 +339,11 @@ def main(args):
         report_every=args.report_every,
         logprint=logprint,
         error_raiser=log_and_raise_runtime_error,
-        reduce_dt_on_nan=False,
-        reduce_confinement_factor_on_nan=True,
-        dt_reduction_factor=0.5,
-        cf_reduction_factor=0.1,
+        reduce_dt_on_nan=reduce_dt_on_nan,
+        dt_reduction_factor=dt_reduction_factor,
+        reduce_cf_on_nan=reduce_cf_on_nan,
+        cf_reduction_factor=cf_reduction_factor,
+        nan_max_attempts=nan_max_attempts,
     )
 
     return model

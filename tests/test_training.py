@@ -20,6 +20,8 @@ from plnn.model_training import train_model
 ##  Configuration  ##
 #####################
 
+OUTDIR = f"{TMPDIR}/test_training"
+
 W1 = np.array([
     [1, 3],
     [2, 2],
@@ -148,6 +150,7 @@ def test_fixed_sigma_training(dtype, datdir_train, datdir_valid,
         batch_size=1,
         fix_noise=True,
         hyperparams={},
+        outdir=OUTDIR
     )
 
     sigma1 = model.get_sigma()
@@ -173,5 +176,7 @@ def test_fixed_sigma_training(dtype, datdir_train, datdir_valid,
             msg += f"\n  Initial: {arr0}\n  Final: {arr1}"
             errors.append(msg)
     
+    remove_dir(OUTDIR)
+
     assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
     
