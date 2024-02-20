@@ -293,7 +293,7 @@ def train_one_epoch(
                 if attempts == nan_max_attempts:
                     msg = "Encountered nan in loss and reached the maximum "
                     msg += f"number of model alterations: {nan_max_attempts}."
-                    raise RuntimeError(msg)
+                    log_and_raise_runtime_error(msg)
                 
                 # Perform model surgery
                 msg = "Encountered nan in loss. Reverting update and performing model surgery."
