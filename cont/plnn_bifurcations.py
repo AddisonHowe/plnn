@@ -88,6 +88,7 @@ def parse_args(args):
     parser.add_argument('-v', '--verbosity', type=int, default=1)
     parser.add_argument('--progress_bar', action="store_true")
     parser.add_argument('--savedata', action="store_true")
+    parser.add_argument('--random_p_increment', action="store_true")
     parser.add_argument('--outdir', type=str, default=None)
     parser.add_argument('--seed', type=int, default=None)
     return parser.parse_args(args)
@@ -97,8 +98,6 @@ def main(args):
 
     savedata = args.savedata
     outdir = args.outdir
-    if savedata:
-        os.makedirs(outdir, exist_ok=True)
 
     nprng = np.random.default_rng(seed=args.seed)
 
@@ -172,7 +171,7 @@ def main(args):
                 rho=rho,
                 plims=[P1LIMS, P2LIMS],
                 verbosity=args.verbosity,
-                random_p_increment=True,
+                random_p_increment=args.random_p_increment,
             )
             curves_x.append(xs)
             curves_p.append(ps)
@@ -222,6 +221,7 @@ def main(args):
         np.save(f"{outdir}/curves_p.npy", np.array(curves_p, dtype=object))
         np.save(f"{outdir}/crit_ps.npy", np.array(crit_ps, dtype=object))
         np.save(f"{outdir}/eigs.npy", np.array(eigs, dtype=object))
+
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
