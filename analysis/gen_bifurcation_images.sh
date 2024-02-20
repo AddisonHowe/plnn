@@ -5,7 +5,8 @@ results_dir=$1
 for studydir in data/transition_rate_study_results/$results_dir/*; do 
     for modeldir in $studydir/*; do
         echo $modeldir;
-        outdir=tmpbifs/$results_dir/$(basename $studydir)/$(basename $modeldir)
+        outdir=out/bifs/$results_dir/$(basename $studydir)/$(basename $modeldir)
+        echo $outdir
         mkdir -p $outdir
         for ((i = 0; i < 1; i++)); do
             python cont/plnn_bifurcations.py \
@@ -13,7 +14,8 @@ for studydir in data/transition_rate_study_results/$results_dir/*; do
             -v 0 -n 400 --progress_bar \
             --plot_first_steps --plot_failed_to_converge_points \
             --saveas $outdir/bif_diagram$i.png \
-            --savedata --outdir $outdir/bifcurve_data
+            --savedata --outdir $outdir/bifcurve_data \
+            # --random_p_increment
         done
     done        
 done
