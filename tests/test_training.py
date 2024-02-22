@@ -14,6 +14,7 @@ from plnn.dataset import get_dataloaders
 from plnn.loss_functions import mean_cov_loss, kl_divergence_loss
 from plnn.optimizers import get_optimizer_args, select_optimizer
 from plnn.model_training import train_model
+from plnn.dataset import LandscapeSimulationDataset, NumpyLoader
 
 
 #####################
@@ -104,13 +105,13 @@ def get_model(
 ###############################################################################
 
 
-@pytest.mark.parametrize('dtype', [jnp.float32])
+@pytest.mark.parametrize('dtype', [jnp.float32, jnp.float64])
 @pytest.mark.parametrize('datdir_train, datdir_valid', [
     [f"{DATDIR}/simtest1/data_train", f"{DATDIR}/simtest1/data_valid"],
 ])
-@pytest.mark.parametrize('sigma', [0.3]) # [0.3, 0.5]
+@pytest.mark.parametrize('sigma', [0.3])
 @pytest.mark.parametrize('loss_fn', [kl_divergence_loss, mean_cov_loss])
-@pytest.mark.parametrize('opt_method', ['sgd']) # ['sgd', 'adam', 'rms']
+@pytest.mark.parametrize('opt_method', ['sgd', 'adam', 'rms'])
 def test_fixed_sigma_training(dtype, datdir_train, datdir_valid, 
                               sigma, loss_fn, opt_method):
     nprng = np.random.default_rng()
@@ -180,3 +181,114 @@ def test_fixed_sigma_training(dtype, datdir_train, datdir_valid,
 
     assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
     
+
+@pytest.mark.parametrize('dtype', [jnp.float32, jnp.float64])
+@pytest.mark.parametrize('sample_cells', [False, True])
+@pytest.mark.parametrize('fix_noise', [False, True])
+def test_divergent_training(dtype, sample_cells, fix_noise):
+    """Test a case in which cells diverge.
+    
+    Initizialization and activation function are such that the phi function is
+            phi(x, y) = x^4 + y^4 +x^2 + y^2
+    """
+    key = jrandom.PRNGKey(0)
+    model, hyperparams = DeepPhiPLNN.make_model(
+        key,
+        dtype=dtype,
+        include_phi_bias=False,
+        phi_hidden_dims=[2],
+        phi_hidden_acts='square',
+        phi_final_act=None,
+        ndims=2,
+        nparams=2,
+        nsigs=2,
+        ncells=1,
+        signal_type='jump',
+        nsigparams=3,
+        sigma_init=0.0001,
+        solver='euler',
+        dt0=0.1,
+        confine=True,
+        confinement_factor=1.0,
+        include_tilt_bias=False,
+        sample_cells=sample_cells,
+    )
+    key, subkey = jrandom.split(key, 2)
+    model = model.initialize(
+        subkey, dtype=dtype,
+        init_phi_weights_method='explicit',
+        init_phi_weights_args=[[[[1, 0],[0, 1]], [[1, 1]]]],
+    )
+
+    # Fails when dt=0.1, should work when dt=0.01
+    training_data = [
+        [
+            # signal parameters (null)
+            [[1, 0, 0],[1, 0, 0]],
+            # Datapoints
+            [{'t0': 0.0, 
+              'x0': [[3,0],[0,0]], 
+              't1': 1.0, 
+              'x1': [[0.05, 0], [0.01, 0.01]]}]
+        ]
+    ]
+
+    train_dset = LandscapeSimulationDataset(
+        data=training_data,
+        nsims=1,
+    )
+
+    train_dataloader = NumpyLoader(
+        train_dset, 
+        batch_size=1, 
+        shuffle=False,
+    )
+
+    valid_dataloader = NumpyLoader(
+        train_dset, 
+        batch_size=1, 
+        shuffle=False,
+    )
+
+    optimizer_args = {
+        'lr_schedule' : 'constant',
+        'learning_rate' : 0.01,
+        'momentum' : 0.9,
+        'weight_decay' : 0.5, 
+        'clip' : 1.0, 
+    }
+    optimizer = select_optimizer(
+        'rms', optimizer_args,
+        batch_size=2, dataset_size=len(train_dset),
+    )
+
+    model = train_model(
+        model, 
+        mean_cov_loss, 
+        optimizer,
+        train_dataloader, 
+        valid_dataloader,
+        key=jrandom.PRNGKey(0),
+        num_epochs=1,
+        batch_size=1,
+        fix_noise=fix_noise,
+        hyperparams={},
+        outdir=OUTDIR,
+        reduce_dt_on_nan=True,
+        dt_reduction_factor=0.1,
+        reduce_cf_on_nan=False,
+        cf_reduction_factor=None,
+        nan_max_attempts=3,
+    )
+
+    dt0_final = model.dt0
+    dt0_final_exp = 0.01
+    
+    errors = []
+    if not jnp.allclose(dt0_final, dt0_final_exp):
+        msg = f"Incorrect dt0 final. Expected {dt0_final_exp}. Got {dt0_final}."
+        errors.append(msg)
+    
+    remove_dir(OUTDIR)
+
+    assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
