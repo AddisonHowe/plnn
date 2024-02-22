@@ -77,6 +77,8 @@ def train_model(
     loss_hist_valid = []
     learn_rate_hist = []
     sigma_hist = []
+    tilt_weights = []
+    tilt_bias = []
 
     if fix_noise:
         filter_spec = jtu.tree_map(lambda _: True, model)
@@ -145,8 +147,9 @@ def train_model(
         )
 
         if np.isnan(avg_vloss):
+            pass
             msg = f"nan encountered in epoch {epoch} (validation loss)."
-            log_and_raise_runtime_error(msg)
+            logprint(msg)
         
         if hasattr(opt_state[1], 'hyperparams'):
             lr = opt_state[1].hyperparams['learning_rate']
@@ -168,6 +171,12 @@ def train_model(
 
         sigma_hist.append(model.get_sigma())
         np.save(f"{outdir}/sigma_history.npy", sigma_hist)
+
+        tilt_weights.append(model.get_parameters()['tilt.w'])
+        np.save(f"{outdir}/tilt_weights_history.npy", tilt_weights)
+
+        tilt_bias.append(model.get_parameters()['tilt.b'])
+        np.save(f"{outdir}/tilt_bias_history.npy", tilt_bias)
 
         # Save the model's state
         if avg_vloss < best_vloss or save_all:
