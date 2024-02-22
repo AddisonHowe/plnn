@@ -11,7 +11,7 @@ import jax
 import jax.numpy as jnp
 
 from plnn.models import DeepPhiPLNN
-from plnn.helpers import load_model_from_file
+from plnn.io import load_model_from_directory
 from cont.continuation import trace_curve
 
 
@@ -42,34 +42,6 @@ def get_plnn_bifurcation_curves(
         p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS
 ):
     raise NotImplementedError()
-    p1lims = p1lims.copy()
-    p2lims = p2lims.copy()
-    p1lims[0] = min(p1lims[0], P1LIMS[0])
-    p1lims[1] = max(p1lims[1], P1LIMS[1])
-    p2lims[0] = min(p2lims[0], P2LIMS[0])
-    p2lims[1] = max(p2lims[1], P2LIMS[1])
-
-    curves_p = []
-    colors = []
-    for i in range(len(xstarts)):
-        x0 = np.array(xstarts[i][0])
-        col = xstarts[i][1]
-        p0 = np.array([P1(x0), P2(x0)])
-        for sign in [1, -1]:
-            _, ps, _, _ = trace_curve(
-                x0, p0, F, Fx, dxFxPhi, Fp,
-                maxiter=maxiter, 
-                ds=ds*sign,
-                min_ds=min_ds,
-                max_ds=max_ds,
-                max_delta_p=max_delta_p,
-                rho=rho,
-                plims=[p1lims, p2lims],
-                verbosity=0,
-            )
-            curves_p.append(ps)
-            colors.append(col)
-    return curves_p, colors
 
 
 def parse_args(args):
@@ -106,7 +78,7 @@ def main(args):
     if model_fpath:
         model, _ = DeepPhiPLNN.load(model_fpath, dtype=jnp.float64)
     else:
-        model = load_model_from_file(
+        model = load_model_from_directory(
             modeldir, model_class=DeepPhiPLNN, dtype=jnp.float64
         )[0]
     

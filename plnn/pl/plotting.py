@@ -11,12 +11,13 @@ from .plot_landscapes import func_phi1, func_phi2, plot_landscape
 def plot_training_loss_history(
         loss_hist_train, startidx=0, 
         log=False, title="Training Loss", 
-        saveas=None
+        saveas=None, ax=None, **kwargs
 ):
-    fig, ax = plt.subplots(1, 1)
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
     erange = np.arange(startidx, len(loss_hist_train))
     fplot = ax.semilogy if log else ax.plot
-    fplot(1 + erange, loss_hist_train[erange], '.-')
+    fplot(1 + erange, loss_hist_train[erange], '.-', color=kwargs.get('color'))
     ax.set_xlabel(f"epoch")
     ax.set_ylabel(f"loss")
     ax.set_title(title)
@@ -27,12 +28,13 @@ def plot_training_loss_history(
 def plot_validation_loss_history(
         loss_hist_valid, startidx=0, 
         log=False, title="Validation Loss", 
-        saveas=None
+        saveas=None, ax=None, **kwargs
 ):
-    fig, ax = plt.subplots(1, 1)
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
     erange = np.arange(startidx, len(loss_hist_valid))
     fplot = ax.semilogy if log else ax.plot
-    fplot(1 + erange, loss_hist_valid[erange], '.-')
+    fplot(1 + erange, loss_hist_valid[erange], '.-', color=kwargs.get('color'))
     ax.set_xlabel(f"epoch")
     ax.set_ylabel(f"loss")
     ax.set_title(title)
@@ -48,9 +50,11 @@ def plot_loss_history(
         title="Loss History", 
         alpha_train=0.9,
         alpha_valid=0.5,
-        saveas=None
+        saveas=None,
+        ax=None,
 ):
-    fig, ax = plt.subplots(1, 1)
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
     erange = np.arange(startidx, len(loss_hist_train))
     fplot = ax.semilogy if log else ax.plot
     fplot(1 + erange, loss_hist_train[erange], 'r.-', 
@@ -68,9 +72,10 @@ def plot_loss_history(
 def plot_train_vs_valid_history(
         loss_hist_train, loss_hist_valid, startidx=0,
         log=True, title="Training vs Validation Loss",
-        saveas=None,
+        saveas=None, ax=None,
 ):
-    fig, ax = plt.subplots(1, 1)
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
     erange = np.arange(startidx, len(loss_hist_train))
     fplot = ax.loglog if log else ax.plot
     fplot(loss_hist_train[erange], loss_hist_valid[erange], 'k.-')
@@ -95,7 +100,7 @@ def plot_sigma_history(
         sigma_true=None
 ):
     if ax is None:
-      fig, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(1, 1)
     fplot = ax.semilogy if log else ax.plot
     fplot(sigma_history, 'k.-')
     if sigma_true is not None:
@@ -115,14 +120,14 @@ def plot_sigma_history(
 
 
 def plot_learning_rate_history(
-      lr_history, 
-      log=False, 
-      title="Learning Rate", 
-      saveas=None,
-      ax=None
+        lr_history, 
+        log=False, 
+        title="Learning Rate", 
+        saveas=None,
+        ax=None
 ):
     if ax is None:
-      fig, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(1, 1)
     fplot = ax.semilogy if log else ax.plot
     fplot(lr_history, 'k.-')
     ax.set_xlabel(f"epoch")

@@ -266,17 +266,18 @@ def train_one_epoch(
         inputs, y1 = data
         key, subkey = jrandom.split(key, 2)
         old_model = model
+        old_opt_state = opt_state
         stepped = False
         attempts = 0
         while not stepped:
             if fix_noise:
                 model, opt_state, loss = make_step_partitioned(
-                    model, inputs, y1, optimizer, opt_state, loss_fn, subkey, 
+                    model, inputs, y1, optimizer, old_opt_state, loss_fn, subkey, 
                     filter_spec
                 )
             else:
                 model, opt_state, loss = make_step(
-                    model, inputs, y1, optimizer, opt_state, loss_fn, subkey, 
+                    model, inputs, y1, optimizer, old_opt_state, loss_fn, subkey, 
                 )
 
             if jnp.isfinite(loss.item()):

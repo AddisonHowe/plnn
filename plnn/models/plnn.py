@@ -23,6 +23,7 @@ _ACTIVATION_KEYS = {
     'softplus' : jax.nn.softplus,
     'elu' : jax.nn.elu,
     'tanh' : jax.nn.tanh,
+    'square' : lambda x: x*x,
 }
 
 _SOLVER_KEYS = {
@@ -177,7 +178,7 @@ class PLNN(eqx.Module):
         # Parse the inputs
         fwdvec = jax.vmap(self.simulate_forward, 0)
         key, sample_key = jrandom.split(key, 2)
-        if self.sample_cells:
+        if self.sample_cells and self.ncells > 1:
             y0 = self._sample_y0(sample_key, y0)
         batch_keys = jax.random.split(key, t0.shape[0])
         return fwdvec(t0, t1, y0, sigparams, batch_keys)
@@ -691,8 +692,27 @@ class PLNN(eqx.Module):
             Array of shape (1,).
         """
         phi = self.eval_phi(y)
-        gtilt = self.grad_tilt(t, sigparams)
-        return phi + jnp.dot(gtilt, y)
+        tau = self.grad_tilt(t, sigparams)
+        return phi + jnp.dot(tau, y)
+    
+    def eval_tilted_grad_phi(
+        self, 
+        t: Float, 
+        y: Float[Array, "ndims"], 
+        sigparams: Float[Array, "nsigs nsigparams"],
+    ) -> Float[Array, "ndims"]:
+        """Evaluate tilted gradient. 
+
+        Args:
+            t (Scalar)        : Time.
+            y (Array)         : State. Shape (d,).
+            sigparams (Array) : Signal parameters. Shape (nsigs, nsigparams).
+        Returns:
+            Array of shape (d,).
+        """
+        grad_phi = self.eval_grad_phi(y)
+        tau = self.grad_tilt(t, sigparams)
+        return grad_phi + tau
     
     ####################################
     ##  Vectorized Landscape Methods  ##
@@ -775,6 +795,23 @@ class PLNN(eqx.Module):
         """
         return jax.vmap(self.eval_tilted_phi, (None, 0, None))(t, y, sigparams)
     
+    def tilted_grad_phi(
+        self, 
+        t: Float, 
+        y: Float[Array, "ncells ndims"],
+        sigparams: Float[Array, "nsigs nsigparams"]
+    ) -> Float[Array, "ncells ndims"]:
+        """Tilted landscape level. 
+
+        Args:
+            t (Scalar) : Time.
+            y (Array)  : State. Shape (n,d).
+            sigparams (Array) : Signal parameters. Shape (nsigs, nsigparams).
+        Returns:
+            Array of shape (n,d).
+        """
+        return jax.vmap(self.eval_tilted_grad_phi, (None, 0, None))(t, y, sigparams)
+    
     #######################################
     ##  Convenience Landscape Functions  ##
     #######################################
@@ -856,6 +893,84 @@ class PLNN(eqx.Module):
             Array of shape (n,1).
         """
         return jax.vmap(self.eval_phi_with_tilts, (None, 0, None))(t, y, tilts)
+    
+    def eval_grad_phi_with_signal(
+            self, 
+            t: Float, 
+            y: Float[Array, "ndims"], 
+            signal: Float[Array, "nsigs"]
+    ) -> Float[Array, "ndims"]:
+        """Convenience function. Gradient with tilt based on signal.
+
+        Acts on individual particle. TODO: Test.
+
+        Args:
+            t (Scalar)     : Time.
+            y (Array)      : State. Shape (d,).
+            signal (Array) : Signal parameters. Shape (nsigs,).
+        Returns:
+            Array of shape (d,).
+        """
+        grad_phi = self.eval_grad_phi(t, y)
+        tau = self.tilt_module(signal)
+        return grad_phi + tau
+    
+    def eval_grad_phi_with_tilts(
+            self, 
+            t: Float, 
+            y: Float[Array, "ndims"], 
+            tilts: Float[Array, "ndims"]
+    ) -> Float[Array, "ndims"]:
+        """Convenience function. Gradient with tilt given directly.
+
+        Acts on individual particle. TODO: Test.
+
+        Args:
+            t (Scalar)    : Time.
+            y (Array)     : State. Shape (d,).
+            tilts (Array) : Tilt parameters. Shape (nsigs,).
+        Returns:
+            Array of shape (d,).
+        """
+        return self.eval_grad_phi(t, y) + tilts
+
+    def grad_phi_with_signal(
+            self,
+            t: Float, 
+            y: Float[Array, "ncells ndims"],
+            signal: Float[Array, "nsigs"]
+    ) -> Float[Array, "ncells ndims"]:
+        """Convenience function. Gradient with tilt based on signal.
+
+        Vectorized across a number of particles. TODO: Test.
+
+        Args:
+            t (Scalar)     : Time.
+            y (Array)      : State. Shape (n,d).
+            signal (Array) : Signal values. Shape (nsigs,).
+        Returns:
+            Array of shape (n,d).
+        """
+        return jax.vmap(self.eval_grad_phi_with_signal, (None, 0, None))(t, y, signal)
+    
+    def grad_phi_with_tilts(
+            self,
+            t: Float, 
+            y: Float[Array, "ncells ndims"],
+            tilts: Float[Array, "ndims"]
+    ) -> Float[Array, "ncells ndims"]:
+        """Convenience function. Gradient with tilt given directly.
+
+        Vectorized across a number of particles. TODO: Test.
+
+        Args:
+            t (Scalar)    : Time.
+            y (Array)     : State. Shape (n,d).
+            tilts (Array) : Tilt values. Shape (ndims,).
+        Returns:
+            Array of shape (n,d).
+        """
+        return jax.vmap(self.eval_grad_phi_with_tilts, (None, 0, None))(t, y, tilts)
         
     ########################
     ##  Signal Functions  ##
@@ -1361,7 +1476,15 @@ class PLNN(eqx.Module):
         if not show: plt.close()
         return ax
     
-    def plot_f(self, signal=0, r=4, res=50, **kwargs):
+    def plot_f(
+            self, 
+            tilt=None,
+            signal=None,
+            sigparams=None,
+            eval_time=None,
+            r=4, 
+            res=50, 
+            **kwargs):
         """Plot the vector field f.
         Args:
             signal (float or tuple[float]) :
@@ -1392,6 +1515,7 @@ class PLNN(eqx.Module):
         xlabel = kwargs.get('xlabel', "$x$")
         ylabel = kwargs.get('ylabel', "$y$")
         title = kwargs.get('title', "$f(x,y|\\vec{s})$")
+        equal_axes = kwargs.get('equal_axes', False)
         cmap = kwargs.get('cmap', 'coolwarm')
         include_cbar = kwargs.get('include_cbar', True)
         cbar_title = kwargs.get('cbar_title', "$|f|$")
@@ -1401,23 +1525,37 @@ class PLNN(eqx.Module):
         show = kwargs.get('show', False)
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
         if ax is None: fig, ax = plt.subplots(1, 1, figsize=figsize)
-        
-        # Handle signal value
-        eval_time = 0.
-        if signal is None:
-            if self.signal_type == 'jump':
-                signal = [1, 0, 0]
-            elif self.signal_type == 'sigmoid':
-                signal = [1, 0, 0, 0]
-        signal_params = jnp.tile(jnp.array(signal), (self.nsigs, 1))
-        
-        # Compute f
+
+        if equal_axes:
+            ax.set_aspect('equal')
+
+        # Get grid
         x = np.linspace(-r, r, res)
         y = np.linspace(-r, r, res)
         xs, ys = np.meshgrid(x, y)
         z = np.array([xs.flatten(), ys.flatten()]).T
-        z = jnp.array(z)
-        f = np.array(self.f(eval_time, z, signal_params))
+        z = jnp.array(z, dtype=jnp.float32)
+        
+        # Determine tilt based on given information
+        if tilt is not None:
+            # Tilt given directly
+            grad_phi = self.grad_phi_with_tilts(eval_time, z, jnp.array(tilt))
+        elif signal is not None:
+            # Signal values given directly
+            grad_phi = self.grad_phi_with_signal(eval_time, z, jnp.array(signal))
+        elif (sigparams is not None) and (eval_time is not None):
+            # Signal parameters and evaluation time given.
+            grad_phi = self.tilted_grad_phi(eval_time, z, jnp.array(sigparams))
+        else:
+            # Plot vector field with no tilt
+            if self.signal_type == 'jump':
+                sigparams = self.nsigs * [[1, 0, 0]]
+            elif self.signal_type == 'sigmoid':
+                sigparams = self.nsigs * [[1, 0, 0, 0]]
+            grad_phi = self.grad_phi(eval_time, z)
+
+        # Compute f as the negative of the gradient
+        f = -np.array(grad_phi)
         fu, fv = f.T
         fnorms = np.sqrt(fu**2 + fv**2)
 
@@ -1426,7 +1564,10 @@ class PLNN(eqx.Module):
         
         # Colorbar
         if include_cbar:
-            cbar = plt.colorbar(sc)
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            fig = ax.figure
+            cbar = fig.colorbar(sc, cax=cax)
             cbar.ax.set_title(cbar_title, size=cbar_titlefontsize)
             cbar.ax.tick_params(labelsize=cbar_ticklabelsize)
         
@@ -1452,6 +1593,7 @@ class PLNN(eqx.Module):
         return [x for x in m.layers if isinstance(x, eqx.nn.Linear)]
 
     def _sample_y0(self, key, y0):
+        nbatches, _, dim = y0.shape
         y0_samp = jnp.empty([y0.shape[0], self.ncells, y0.shape[2]])
         if y0.shape[1] < self.ncells:
             # Sample with replacement

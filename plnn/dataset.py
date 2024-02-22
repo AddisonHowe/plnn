@@ -26,18 +26,32 @@ class LandscapeSimulationDataset(Dataset):
 
     """
     
-    def __init__(self, datdir, nsims, ndims, 
-                 transform=None, target_transform=None, **kwargs):
+    def __init__(
+            self, 
+            datdir=None, 
+            nsims=None, 
+            ndims=2, 
+            transform=None, 
+            target_transform=None, 
+            data=None,  # List containing datapoints for each simulation.
+            dtype=torch.float32,
+            **kwargs
+    ):
         #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
         simprefix = kwargs.get('simprefix', 'sim')
-        dtype = kwargs.get('dtype', torch.float32)
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+        self.dtype = dtype
         self.nsims = nsims
         self.ndims = ndims
         self.transform = transform
         self.target_transform = target_transform
-        self.dtype = dtype
-        self._load_data(datdir, nsims, simprefix=simprefix)
+        if data is None:
+            # Load from given directory
+            self._load_data(datdir, nsims, simprefix=simprefix)
+        else:
+            # Load given data directly
+            self.nsims = nsims if nsims else len(data)
+            self._load_data_direct(data, nsims)
 
     def __len__(self):
         return len(self.dataset)
@@ -163,6 +177,25 @@ class LandscapeSimulationDataset(Dataset):
             x0, x1 = xs[i], xs[i + 1]
             t0, t1 = ts[i], ts[i + 1]
             dataset.append((t0, x0, t1, x1, sigparams))
+
+    def _load_data_direct(self, data, nsims):
+        assert len(data) == nsims, \
+            f"Data (length {len(data)}) should be of length nsims={nsims}."
+        dataset = []
+        for i in range(nsims):
+            sigparams, simdata = data[i]
+            sigparams = np.array(sigparams, dtype=float)
+            for datapoint in simdata:
+                t0 = np.array(datapoint['t0'], dtype=float)
+                x0 = np.array(datapoint['x0'], dtype=float)
+                t1 = np.array(datapoint['t1'], dtype=float)
+                x1 = np.array(datapoint['x1'], dtype=float)
+                dataset.append((t0, x0, t1, x1, sigparams))
+
+        self.dataset = np.array(dataset, dtype=object)
+        self.ts_all = None
+        self.xs_all = None
+        self.ps_all = None
 
 
 ###############################
