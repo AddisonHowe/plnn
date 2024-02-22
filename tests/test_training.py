@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 import jax.numpy as jnp
 import jax.random as jrandom
+from contextlib import nullcontext as does_not_raise
 
 from tests.conftest import DATDIR, TMPDIR, remove_dir
 
@@ -185,11 +186,27 @@ def test_fixed_sigma_training(dtype, datdir_train, datdir_valid,
 @pytest.mark.parametrize('dtype', [jnp.float32, jnp.float64])
 @pytest.mark.parametrize('sample_cells', [False, True])
 @pytest.mark.parametrize('fix_noise', [False, True])
-def test_divergent_training(dtype, sample_cells, fix_noise):
+@pytest.mark.parametrize('nan_max_attempts, expect_context', [
+    [0, pytest.raises(RuntimeError)],
+    [1, pytest.raises(RuntimeError)],
+    [2, does_not_raise()],
+    [3, does_not_raise()],
+])
+def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, expect_context):
     """Test a case in which cells diverge.
     
     Initizialization and activation function are such that the phi function is
             phi(x, y) = x^4 + y^4 +x^2 + y^2
+
+    During training, this model should fail because the timestep is too large.
+    When that happens, a nan value in the x position will propogate through to
+    the loss, and then to the model parameters via the update. At this point,
+    the erroring model should be saved to the debugging directory. Importantly,
+    this erroring model should have valid parameters, namely the original ones:
+        phi.w: [[[1,0],[0,1]], [1, 1]]
+        phi.b: [[], []]
+        dt0: 1.0
+    
     """
     key = jrandom.PRNGKey(0)
     model, hyperparams = DeepPhiPLNN.make_model(
@@ -205,9 +222,9 @@ def test_divergent_training(dtype, sample_cells, fix_noise):
         ncells=1,
         signal_type='jump',
         nsigparams=3,
-        sigma_init=0.0001,
+        sigma_init=0.0,
         solver='euler',
-        dt0=0.1,
+        dt0=1.0,
         confine=True,
         confinement_factor=1.0,
         include_tilt_bias=False,
@@ -220,7 +237,7 @@ def test_divergent_training(dtype, sample_cells, fix_noise):
         init_phi_weights_args=[[[[1, 0],[0, 1]], [[1, 1]]]],
     )
 
-    # Fails when dt=0.1, should work when dt=0.01
+    # Fails when dt=1.0 and dt=0.1, should work when dt=0.01
     training_data = [
         [
             # signal parameters (null)
@@ -228,8 +245,8 @@ def test_divergent_training(dtype, sample_cells, fix_noise):
             # Datapoints
             [{'t0': 0.0, 
               'x0': [[3,0],[0,0]], 
-              't1': 1.0, 
-              'x1': [[0.05, 0], [0.01, 0.01]]}]
+              't1': 10.0, 
+              'x1': [[1., 1.], [1., 1.]]}]
         ]
     ]
 
@@ -252,43 +269,126 @@ def test_divergent_training(dtype, sample_cells, fix_noise):
 
     optimizer_args = {
         'lr_schedule' : 'constant',
-        'learning_rate' : 0.01,
+        'learning_rate' : 1,
         'momentum' : 0.9,
         'weight_decay' : 0.5, 
         'clip' : 1.0, 
     }
     optimizer = select_optimizer(
         'rms', optimizer_args,
-        batch_size=2, dataset_size=len(train_dset),
+        batch_size=1, dataset_size=len(train_dset),
     )
 
-    model = train_model(
-        model, 
-        mean_cov_loss, 
-        optimizer,
-        train_dataloader, 
-        valid_dataloader,
-        key=jrandom.PRNGKey(0),
-        num_epochs=1,
-        batch_size=1,
-        fix_noise=fix_noise,
-        hyperparams={},
-        outdir=OUTDIR,
-        reduce_dt_on_nan=True,
-        dt_reduction_factor=0.1,
-        reduce_cf_on_nan=False,
-        cf_reduction_factor=None,
-        nan_max_attempts=3,
-    )
+    with expect_context:
+        model = train_model(
+            model, 
+            mean_cov_loss, 
+            optimizer,
+            train_dataloader, 
+            valid_dataloader,
+            key=jrandom.PRNGKey(0),
+            num_epochs=1,
+            batch_size=1,
+            fix_noise=fix_noise,
+            hyperparams=hyperparams,
+            outdir=OUTDIR,
+            reduce_dt_on_nan=True,
+            dt_reduction_factor=0.1,
+            reduce_cf_on_nan=False,
+            cf_reduction_factor=None,
+            nan_max_attempts=nan_max_attempts,
+        )
 
-    dt0_final = model.dt0
-    dt0_final_exp = 0.01
-    
-    errors = []
-    if not jnp.allclose(dt0_final, dt0_final_exp):
-        msg = f"Incorrect dt0 final. Expected {dt0_final_exp}. Got {dt0_final}."
-        errors.append(msg)
-    
-    remove_dir(OUTDIR)
+        errors = []
 
-    assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
+        # Check that final dt0 value is correct
+        dt0_final_exp = 0.01
+        dt0_final = model.dt0
+        if not jnp.allclose(dt0_final, dt0_final_exp):
+            msg = f"Incorrect dt0 final. "
+            msg += f"Expected {dt0_final_exp}. Got {dt0_final}."
+            errors.append(msg)
+
+        def check_model(errors, model, dt0_exp=None, 
+                        phiw0_exp=None, phiw1_exp=None, s=""):
+            if dt0_exp is not None:
+                dt0 = model.dt0
+                if not jnp.allclose(dt0_final, dt0_final_exp):
+                    msg = f"[{s}] Incorrect dt0. Expected {dt0_exp}. Got {dt0}."
+                    errors.append(msg)
+            if phiw0_exp is not None:
+                phiw0 = model.get_parameters()['phi.w'][0]
+                if not jnp.allclose(phiw0, phiw0_exp, equal_nan=True):
+                    msg = f"[{s}] Incorrect phi.w[0]."
+                    msg += f"\nExpected:\n{phiw0_exp}\nGot:\n{phiw0}"
+                    errors.append(msg)
+            if phiw1_exp is not None:
+                phiw1 = model.get_parameters()['phi.w'][1]
+                if not jnp.allclose(phiw1, phiw1_exp, equal_nan=True):
+                    msg = f"[{s}] Incorrect phi.w[1]."
+                    msg += f"\nExpected:\n{phiw1_exp}\nGot:\n{phiw1}"
+                    errors.append(msg)
+            return errors
+        
+        m, _ = DeepPhiPLNN.load(
+            f"{OUTDIR}/debug/model_1_err_prestep0.pth", dtype=dtype)
+        errors = check_model(
+            errors, m, 
+            dt0_exp=1.0, 
+            phiw0_exp=jnp.array([[1, 0],[0, 1]], dtype=dtype),
+            phiw1_exp=jnp.array([[1, 1]], dtype=dtype),
+            s="prestep0"
+        )
+
+        m, _ = DeepPhiPLNN.load(
+            f"{OUTDIR}/debug/model_1_err_poststep0.pth", dtype=dtype)
+        errors = check_model(
+            errors, m, 
+            dt0_exp=1.0, 
+            phiw0_exp=jnp.nan * jnp.ones([2, 2], dtype=dtype),
+            phiw1_exp=jnp.nan * jnp.ones([1, 2], dtype=dtype),
+            s="poststep0"
+        )
+
+        m, _ = DeepPhiPLNN.load(
+            f"{OUTDIR}/debug/model_1_postop0.pth", dtype=dtype)
+        errors = check_model(
+            errors, m, 
+            dt0_exp=0.1, 
+            phiw0_exp=jnp.array([[1, 0],[0, 1]], dtype=dtype),
+            phiw1_exp=jnp.array([[1, 1]], dtype=dtype),
+            s="postop0"
+        )
+
+        m, _ = DeepPhiPLNN.load(
+            f"{OUTDIR}/debug/model_1_err_prestep1.pth", dtype=dtype)
+        errors = check_model(
+            errors, m, 
+            dt0_exp=0.1, 
+            phiw0_exp=jnp.array([[1, 0],[0, 1]], dtype=dtype),
+            phiw1_exp=jnp.array([[1, 1]], dtype=dtype),
+            s="prestep1"
+        )
+
+        m, _ = DeepPhiPLNN.load(
+            f"{OUTDIR}/debug/model_1_err_poststep1.pth", dtype=dtype)
+        errors = check_model(
+            errors, m, 
+            dt0_exp=0.1, 
+            phiw0_exp=jnp.nan * jnp.ones([2, 2], dtype=dtype),
+            phiw1_exp=jnp.nan * jnp.ones([1, 2], dtype=dtype),
+            s="poststep1"
+        )
+
+        m, _ = DeepPhiPLNN.load(
+            f"{OUTDIR}/debug/model_1_postop1.pth", dtype=dtype)
+        errors = check_model(
+            errors, m, 
+            dt0_exp=0.01, 
+            phiw0_exp=jnp.array([[1, 0],[0, 1]], dtype=dtype),
+            phiw1_exp=jnp.array([[1, 1]], dtype=dtype),
+            s="postop1"
+        )
+        
+        remove_dir(OUTDIR)
+        assert not errors, "Errors occurred:\n{}".format("\n".join(errors))

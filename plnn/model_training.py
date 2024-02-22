@@ -284,11 +284,15 @@ def train_one_epoch(
                 stepped = True
             else:
                 
-                # Save the erroring model for debugging
                 if attempts == 0:    
                     os.makedirs(debug_dir, exist_ok=True)
-                    model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_errored.pth"
-                    model.save(model_path, hyperparams)
+                
+                # Save the pre-step model
+                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_err_prestep{attempts}.pth"
+                old_model.save(model_path, hyperparams)
+                # Save the post-step model
+                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_err_poststep{attempts}.pth"
+                model.save(model_path, hyperparams)
                     
                 # Raise an error if the number of attempts reaches the limit.
                 if attempts == nan_max_attempts:
@@ -318,7 +322,7 @@ def train_one_epoch(
                     msg += f"\n\tNew model confinement_factor: {model.confinement_factor}"
                 
                 # Save the resulting model
-                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_update{attempts}.pth"
+                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_postop{attempts}.pth"
                 model.save(model_path, hyperparams)
                 logprint(msg)
                 attempts += 1
