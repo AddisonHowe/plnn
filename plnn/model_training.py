@@ -9,7 +9,6 @@ import jax.numpy as jnp
 import jax.random as jrandom
 import jax.tree_util as jtu
 import equinox as eqx
-from optax import skip_not_finite
 import matplotlib.pyplot as plt
 
 from plnn.models.plnn import PLNN
