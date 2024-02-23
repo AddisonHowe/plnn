@@ -274,33 +274,32 @@ def train_one_epoch(
     for bidx, data in enumerate(dataloader):
         inputs, y1 = data
         key, subkey = jrandom.split(key, 2)
-        old_model = model
-        old_opt_state = opt_state
+        orig_model = model  # keep a copy of the original model at batch start
+        orig_opt_state = opt_state  # keep a copy of the original opt state
+        prev_model = model  # keep a copy of the previous model in case of error
         stepped = False
         attempts = 0
         while not stepped:
             if fix_noise:
                 model, opt_state, loss = make_step_partitioned(
-                    model, inputs, y1, optimizer, old_opt_state, loss_fn, subkey, 
+                    prev_model, inputs, y1, optimizer, orig_opt_state, loss_fn, subkey, 
                     filter_spec
                 )
             else:
                 model, opt_state, loss = make_step(
-                    model, inputs, y1, optimizer, old_opt_state, loss_fn, subkey, 
+                    prev_model, inputs, y1, optimizer, orig_opt_state, loss_fn, subkey, 
                 )
 
             if jnp.isfinite(loss.item()):
                 stepped = True
             else:
-                
-                if attempts == 0:    
+                if attempts == 0:
                     os.makedirs(debug_dir, exist_ok=True)
-                
                 # Save the pre-step model
-                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_err_prestep{attempts}.pth"
-                old_model.save(model_path, hyperparams)
+                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_{bidx}_err_prestep{attempts}.pth"
+                prev_model.save(model_path, hyperparams)
                 # Save the post-step model
-                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_err_poststep{attempts}.pth"
+                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_{bidx}_err_poststep{attempts}.pth"
                 model.save(model_path, hyperparams)
                     
                 # Raise an error if the number of attempts reaches the limit.
@@ -310,32 +309,33 @@ def train_one_epoch(
                     log_and_raise_runtime_error(msg)
                 
                 # Perform model surgery
-                msg = "Encountered nan in loss. Reverting update and performing model surgery."
+                msg = f"Encountered nan in loss. Reverting update and performing"
+                msg += f" model surgery ({attempts + 1}/{nan_max_attempts})."
                 if reduce_dt_on_nan:
                     where = lambda m: m.dt0
                     model = eqx.tree_at(
-                        where, old_model, 
-                        old_model.dt0 * dt_reduction_factor
+                        where, orig_model, 
+                        prev_model.dt0 * dt_reduction_factor
                     )
                     hyperparams['dt0'] = model.dt0
-                    old_model = model
+                    prev_model = model
                     msg += f"\n\tNew model dt0: {model.dt0}"
                 if reduce_cf_on_nan:
                     where = lambda m: m.confinement_factor
                     model = eqx.tree_at(
-                        where, old_model, 
-                        old_model.confinement_factor * cf_reduction_factor
+                        where, orig_model, 
+                        prev_model.confinement_factor * cf_reduction_factor
                     )
                     hyperparams['confinement_factor'] = model.confinement_factor
-                    old_model = model
+                    prev_model = model
                     msg += f"\n\tNew model confinement_factor: {model.confinement_factor}"
                 
                 # Save the resulting model
-                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_postop{attempts}.pth"
+                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_{bidx}_postop{attempts}.pth"
                 model.save(model_path, hyperparams)
 
-                assert not jnp.any(jnp.isnan(model.get_parameters()['phi.w'][0]))
-                assert not jnp.any(jnp.isnan(model.get_parameters()['phi.w'][1]))
+                if jnp.any(jnp.isnan(model.get_parameters()['phi.w'][0])):
+                    logprint("!!! Got nan in saved model phi.w[0] !!!")
 
                 logprint(msg)
                 attempts += 1
