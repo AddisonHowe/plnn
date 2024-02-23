@@ -297,7 +297,7 @@ def train_one_epoch(
                     os.makedirs(debug_dir, exist_ok=True)
                 # Raise an error if the number of attempts reaches the limit.
                 if attempts == nan_max_attempts:
-                    msg = "Encountered nan in loss and reached the maximum "
+                    msg = "\tEncountered nan in loss and reached the maximum "
                     msg += f"number of model alterations: {nan_max_attempts}."
                     log_and_raise_runtime_error(msg)
                     
@@ -308,10 +308,8 @@ def train_one_epoch(
                 model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_{bidx}_err_poststep{attempts}.pth"
                 model.save(model_path, hyperparams)
                     
-                
-                
                 # Perform model surgery
-                msg = f"Encountered nan in loss. Reverting update and performing"
+                msg = f"\tEncountered nan in loss. Reverting update and performing"
                 msg += f" model surgery ({attempts + 1}/{nan_max_attempts})."
                 if reduce_dt_on_nan:
                     where = lambda m: m.dt0
@@ -321,7 +319,7 @@ def train_one_epoch(
                     )
                     hyperparams['dt0'] = model.dt0
                     prev_model = model
-                    msg += f"\n\tNew model dt0: {model.dt0}"
+                    msg += f"\n\t\tNew model dt0: {model.dt0}"
                 if reduce_cf_on_nan:
                     where = lambda m: m.confinement_factor
                     model = eqx.tree_at(
@@ -330,7 +328,8 @@ def train_one_epoch(
                     )
                     hyperparams['confinement_factor'] = model.confinement_factor
                     prev_model = model
-                    msg += f"\n\tNew model confinement_factor: {model.confinement_factor}"
+                    msg += f"\n\t\tNew model confinement_factor: {model.confinement_factor}"
+                logprint(msg)
                 
                 # Save the resulting model
                 model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_{bidx}_postop{attempts}.pth"
@@ -339,7 +338,6 @@ def train_one_epoch(
                 if jnp.any(jnp.isnan(model.get_parameters()['phi.w'][0])):
                     logprint("!!! Got nan in saved model phi.w[0] !!!")
 
-                logprint(msg)
                 attempts += 1
         
         epoch_running_loss += loss.item()

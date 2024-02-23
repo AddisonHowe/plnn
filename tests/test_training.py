@@ -327,7 +327,7 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
                         phiw0_exp=None, phiw1_exp=None, s=""):
             if dt0_exp is not None:
                 dt0 = model.dt0
-                if not jnp.allclose(dt0_final, dt0_final_exp):
+                if not jnp.allclose(dt0, dt0_exp):
                     msg = f"[{s}] Incorrect dt0. Expected {dt0_exp}. Got {dt0}."
                     errors.append(msg)
             if phiw0_exp is not None:
