@@ -408,7 +408,7 @@ def validation_step(model, x, y, loss_fn, key):
 
 
 def handle_nan_loss(
-        attempts, *
+        attempts,
         model, 
         prev_model, 
         orig_model,
