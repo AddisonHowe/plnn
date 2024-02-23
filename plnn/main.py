@@ -320,7 +320,7 @@ def main(args):
     log_model(outdir, model)
 
     # Train the model
-    train_model(
+    model = train_model(
         model,
         loss_fn, 
         optimizer,
