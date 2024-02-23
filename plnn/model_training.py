@@ -13,6 +13,7 @@ from optax import skip_not_finite
 import matplotlib.pyplot as plt
 
 from plnn.models.plnn import PLNN
+from plnn.models import DeepPhiPLNN
 from plnn.pl.plotting import plot_loss_history
 
 def train_model(
@@ -290,56 +291,33 @@ def train_one_epoch(
                     prev_model, inputs, y1, optimizer, orig_opt_state, loss_fn, subkey, 
                 )
 
-            if jnp.isfinite(loss.item()):
-                stepped = True
-            else:
-                if attempts == 0:
-                    os.makedirs(debug_dir, exist_ok=True)
-                # Raise an error if the number of attempts reaches the limit.
-                if attempts == nan_max_attempts:
-                    msg = "\tEncountered nan in loss and reached the maximum "
-                    msg += f"number of model alterations: {nan_max_attempts}."
-                    log_and_raise_runtime_error(msg)
-                    
-                # Save the pre-step model
-                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_{bidx}_err_prestep{attempts}.pth"
-                prev_model.save(model_path, hyperparams)
-                # Save the post-step model
-                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_{bidx}_err_poststep{attempts}.pth"
-                model.save(model_path, hyperparams)
-                    
-                # Perform model surgery
-                msg = f"\tEncountered nan in loss. Reverting update and performing"
-                msg += f" model surgery ({attempts + 1}/{nan_max_attempts})."
-                if reduce_dt_on_nan:
-                    where = lambda m: m.dt0
-                    model = eqx.tree_at(
-                        where, orig_model, 
-                        prev_model.dt0 * dt_reduction_factor
-                    )
-                    hyperparams['dt0'] = model.dt0
-                    prev_model = model
-                    msg += f"\n\t\tNew model dt0: {model.dt0}"
-                if reduce_cf_on_nan:
-                    where = lambda m: m.confinement_factor
-                    model = eqx.tree_at(
-                        where, orig_model, 
-                        prev_model.confinement_factor * cf_reduction_factor
-                    )
-                    hyperparams['confinement_factor'] = model.confinement_factor
-                    prev_model = model
-                    msg += f"\n\t\tNew model confinement_factor: {model.confinement_factor}"
-                logprint(msg)
-                
-                # Save the resulting model
-                model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_{bidx}_postop{attempts}.pth"
-                model.save(model_path, hyperparams)
-
-                if jnp.any(jnp.isnan(model.get_parameters()['phi.w'][0])):
-                    logprint("!!! Got nan in saved model phi.w[0] !!!")
-
+            if jnp.isnan(loss.item()):
+                model, prev_model = handle_nan_loss(
+                    attempts,
+                    model=model,
+                    prev_model=prev_model, 
+                    orig_model=orig_model,
+                    nan_max_attempts=nan_max_attempts,
+                    debug_dir=debug_dir, 
+                    model_name=model_name,
+                    epoch_idx=epoch_idx,
+                    batch_idx=bidx,
+                    hyperparams=hyperparams,
+                    reduce_dt_on_nan=reduce_dt_on_nan,
+                    dt_reduction_factor=dt_reduction_factor,
+                    reduce_cf_on_nan=reduce_cf_on_nan,
+                    cf_reduction_factor=cf_reduction_factor,
+                    logprint=logprint,
+                    log_and_raise_runtime_error=log_and_raise_runtime_error,
+                )
                 attempts += 1
-        
+            elif isinstance(model, DeepPhiPLNN) and jnp.any(
+                    jnp.isnan(model.get_parameters()['phi.w'][0])):
+                msg = "!!! MODEL HAS NAN IN PHI.W[0] !!!"
+                log_and_raise_runtime_error(msg)
+            else:
+                stepped = True
+                
         epoch_running_loss += loss.item()
         batch_running_loss += loss.item()
         if bidx % report_every == (report_every - 1):
@@ -351,6 +329,10 @@ def train_one_epoch(
                     msg += f"\t\t[learning rate: {lr:.5g}]"
                 logprint(msg)
             batch_running_loss = 0.
+        
+        if jnp.any(jnp.isnan(model.get_parameters()['phi.w'][0])):
+            msg = "!!! MODEL HAS NAN IN PHI.W[0] !!!"
+            log_and_raise_runtime_error(msg)
 
     avg_epoch_loss = epoch_running_loss / n
     return model, avg_epoch_loss, opt_state
@@ -423,6 +405,75 @@ def validation_step(model, x, y, loss_fn, key):
     y_pred = model(t0, t1, y0, sigparams, key)
     vloss = loss_fn(y_pred, y)
     return vloss
+
+
+def handle_nan_loss(
+        attempts, *
+        model, 
+        prev_model, 
+        orig_model,
+        nan_max_attempts,
+        debug_dir, 
+        model_name,
+        epoch_idx,
+        batch_idx,
+        hyperparams,
+        reduce_dt_on_nan,
+        dt_reduction_factor,
+        reduce_cf_on_nan,
+        cf_reduction_factor,
+        logprint,
+        log_and_raise_runtime_error,
+):
+    if attempts == 0:
+        os.makedirs(debug_dir, exist_ok=True)
+    # Raise an error if the number of attempts reaches the limit.
+    if attempts == nan_max_attempts:
+        msg = "\tEncountered nan in loss and reached the maximum "
+        msg += f"number of model alterations: {nan_max_attempts}."
+        log_and_raise_runtime_error(msg)
+        
+    # Save the pre-step model
+    model_path = "{}/{}_{}_{}_err_prestep{}.pth".format(
+        debug_dir, model_name, epoch_idx + 1, batch_idx, attempts)
+    prev_model.save(model_path, hyperparams)
+    # Save the post-step model
+    model_path = "{}/{}_{}_{}_err_poststep{}.pth".format(
+        debug_dir, model_name, epoch_idx + 1, batch_idx, attempts)
+    model.save(model_path, hyperparams)
+        
+    # Perform model surgery
+    msg = f"\tEncountered nan in loss. Reverting update and performing"
+    msg += f" model surgery ({attempts + 1}/{nan_max_attempts})."
+    if reduce_dt_on_nan:
+        where = lambda m: m.dt0
+        model = eqx.tree_at(
+            where, orig_model, 
+            prev_model.dt0 * dt_reduction_factor
+        )
+        hyperparams['dt0'] = model.dt0
+        prev_model = model
+        msg += f"\n\t\tNew model dt0: {model.dt0}"
+    if reduce_cf_on_nan:
+        where = lambda m: m.confinement_factor
+        model = eqx.tree_at(
+            where, orig_model, 
+            prev_model.confinement_factor * cf_reduction_factor
+        )
+        hyperparams['confinement_factor'] = model.confinement_factor
+        prev_model = model
+        msg += f"\n\t\tNew model confinement_factor: {model.confinement_factor}"
+    logprint(msg)
+    
+    # Save the resulting model
+    model_path = "{}/{}_{}_{}_postop{}.pth".format(
+        debug_dir, model_name, epoch_idx + 1, batch_idx, attempts)
+    model.save(model_path, hyperparams)
+
+    if jnp.any(jnp.isnan(model.get_parameters()['phi.w'][0])):
+        logprint("!!! Got nan in saved model phi.w[0] !!!")
+
+    return model, prev_model
     
 
 def make_plots(epoch, model, outdir, plotting_opts, **kwargs):
