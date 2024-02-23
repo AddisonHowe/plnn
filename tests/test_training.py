@@ -246,7 +246,12 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
             [{'t0': 0.0, 
               'x0': [[3,0],[0,0]], 
               't1': 10.0, 
-              'x1': [[1., 1.], [1., 1.]]}]
+              'x1': [[1., 1.], [1., 1.]]},
+              {'t0': 0.0, 
+              'x0': [[3,0],[0,0]], 
+              't1': 10.0, 
+              'x1': [[1., 1.], [1., 1.]]},
+            ]
         ]
     ]
 
@@ -338,9 +343,9 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
                     msg += f"\nExpected:\n{phiw1_exp}\nGot:\n{phiw1}"
                     errors.append(msg)
             return errors
-        
+                
         m, _ = DeepPhiPLNN.load(
-            f"{OUTDIR}/debug/model_1_err_prestep0.pth", dtype=dtype)
+            f"{OUTDIR}/debug/model_1_0_err_prestep0.pth", dtype=dtype)
         errors = check_model(
             errors, m, 
             dt0_exp=1.0, 
@@ -350,7 +355,7 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
         )
 
         m, _ = DeepPhiPLNN.load(
-            f"{OUTDIR}/debug/model_1_err_poststep0.pth", dtype=dtype)
+            f"{OUTDIR}/debug/model_1_0_err_poststep0.pth", dtype=dtype)
         errors = check_model(
             errors, m, 
             dt0_exp=1.0, 
@@ -360,7 +365,7 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
         )
 
         m, _ = DeepPhiPLNN.load(
-            f"{OUTDIR}/debug/model_1_postop0.pth", dtype=dtype)
+            f"{OUTDIR}/debug/model_1_0_postop0.pth", dtype=dtype)
         errors = check_model(
             errors, m, 
             dt0_exp=0.1, 
@@ -370,7 +375,7 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
         )
 
         m, _ = DeepPhiPLNN.load(
-            f"{OUTDIR}/debug/model_1_err_prestep1.pth", dtype=dtype)
+            f"{OUTDIR}/debug/model_1_0_err_prestep1.pth", dtype=dtype)
         errors = check_model(
             errors, m, 
             dt0_exp=0.1, 
@@ -380,7 +385,7 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
         )
 
         m, _ = DeepPhiPLNN.load(
-            f"{OUTDIR}/debug/model_1_err_poststep1.pth", dtype=dtype)
+            f"{OUTDIR}/debug/model_1_0_err_poststep1.pth", dtype=dtype)
         errors = check_model(
             errors, m, 
             dt0_exp=0.1, 
@@ -390,7 +395,7 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
         )
 
         m, _ = DeepPhiPLNN.load(
-            f"{OUTDIR}/debug/model_1_postop1.pth", dtype=dtype)
+            f"{OUTDIR}/debug/model_1_0_postop1.pth", dtype=dtype)
         errors = check_model(
             errors, m, 
             dt0_exp=0.01, 
