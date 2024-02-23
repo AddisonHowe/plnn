@@ -311,10 +311,6 @@ def train_one_epoch(
                     log_and_raise_runtime_error=log_and_raise_runtime_error,
                 )
                 attempts += 1
-            elif isinstance(model, DeepPhiPLNN) and jnp.any(
-                    jnp.isnan(model.get_parameters()['phi.w'][0])):
-                msg = "!!! MODEL HAS NAN IN PHI.W[0] !!!"
-                log_and_raise_runtime_error(msg)
             else:
                 stepped = True
                 
@@ -330,8 +326,9 @@ def train_one_epoch(
                 logprint(msg)
             batch_running_loss = 0.
         
-        if jnp.any(jnp.isnan(model.get_parameters()['phi.w'][0])):
-            msg = "!!! MODEL HAS NAN IN PHI.W[0] !!!"
+        if isinstance(model, DeepPhiPLNN) and jnp.any(
+                jnp.isnan(model.get_parameters()['phi.w'][0])):
+            msg = "!!! UPDATED MODEL HAS NAN VALUES IN PHI.W[0] !!!"
             log_and_raise_runtime_error(msg)
 
     avg_epoch_loss = epoch_running_loss / n
