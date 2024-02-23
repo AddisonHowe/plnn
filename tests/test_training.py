@@ -279,6 +279,7 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
         batch_size=1, dataset_size=len(train_dset),
     )
 
+    errors = []
     with expect_context:
         model = train_model(
             model, 
@@ -299,7 +300,15 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
             nan_max_attempts=nan_max_attempts,
         )
 
-        errors = []
+        # Check that model does not contain nan in phi.w
+        phiw0 = model.get_parameters()['phi.w'][0]
+        phiw1 = model.get_parameters()['phi.w'][1]
+        if jnp.any(jnp.isnan(phiw0)):
+            msg = "nan encountered in phiw0 of output model."
+            errors.append(msg)
+        if jnp.any(jnp.isnan(phiw1)):
+            msg = "nan encountered in phiw1 of output model."
+            errors.append(msg)
 
         # Check that final dt0 value is correct
         dt0_final_exp = 0.01
@@ -390,5 +399,5 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
             s="postop1"
         )
         
-        remove_dir(OUTDIR)
-        assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
+    remove_dir(OUTDIR)
+    assert not errors, "Errors occurred:\n{}".format("\n".join(errors))

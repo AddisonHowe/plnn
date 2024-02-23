@@ -333,6 +333,10 @@ def train_one_epoch(
                 # Save the resulting model
                 model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_postop{attempts}.pth"
                 model.save(model_path, hyperparams)
+
+                assert not jnp.any(jnp.isnan(model.get_parameters()['phi.w'][0]))
+                assert not jnp.any(jnp.isnan(model.get_parameters()['phi.w'][1]))
+
                 logprint(msg)
                 attempts += 1
         
