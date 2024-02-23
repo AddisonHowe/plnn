@@ -295,6 +295,12 @@ def train_one_epoch(
             else:
                 if attempts == 0:
                     os.makedirs(debug_dir, exist_ok=True)
+                # Raise an error if the number of attempts reaches the limit.
+                if attempts == nan_max_attempts:
+                    msg = "Encountered nan in loss and reached the maximum "
+                    msg += f"number of model alterations: {nan_max_attempts}."
+                    log_and_raise_runtime_error(msg)
+                    
                 # Save the pre-step model
                 model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_{bidx}_err_prestep{attempts}.pth"
                 prev_model.save(model_path, hyperparams)
@@ -302,11 +308,7 @@ def train_one_epoch(
                 model_path = f"{debug_dir}/{model_name}_{epoch_idx + 1}_{bidx}_err_poststep{attempts}.pth"
                 model.save(model_path, hyperparams)
                     
-                # Raise an error if the number of attempts reaches the limit.
-                if attempts == nan_max_attempts:
-                    msg = "Encountered nan in loss and reached the maximum "
-                    msg += f"number of model alterations: {nan_max_attempts}."
-                    log_and_raise_runtime_error(msg)
+                
                 
                 # Perform model surgery
                 msg = f"Encountered nan in loss. Reverting update and performing"
