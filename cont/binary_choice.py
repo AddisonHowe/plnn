@@ -81,6 +81,78 @@ def get_binary_choice_curves(p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS):
     return curves_p, colors
 
 
+def plot_binary_choice_bifurcation_diagram(
+        xstarts=XSTARTS,
+        plot_starts=False,
+        plot_first_steps=False,
+        plot_failed_to_converge_points=False,
+        ax=None,
+        figsize=(4,4),
+        saveas="",
+        show=False,
+        tight_layout=True,
+        xlabel='$p_1$',
+        ylabel='$p_2$',
+        p1_view_lims=P1_VIEW_LIMS,
+        p2_view_lims=P2_VIEW_LIMS,
+        verbosity=0,
+):
+    """Plot a bifurcation diagram for the binary choice landscape.
+    """
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+    curves_x = []
+    curves_p = []
+    crit_ps = []
+    eigs = []
+    failed_to_converge_xs = []
+    failed_to_converge_ps = []
+    for i in range(len(xstarts)):
+        x0 = np.array(xstarts[i][0])
+        col = xstarts[i][1]
+        p0 = np.array([P1(x0), P2(x0)])
+        for sign in [1, -1]:
+            xs, ps, cps, d = trace_curve(
+                x0, p0, F, Fx, dxFxPhi, Fp,
+                maxiter=maxiter, 
+                ds=ds*sign,
+                min_ds=min_ds,
+                max_ds=max_ds,
+                max_delta_p=max_delta_p,
+                rho=rho,
+                plims=[P1LIMS, P2LIMS],
+                verbosity=verbosity,
+            )
+            curves_x.append(xs)
+            curves_p.append(ps)
+            crit_ps.append(cps)
+            eigs.append(np.array(d['eigs']))
+            failed_to_converge_ps.append(np.array(d['failed_to_converge_ps']))
+            failed_to_converge_xs.append(np.array(d['failed_to_converge_xs']))
+
+            if plot_starts:
+                ax.plot(ps[0,0], ps[0,1], 'o', alpha=0.2, color=col)
+            
+            if len(ps) > 1:
+                ax.plot(ps[:,0], ps[:,1], '-', alpha=1, color=col)
+                if plot_first_steps:
+                    ax.plot(ps[1,0], ps[1,1], '*', alpha=0.6, color=col)
+
+            if plot_failed_to_converge_points:
+                for p in d['failed_to_converge_ps']:
+                    ax.plot(*p, '^', alpha=0.6, color=col)
+
+    ax.set_xlim(*p1_view_lims)
+    ax.set_ylim(*p2_view_lims)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    if tight_layout: plt.tight_layout()
+    if saveas: plt.savefig(saveas, bbox_inches='tight')
+    if show: plt.show()
+    return ax
+
+
 def parse_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('--plot_starts', action="store_true")
