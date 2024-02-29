@@ -5,3 +5,7 @@ from .plotting import plot_train_vs_valid_history
 from .plotting import plot_sigma_history
 from .plotting import plot_learning_rate_history
 from .plotting import plot_phi_inferred_vs_true
+
+from .plot_landscapes import plot_landscape
+
+from .config import DEFAULT_CMAP
