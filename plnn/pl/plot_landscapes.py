@@ -5,7 +5,9 @@
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
-import torch 
+import torch
+
+from .config import DEFAULT_CMAP
 
 def func_phi1(x, y, p1=0, p2=0):
     return x**4 + y**4 + y**3 - 4*x*x*y + y*y - p1*x + p2*y
@@ -20,14 +22,20 @@ def plot_landscape(
         plot3d=False,
         params=[0,0], 
         lognormalize=True, 
-        cmap='coolwarm', 
+        cmap=DEFAULT_CMAP, 
         xlims=None, 
         ylims=None, 
         xlabel="$x$", 
         ylabel="$y$", 
         zlabel="$z$",
         title="$\phi$",
+        include_cbar=True,
         cbar_title="$\phi$", 
+        cbar_titlefontsize=6,
+        cbar_ticklabelsize=6,
+        title_fontsize=None,
+        xticks=None,
+        yticks=None,
         ax=None,
         figsize=(6, 4),
         view_init=(30, -45),
@@ -39,7 +47,6 @@ def plot_landscape(
     if ax is None and plot3d:
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(projection='3d')
-        # fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
     elif ax is None and (not plot3d):
         fig, ax = plt.subplots(1, 1, figsize=figsize)
 
@@ -79,30 +86,34 @@ def plot_landscape(
         )
 
     fig = ax.figure
-    if plot3d:
-        # divider = make_axes_locatable(ax)
-        cbar = fig.colorbar(sc, ax=ax)
-        cbar.ax.set_title(cbar_title, size=8)
-        cbar.ax.tick_params(labelsize=8)
-    else:
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.05)
-        cbar = fig.colorbar(sc, cax=cax)
-        cbar.ax.set_title(cbar_title, size=8)
-        cbar.ax.tick_params(labelsize=8)
-
+    if include_cbar:
+        if plot3d:
+            cbar = fig.colorbar(sc, ax=ax)
+            cbar.ax.set_title(cbar_title, size=cbar_titlefontsize)
+            cbar.ax.tick_params(labelsize=cbar_ticklabelsize)
+        else:
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            cbar = fig.colorbar(sc, cax=cax)
+            cbar.ax.set_title(cbar_title, size=cbar_titlefontsize)
+            cbar.ax.tick_params(labelsize=cbar_ticklabelsize)
 
     # Format plot
     if xlims is not None: ax.set_xlim(*xlims)
     if ylims is not None: ax.set_ylim(*ylims)
-    ax.set_title(title)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    if title: ax.set_title(title, size=title_fontsize)
+    if xlabel: ax.set_xlabel(xlabel)
+    if ylabel: ax.set_ylabel(ylabel)
+    if xticks is False:
+        ax.set_xticks([])
+    if yticks is False:
+        ax.set_yticks([])
     if plot3d: 
         ax.set_zlabel(zlabel)
         ax.view_init(*view_init)
+    
     plt.tight_layout()
     
-    if saveas: plt.savefig(saveas)
+    if saveas: plt.savefig(saveas, bbox_inches='tight')
     
     return ax
