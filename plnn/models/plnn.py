@@ -13,7 +13,7 @@ from diffrax import diffeqsolve, WeaklyDiagonalControlTerm, MultiTerm, ODETerm
 from diffrax import VirtualBrownianTree, SaveAt, SubSaveAt
 import equinox as eqx
 
-from plnn.pl.plot_plnn import plot_phi, plot_f
+import plnn.pl as pl
 
 _ACTIVATION_KEYS = {
     'none' : None,
@@ -1336,7 +1336,7 @@ class PLNN(eqx.Module):
             res (int) :
             plot3d (bool) :
             normalize (bool) :
-            log_normalize (bool) :
+            lognormalize (bool) :
             clip (float) :
             ax (Axis) :
             figsize (tuple[float]) :
@@ -1357,7 +1357,7 @@ class PLNN(eqx.Module):
         Returns:
             Axis object.
         """
-        return plot_phi(
+        return pl.plot_phi(
             self,
             tilt=tilt,
             signal=signal,
@@ -1401,7 +1401,7 @@ class PLNN(eqx.Module):
         Returns:
             Axis object.
         """
-        return plot_f(
+        return pl.plot_f(
             self, 
             tilt=tilt,
             signal=signal,

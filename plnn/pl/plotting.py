@@ -156,7 +156,7 @@ def plot_phi_inferred_vs_true(
     model.plot_phi(
         signal=signal, 
         r=plot_radius, res=plot_res, plot3d=False,
-        normalize=True, log_normalize=True,
+        normalize=True, lognormalize=True,
         show=True,
         equal_axes=True,
         ax=ax1,

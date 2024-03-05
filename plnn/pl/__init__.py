@@ -8,4 +8,6 @@ from .plotting import plot_phi_inferred_vs_true
 
 from .plot_landscapes import plot_landscape
 
+from .plot_plnn import plot_phi, plot_f
+
 from .config import DEFAULT_CMAP

@@ -12,7 +12,7 @@ from .config import DEFAULT_CMAP
 
 
 def plot_phi(
-        model, 
+        model,
         tilt=None,
         signal=None,
         sigparams=None,
@@ -20,63 +20,48 @@ def plot_phi(
         r=4, 
         res=50, 
         plot3d=False, 
-        **kwargs
+        lognormalize=True, 
+        normalize=False,
+        minimum=None,
+        clip=None,
+        xlims=None, 
+        ylims=None, 
+        zlims=None, 
+        xlabel="$x$", 
+        ylabel="$y$", 
+        zlabel="$z$",
+        xticks=None,
+        yticks=None,
+        zticks=None,
+        title="$\\phi(x,y)$",
+        title_fontsize=None,
+        include_cbar=True,
+        cbar_title="$\phi$", 
+        cbar_titlefontsize=6,
+        cbar_ticklabelsize=6,
+        cmap=DEFAULT_CMAP, 
+        ncontours=0,
+        contour_linewidth=1,
+        contour_linestyle='solid',
+        contour_linecolor='k',
+        contour_linealpha=1.0,
+        figsize=(6, 4),
+        view_init=(30, -45),
+        alpha=1.0,
+        ax=None,
+        equal_axes=True,
+        tight_layout=True,
+        saveas=None,
+        show=False,
 ):
-    """Plot the scalar function phi.
-
-    Args:
-        r (int) : 
-        res (int) :
-        plot3d (bool) :
-        normalize (bool) :
-        log_normalize (bool) :
-        clip (float) :
-        ax (Axis) :
-        figsize (tuple[float]) :
-        xlims (tuple[float]) :
-        ylims (tuple[float]) :
-        xlabel (str) :
-        ylabel (str) :
-        zlabel (str) :
-        title (str) :
-        cmap (Colormap) :
-        include_cbar (bool) :
-        cbar_title (str) :
-        cbar_titlefontsize (int) :
-        cbar_ticklabelsize (int) :
-        view_init (tuple) :
-        saveas (str) :
-        show (bool) :
+    """Plot the scalar function phi defined by a given model.
 
     Returns:
         Axis object.
     """
-    #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
-    normalize = kwargs.get('normalize', True)
-    log_normalize = kwargs.get('log_normalize', True)
-    clip = kwargs.get('clip', None)
-    ax = kwargs.get('ax', None)
-    figsize = kwargs.get('figsize', (6, 4))
-    xlims = kwargs.get('xlims', None)
-    ylims = kwargs.get('ylims', None)
-    xlabel = kwargs.get('xlabel', "$x$")
-    ylabel = kwargs.get('ylabel', "$y$")
-    zlabel = kwargs.get('zlabel', "$\\phi$")
-    title = kwargs.get('title', "$\\phi(x,y)$")
-    cmap = kwargs.get('cmap', DEFAULT_CMAP)
-    include_cbar = kwargs.get('include_cbar', True)
-    cbar_title = kwargs.get('cbar_title', 
-                            "$\\ln\\phi$" if log_normalize else "$\\phi$")
-    cbar_titlefontsize = kwargs.get('cbar_titlefontsize', 10)
-    cbar_ticklabelsize = kwargs.get('cbar_ticklabelsize', 8)
-    view_init = kwargs.get('view_init', (30, -45))
-    tight_layout = kwargs.get('tight_layout', True)
-    equal_axes = kwargs.get('equal_axes', False)
-    saveas = kwargs.get('saveas', None)
-    show = kwargs.get('show', False)
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
     if ax is None and plot3d:
-        fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot(projection='3d')
     elif ax is None and (not plot3d):
         fig, ax = plt.subplots(1, 1, figsize=figsize)
     
@@ -107,15 +92,17 @@ def plot_phi(
         elif model.signal_type == 'sigmoid':
             sigparams = model.nsigs * [[1, 0, 0, 0]]
         phi = model.phi(z)
-
-    # Convert phi to an array
+    
+    # Convert phi to a numpy array
     phi = np.array(phi)
     
     # Normalization
-    if normalize:
+    if lognormalize:
+        phi = np.log(1 + phi - phi.min())
+    elif normalize:
         phi = 1 + phi - phi.min()  # set minimum to 1
-    if log_normalize:
-        phi = np.log(phi)
+    if minimum is not None:
+        phi = phi - (phi.min() - minimum)  # set minimum to given value
 
     # Clipping
     clip = 1 + phi.max() if clip is None else clip
@@ -127,46 +114,91 @@ def plot_phi(
     plot_screen[~under_cutoff] = np.nan
     phi_plot = phi * plot_screen
 
-    # Plot phi
+    # Get levelsets
+    if ncontours:
+        yidx = int(len(phi_plot[0]) // 2)
+        idxs = np.linspace(
+            0, len(phi_plot[0]), 
+            ncontours, 
+            endpoint=False,
+            dtype=int, 
+        )
+        levels = np.sort(phi_plot[yidx, idxs])
+
+    # Plot landscape or heatmap of phi
     if plot3d:
         sc = ax.plot_surface(
             xs, ys, phi_plot.reshape(xs.shape), 
             vmin=phi[under_cutoff].min(),
             vmax=phi[under_cutoff].max(),
-            cmap=cmap
+            cmap=cmap,
+            alpha=alpha,
         )
+        if ncontours:
+            ax.contour(
+                xs, ys, phi_plot.reshape(xs.shape),
+                levels=levels, 
+                vmin=phi[under_cutoff].min(),
+                vmax=phi[under_cutoff].max(),
+                cmap=cmap,
+                linewidths=contour_linewidth,
+                linestyles=contour_linestyle, 
+                offset=0,
+            )
     else:
         sc = ax.pcolormesh(
             xs, ys, phi_plot.reshape(xs.shape),
             vmin=phi[under_cutoff].min(),
             vmax=phi[under_cutoff].max(),
             cmap=cmap, 
+            shading="gouraud",
         )
+        if ncontours:
+            ax.contour(
+                xs, ys, phi_plot.reshape(xs.shape),
+                levels=levels, 
+                vmin=phi[under_cutoff].min(),
+                vmax=phi[under_cutoff].max(),
+                alpha=contour_linealpha,
+                colors=contour_linecolor,
+                linewidths=contour_linewidth,
+                linestyles=contour_linestyle, 
+            )
+    
     # Colorbar
+    fig = ax.figure
     if include_cbar:
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.05)
-        fig = ax.figure
-        cbar = fig.colorbar(sc, cax=cax)
-        cbar.ax.set_title(cbar_title, size=cbar_titlefontsize)
-        cbar.ax.tick_params(labelsize=cbar_ticklabelsize)
+        if plot3d:
+            cbar = fig.colorbar(sc, ax=ax)
+            cbar.ax.set_title(cbar_title, size=cbar_titlefontsize)
+            cbar.ax.tick_params(labelsize=cbar_ticklabelsize)
+        else:
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            cbar = fig.colorbar(sc, cax=cax)
+            cbar.ax.set_title(cbar_title, size=cbar_titlefontsize)
+            cbar.ax.tick_params(labelsize=cbar_ticklabelsize)
     
     # Format plot
     if xlims is not None: ax.set_xlim(*xlims)
     if ylims is not None: ax.set_ylim(*ylims)
-    if title is not None: ax.set_title(title)
+    if zlims is not None: ax.set_zlim(*zlims)
+    if title is not None: ax.set_title(title, size=title_fontsize)
     if xlabel is not None: ax.set_xlabel(xlabel)
     if ylabel is not None: ax.set_ylabel(ylabel)
+    if xticks is False: ax.set_xticks([])
+    if yticks is False: ax.set_yticks([])
+    if zticks is False: ax.set_zticks([])
     if plot3d: 
         ax.set_zlabel(zlabel)
         ax.view_init(*view_init)
     
-    if tight_layout: plt.tight_layout()
-    
     # Save and close
+    if tight_layout: plt.tight_layout()
     if saveas: plt.savefig(saveas, bbox_inches='tight')
     if not show: plt.close()
     return ax
+
 
 def plot_f(
         model, 
@@ -176,47 +208,33 @@ def plot_f(
         eval_time=None,
         r=4, 
         res=50, 
-        **kwargs):
-    """Plot the vector field f.
-    Args:
-        signal (float or tuple[float]) :
-        r (int) : 
-        res (int) :
-        ax (Axis) :
-        figsize (tuple[float]) :
-        xlims (tuple[float]) :
-        ylims (tuple[float]) :
-        xlabel (str) :
-        ylabel (str) :
-        title (str) :
-        cmap (Colormap) :
-        include_cbar (bool) :
-        cbar_title (str) :
-        cbar_titlefontsize (int) :
-        cbar_ticklabelsize (int) :
-        saveas (str) :
-        show (bool) :
+        xlims=None, 
+        ylims=None, 
+        xlabel="$x$", 
+        ylabel="$y$", 
+        xticks=None,
+        yticks=None,
+        title="$\\phi(x,y)$",
+        title_fontsize=None,
+        include_cbar=True,
+        cbar_title="$\phi$", 
+        cbar_titlefontsize=6,
+        cbar_ticklabelsize=6,
+        cmap=DEFAULT_CMAP, 
+        figsize=(6, 4),
+        ax=None,
+        equal_axes=True,
+        tight_layout=True,
+        saveas=None,
+        show=False,
+):
+    """Plot the vector field f defined by the given model.
+
     Returns:
         Axis object.
     """
-    #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
-    ax = kwargs.get('ax', None)
-    figsize = kwargs.get('figsize', (6, 4))
-    xlims = kwargs.get('xlims', None)
-    ylims = kwargs.get('ylims', None)
-    xlabel = kwargs.get('xlabel', "$x$")
-    ylabel = kwargs.get('ylabel', "$y$")
-    title = kwargs.get('title', "$f(x,y|\\vec{s})$")
-    equal_axes = kwargs.get('equal_axes', False)
-    cmap = kwargs.get('cmap', DEFAULT_CMAP)
-    include_cbar = kwargs.get('include_cbar', True)
-    cbar_title = kwargs.get('cbar_title', "$|f|$")
-    cbar_titlefontsize = kwargs.get('cbar_titlefontsize', 10)
-    cbar_ticklabelsize = kwargs.get('cbar_ticklabelsize', 8)
-    saveas = kwargs.get('saveas', None)
-    show = kwargs.get('show', False)
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-    if ax is None: fig, ax = plt.subplots(1, 1, figsize=figsize)
+    if ax is None: 
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
 
     if equal_axes:
         ax.set_aspect('equal')
@@ -252,7 +270,12 @@ def plot_f(
     fnorms = np.sqrt(fu**2 + fv**2)
 
     # Plot force field, tilted by signals
-    sc = ax.quiver(xs, ys, fu/fnorms, fv/fnorms, fnorms, cmap=cmap)
+    sc = ax.quiver(
+        xs, ys, 
+        fu / fnorms, fv / fnorms, 
+        fnorms, 
+        cmap=cmap
+    )
     
     # Colorbar
     if include_cbar:
@@ -266,12 +289,14 @@ def plot_f(
     # Format plot
     if xlims is not None: ax.set_xlim(*xlims)
     if ylims is not None: ax.set_ylim(*ylims)
-    ax.set_title(title)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    plt.tight_layout()
+    if title is not None: ax.set_title(title, size=title_fontsize)
+    if xlabel: ax.set_xlabel(xlabel)
+    if ylabel: ax.set_ylabel(ylabel)
+    if xticks is False: ax.set_xticks([])
+    if yticks is False: ax.set_yticks([])
     
     # Save and close
+    if tight_layout: plt.tight_layout()
     if saveas: plt.savefig(saveas, bbox_inches='tight')
     if not show: plt.close()
     return ax

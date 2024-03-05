@@ -509,7 +509,7 @@ def make_plots(epoch, model, outdir, plotting_opts, **kwargs):
     if plot_phi_heatmap: 
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=False,
-            normalize=False, log_normalize=False,
+            normalize=False, lognormalize=False,
             equal_axes=equal_axes,
             title=f"$\\phi$ ({epoch} epochs)",
             saveas=f"{outdir}/images/phi_heatmap_{epoch}.png",
@@ -517,7 +517,7 @@ def make_plots(epoch, model, outdir, plotting_opts, **kwargs):
     if plot_phi_landscape:
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=True,
-            normalize=False, log_normalize=False,
+            normalize=False, lognormalize=False,
             equal_axes=equal_axes,
             title=f"$\\phi$ ({epoch} epochs)",
             saveas=f"{outdir}/images/phi_landscape_{epoch}.png",
@@ -525,7 +525,7 @@ def make_plots(epoch, model, outdir, plotting_opts, **kwargs):
     if plot_phi_heatmap_norm:
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=False,
-            normalize=True, log_normalize=False,
+            normalize=True, lognormalize=False,
             equal_axes=equal_axes,
             title=f"$\\phi$ ({epoch} epochs)",
             saveas=f"{outdir}/images/normphi_heatmap_{epoch}.png",
@@ -533,7 +533,7 @@ def make_plots(epoch, model, outdir, plotting_opts, **kwargs):
     if plot_phi_landscape_norm:
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=True,
-            normalize=True, log_normalize=False,
+            normalize=True, lognormalize=False,
             equal_axes=equal_axes,
             title=f"$\\phi$ ({epoch} epochs)",
             saveas=f"{outdir}/images/normphi_landscape_{epoch}.png",
@@ -541,7 +541,7 @@ def make_plots(epoch, model, outdir, plotting_opts, **kwargs):
     if plot_phi_heatmap_lognorm:
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=False,
-            normalize=True, log_normalize=True,
+            normalize=True, lognormalize=True,
             equal_axes=equal_axes,
             title=f"$\\phi$ ({epoch} epochs)",
             saveas=f"{outdir}/images/logphi_heatmap_{epoch}.png",
@@ -549,7 +549,7 @@ def make_plots(epoch, model, outdir, plotting_opts, **kwargs):
     if plot_phi_landscape_lognorm:
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=True,
-            normalize=True, log_normalize=True,
+            normalize=True, lognormalize=True,
             equal_axes=equal_axes,
             title=f"$\\phi$ ({epoch} epochs)",
             saveas=f"{outdir}/images/logphi_landscape_{epoch}.png",
