@@ -7,9 +7,11 @@ import os
 from glob import glob
 import numpy as np
 import matplotlib.pyplot as plt
-import torch
-from plnn.models import load_model
-from notebooks.plotting import plot_loss_history, plot_sigma_history
+plt.style.use('figures/fig2.mplstyle')
+
+from plnn.models import DeepPhiPLNN
+from plnn.pl import plot_loss_history, plot_sigma_history
+
 
 OUTDIR = "out/figures/fig2_out"
 SAVEPLOTS = True
@@ -19,6 +21,7 @@ os.makedirs(OUTDIR, exist_ok=True)
 def collect_r_indices(directory, basename):
     fpaths = glob(f"{directory}/{basename}_r*", recursive=False)
     fnames = [f.replace(f"{directory}/{basename}_r", "") for f in fpaths]
+    fnames = [s.split("_")[0] for s in fnames]
     ridxs = [int(r) for r in fnames]
     ridxs = np.sort(ridxs)
     return ridxs
@@ -41,18 +44,30 @@ RES = 50
 TWO_ROWS = True
 
 run_and_data_ids = [
-    ("transition_rate_study_model_training_mcd1", "tr_study2"),
-    # ("transition_rate_study_model_training_mcd1", "tr_study4"),
-    ("transition_rate_study_model_training_mcd1", "tr_study6"),
-    ("transition_rate_study_model_training_mcd2", "tr_study2"),
-    # ("transition_rate_study_model_training_mcd2", "tr_study4"),
-    ("transition_rate_study_model_training_mcd2", "tr_study6"),
-    ("transition_rate_study_model_training_kl1",  "tr_study2"),
-    # ("transition_rate_study_model_training_kl1",  "tr_study4"),
-    ("transition_rate_study_model_training_kl1",  "tr_study6"),
-    ("transition_rate_study_model_training_kl2",  "tr_study2"),
-    # ("transition_rate_study_model_training_kl2",  "tr_study4"),
-    ("transition_rate_study_model_training_kl2",  "tr_study6"),
+    ("transition_rate_study_model_training_kl1",            "tr_study1"),
+    ("transition_rate_study_model_training_kl1",            "tr_study2"),
+    ("transition_rate_study_model_training_kl1",            "tr_study3"),
+    ("transition_rate_study_model_training_kl1",            "tr_study4"),
+    ("transition_rate_study_model_training_kl1",            "tr_study5"),
+    ("transition_rate_study_model_training_kl1",            "tr_study6"),
+    ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study1"),
+    ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study2"),
+    ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study3"),
+    ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study4"),
+    ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study5"),
+    ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study6"),
+    ("transition_rate_study_model_training_kl2",            "tr_study201"),
+    ("transition_rate_study_model_training_kl2",            "tr_study202"),
+    ("transition_rate_study_model_training_kl2",            "tr_study203"),
+    ("transition_rate_study_model_training_kl2",            "tr_study204"),
+    ("transition_rate_study_model_training_kl2",            "tr_study205"),
+    ("transition_rate_study_model_training_kl2",            "tr_study206"),
+    ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study201"),
+    ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study202"),
+    ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study203"),
+    ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study204"),
+    ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study205"),
+    ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study206"),
 ]
 
 for run_id, data_id in run_and_data_ids:
@@ -64,7 +79,7 @@ for run_id, data_id in run_and_data_ids:
     basedatdir_train = f"{basedatdir}/{data_id}_training"
     basedatdir_valid = f"{basedatdir}/{data_id}_validation"
 
-    resdir = f"transition_rate_study_results/{run_id}/{data_id}"
+    resdir = f"data/transition_rate_study_results/{run_id}/{data_id}"
 
     ridxs = collect_r_indices(resdir, f"model_{data_id}")
 
@@ -80,7 +95,9 @@ for run_id, data_id in run_and_data_ids:
     best_models = []
 
     for j, ridx in enumerate(ridxs):
-        modeldir = f"{resdir}/model_{data_id}_r{ridx}"
+        modeldir = glob(f"{resdir}/model_{data_id}_r{ridx}*", recursive=False)
+        assert len(modeldir) == 1, "Multiple runs found!"
+        modeldir = modeldir[0]
         datdir_train = f"{basedatdir_train}/r{ridx}"
         datdir_valid = f"{basedatdir_valid}/r{ridx}"
         assert np.genfromtxt(f"{datdir_train}/ridx.txt", dtype=int) == ridx, \
@@ -100,7 +117,7 @@ for run_id, data_id in run_and_data_ids:
         train_loss_hist = np.load(f"{modeldir}/training_loss_history.npy")
         best_idx = 1 + np.argmin(valid_loss_hist)  # add 1 as no initial loss
         model_fpath = f"{modeldir}/states/model_{data_id}_{best_idx}.pth"
-        model, hparams = load_model(model_fpath)
+        model, hparams = DeepPhiPLNN.load(model_fpath)
         best_models.append((model, best_idx, valid_loss_hist[-1]))
 
         # Plot validation and training histories
@@ -132,9 +149,10 @@ for run_id, data_id in run_and_data_ids:
         model.plot_phi(
             r=BOXR, res=RES, 
             normalize=True,
-            log_normalize=True,
+            lognormalize=True,
             equal_axes=True,
             saveas=f"{outsubdir}/phi_inferred_r{ridx}.pdf",
+            show=False,
         )
 
     log_r_vals = np.array(log_r_vals)
@@ -179,9 +197,10 @@ for run_id, data_id in run_and_data_ids:
         model.plot_phi(
             r=BOXR, res=RES, 
             normalize=True,
-            log_normalize=True,
+            lognormalize=True,
             show=True,
             ax=inset,
+            equal_axes=True,
             xlims=[-4, 4],
             ylims=[-4, 4],
             include_cbar=False,
@@ -214,6 +233,7 @@ for run_id, data_id in run_and_data_ids:
     ax.set_yticks([])
 
     plt.savefig(f"{outsubdir}/{FIGNAME}.pdf", bbox_inches="tight")
+    plt.close()
 
 ##############################################################################
 ##############################################################################
