@@ -329,3 +329,116 @@ class TestBatchedCoreLandscapeMethods:
             msg += f"Expected {shape_exp}. Got {grad_tilt_act.shape}."
             errors.append(msg)
         assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
+
+
+@pytest.mark.parametrize("ncells_int, ncells_ext, sample, tol, dtype", [
+    [100, 100, True, 1e-2, jnp.float64],
+    [100, 100, False, 1e-2, jnp.float64],
+    [100, 200, True, 1e-2, jnp.float64],
+    [100, 200, False, 1e-2, jnp.float64],
+    [200, 100, True, 1e-2, jnp.float64],
+    [200, 100, False, 1e-2, jnp.float64],
+])
+@pytest.mark.parametrize("cxx, cxy, cyy", [
+    # [1., 0., 1.],
+    [1/9, 0, 1/4],
+    # [1/4, 1/9, 1/2],
+    [1/4, -1/9, 1/2],
+])
+@pytest.mark.parametrize("sigma, tfin, dt", [
+    # [0.01, 100, 0.1],
+    [0.10, 100, 0.1],
+])
+@pytest.mark.parametrize("solver", ['euler', 'heun'])
+@pytest.mark.parametrize("batch_size", [3])
+@pytest.mark.parametrize("seed", [1])
+def test_steady_state_distribution(
+    ncells_int, ncells_ext, sample, tol, dtype,
+    cxx, cxy, cyy,
+    sigma, tfin, dt,
+    solver, batch_size, seed
+):
+    assert cxx*cyy - cxy**2 > 0, "BAD TEST CONDITION: NOT POSITIVE DEFINITE!"
+
+    c1 = cxx - cxy
+    c2 = cyy - cxy
+    c3 = cxy
+
+    a = cyy * sigma**2 / (4 * (cxx*cyy - cxy**2))
+    b = cxy * sigma**2 / (4 * (cxy**2 - cxx*cyy))
+    c = cxx * sigma**2 / (4 * (cxx*cyy - cxy**2))
+    cov_exp = jnp.array([[a, b],[b, c]])
+
+    nprng = np.random.default_rng(seed)
+    key = jrandom.PRNGKey(nprng.integers(2**32))
+
+    model, _ = DeepPhiPLNN.make_model(
+        key,
+        dtype=dtype,
+        ndims=2,
+        nparams=2,
+        nsigs=2,
+        ncells=ncells_int,
+        signal_type='jump',
+        nsigparams=3,
+        sigma_init=sigma,
+        solver=solver,
+        dt0=dt,
+        confine=False,
+        confinement_factor=1,
+        sample_cells=sample,
+        include_phi_bias=False,
+        include_tilt_bias=False,
+        phi_hidden_dims=[3,3],
+        phi_hidden_acts=[None, 'square'],
+        phi_final_act=None,
+        phi_layer_normalize=False,
+        tilt_hidden_dims=[],
+        tilt_hidden_acts=None,
+        tilt_final_act=None,
+        tilt_layer_normalize=False,
+    )
+
+    key, subkey = jrandom.split(key, 2)
+
+    model = model.initialize(
+        subkey, dtype=dtype,
+        init_phi_weights_method='explicit',
+        init_phi_weights_args=[[[[1,0],[0,1],[1,1]],
+                                [[1,0,0],[0,1,0],[0,0,1]],
+                                [[c1,c2,c3]]]],
+    )
+
+    key, subkey = jrandom.split(key, 2)
+    x0 = jrandom.normal(subkey, [ncells_ext,2])
+    x0 = jnp.array(batch_size*[x0], dtype=dtype)
+
+    key, subkey = jrandom.split(key, 2)
+
+    t0 = jnp.array(batch_size*[0], dtype=dtype)
+    t1 = jnp.array(batch_size*[tfin], dtype=dtype)
+    sigparams=jnp.array(batch_size*[[[0, 0, 0],[0, 0, 0]]], dtype=dtype)
+
+    res = model(t0, t1, x0, sigparams, subkey)
+
+    errors = []
+
+    if batch_size > 1:
+        # Check pairwise difference between batches
+        for i in range(batch_size - 1):
+            for j in range(i+1, batch_size):
+                if jnp.allclose(res[i], res[j]):
+                    msg = f"Batch {i} and {j} resulted in the same output."
+                    errors.append(msg)
+
+    for bidx in range(batch_size):
+        x1 = res[bidx]
+        cov_act = jnp.cov(x1.T)
+        diff = jnp.abs(cov_act - cov_exp)
+        frobnorm = jnp.linalg.norm(diff)
+        if frobnorm > tol:
+            msg = f"Frobenius norm of cov. diff: {frobnorm} > tol={tol:.5g}."
+            msg += "\nIMPORTANT: This is a stochastic test and may fail."
+            errors.append(msg)
+    
+    assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
