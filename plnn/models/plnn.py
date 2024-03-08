@@ -585,7 +585,12 @@ class PLNN(eqx.Module):
     ) -> Float[Array, "ndims"]:
         """Evaluate diffusion term. 
         
-        Currently only implements scalar noise. (TODO: generalize noise.)
+        The d-dimensional vector returned corresponds to a square, diagonal
+        matrix, the diffusion term in the governing SDE. We therefore are 
+        implicitly assuming a Weakly Diagonal form for the diffusion, in that
+        d independent Wiener processes govern each dimension independently, but 
+        it is possible that the noise in either dimension can depend on the
+        particle's full state.
 
         Args:
             t (Scalar) : Time.
