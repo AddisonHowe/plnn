@@ -1,4 +1,7 @@
-import sys
+"""
+
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
@@ -6,12 +9,11 @@ from PIL import Image
 import time
 import matplotlib.animation as animation
 
+from plnn.pl import DEFAULT_CMAP
+
 import warnings
 warnings.filterwarnings("ignore", module="matplotlib\..*")
 
-"""
-
-"""
 
 class PhiSimulationAnimator:
     """Animation handler for landscape simulations.
@@ -271,7 +273,7 @@ class PhiSimulationAnimator:
             np.zeros(self.heatmeshx.shape), 
             vmin=self.phis.min(),
             vmax=self.phis.max(),
-            cmap='coolwarm', 
+            cmap=DEFAULT_CMAP, 
             animated=True,
             shading='gouraud',
         )
