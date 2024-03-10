@@ -1,4 +1,7 @@
-import sys
+"""
+
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
@@ -7,13 +10,11 @@ import time
 import matplotlib.animation as animation
 
 from plnn.models.plnn import PLNN
+from plnn.pl import DEFAULT_CMAP
 
 import warnings
 warnings.filterwarnings("ignore", module="matplotlib\..*")
 
-"""
-
-"""
 
 class PLNNSimulationAnimator:
     """Animation handler for PLNN simulations.
@@ -279,7 +280,7 @@ class PLNNSimulationAnimator:
             np.zeros(self.heatmeshx.shape), 
             vmin=self.phis.min(),
             vmax=self.phis.max(),
-            cmap='coolwarm', 
+            cmap=DEFAULT_CMAP, 
             animated=True,
             shading='gouraud',
         )
