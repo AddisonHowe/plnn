@@ -113,6 +113,7 @@ def plot_phi(
     plot_screen = np.ones(under_cutoff.shape)
     plot_screen[~under_cutoff] = np.nan
     phi_plot = phi * plot_screen
+    phi_plot = phi_plot.reshape(xs.shape)
 
     # Get levelsets
     if ncontours:
@@ -128,7 +129,7 @@ def plot_phi(
     # Plot landscape or heatmap of phi
     if plot3d:
         sc = ax.plot_surface(
-            xs, ys, phi_plot.reshape(xs.shape), 
+            xs, ys, phi_plot, 
             vmin=phi[under_cutoff].min(),
             vmax=phi[under_cutoff].max(),
             cmap=cmap,
@@ -136,7 +137,7 @@ def plot_phi(
         )
         if ncontours:
             ax.contour(
-                xs, ys, phi_plot.reshape(xs.shape),
+                xs, ys, phi_plot,
                 levels=levels, 
                 vmin=phi[under_cutoff].min(),
                 vmax=phi[under_cutoff].max(),
@@ -147,7 +148,7 @@ def plot_phi(
             )
     else:
         sc = ax.pcolormesh(
-            xs, ys, phi_plot.reshape(xs.shape),
+            xs, ys, phi_plot,
             vmin=phi[under_cutoff].min(),
             vmax=phi[under_cutoff].max(),
             cmap=cmap, 
@@ -155,7 +156,7 @@ def plot_phi(
         )
         if ncontours:
             ax.contour(
-                xs, ys, phi_plot.reshape(xs.shape),
+                xs, ys, phi_plot,
                 levels=levels, 
                 vmin=phi[under_cutoff].min(),
                 vmax=phi[under_cutoff].max(),
