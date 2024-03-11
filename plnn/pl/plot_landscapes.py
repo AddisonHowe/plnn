@@ -66,6 +66,15 @@ def plot_landscape(
     elif ax is None and (not plot3d):
         fig, ax = plt.subplots(1, 1, figsize=figsize)
 
+    if isinstance(phi_func, str):
+        if phi_func == "phi1":
+            phi_func = func_phi1
+        elif phi_func == "phi2":
+            phi_func = func_phi2
+        else:
+            msg = f"Unknown string value for phi_func: {phi_func}"
+            raise RuntimeError(msg)
+
     if equal_axes:
         ax.set_aspect('equal')
 

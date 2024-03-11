@@ -44,30 +44,36 @@ RES = 50
 TWO_ROWS = True
 
 run_and_data_ids = [
-    ("transition_rate_study_model_training_kl1",            "tr_study1"),
-    ("transition_rate_study_model_training_kl1",            "tr_study2"),
-    ("transition_rate_study_model_training_kl1",            "tr_study3"),
-    ("transition_rate_study_model_training_kl1",            "tr_study4"),
-    ("transition_rate_study_model_training_kl1",            "tr_study5"),
-    ("transition_rate_study_model_training_kl1",            "tr_study6"),
-    ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study1"),
-    ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study2"),
-    ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study3"),
-    ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study4"),
-    ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study5"),
-    ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study6"),
+    ("transition_rate_study_model_training_kl1_1", "tr_study1"),
+    ("transition_rate_study_model_training_kl1_1", "tr_study2"),
+    ("transition_rate_study_model_training_kl1_1", "tr_study3"),
+    ("transition_rate_study_model_training_kl1_1", "tr_study4"),
+    ("transition_rate_study_model_training_kl1_1", "tr_study5"),
+    ("transition_rate_study_model_training_kl1_1", "tr_study6"),
+    ("transition_rate_study_model_training_kl1_2", "tr_study1"),
+    ("transition_rate_study_model_training_kl1_2", "tr_study2"),
+    ("transition_rate_study_model_training_kl1_2", "tr_study3"),
+    ("transition_rate_study_model_training_kl1_2", "tr_study4"),
+    ("transition_rate_study_model_training_kl1_2", "tr_study5"),
+    ("transition_rate_study_model_training_kl1_2", "tr_study6"),
+    # ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study1"),
+    # ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study2"),
+    # ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study3"),
+    # ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study4"),
+    # ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study5"),
+    # ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study6"),
     ("transition_rate_study_model_training_kl2",            "tr_study201"),
     ("transition_rate_study_model_training_kl2",            "tr_study202"),
     ("transition_rate_study_model_training_kl2",            "tr_study203"),
     ("transition_rate_study_model_training_kl2",            "tr_study204"),
     ("transition_rate_study_model_training_kl2",            "tr_study205"),
-    ("transition_rate_study_model_training_kl2",            "tr_study206"),
-    ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study201"),
-    ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study202"),
-    ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study203"),
-    ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study204"),
-    ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study205"),
-    ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study206"),
+    # ("transition_rate_study_model_training_kl2",            "tr_study206"),
+    # ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study201"),
+    # ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study202"),
+    # ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study203"),
+    # ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study204"),
+    # ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study205"),
+    # ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study206"),
 ]
 
 for run_id, data_id in run_and_data_ids:
@@ -81,7 +87,7 @@ for run_id, data_id in run_and_data_ids:
 
     resdir = f"data/transition_rate_study_results/{run_id}/{data_id}"
 
-    ridxs = collect_r_indices(resdir, f"model_{data_id}")
+    ridxs = np.unique(collect_r_indices(resdir, f"model_{data_id}"))
 
     phi     = np.genfromtxt(f"{basedatdir_train}/landscape_name", dtype=str)
     sigma   = np.genfromtxt(f"{basedatdir_train}/sigma",          dtype=float)
@@ -98,6 +104,7 @@ for run_id, data_id in run_and_data_ids:
         modeldir = glob(f"{resdir}/model_{data_id}_r{ridx}*", recursive=False)
         assert len(modeldir) == 1, "Multiple runs found!"
         modeldir = modeldir[0]
+        print(modeldir)
         datdir_train = f"{basedatdir_train}/r{ridx}"
         datdir_valid = f"{basedatdir_valid}/r{ridx}"
         assert np.genfromtxt(f"{datdir_train}/ridx.txt", dtype=int) == ridx, \
@@ -114,10 +121,13 @@ for run_id, data_id in run_and_data_ids:
         
         # Load validation loss history to recover best model index
         valid_loss_hist = np.load(f"{modeldir}/validation_loss_history.npy")
-        train_loss_hist = np.load(f"{modeldir}/training_loss_history.npy")
+        try:
+            train_loss_hist = np.load(f"{modeldir}/training_loss_history.npy")
+        except ValueError as e:
+            print(f"{modeldir}/training_loss_history.npy")
         best_idx = 1 + np.argmin(valid_loss_hist)  # add 1 as no initial loss
         model_fpath = f"{modeldir}/states/model_{data_id}_{best_idx}.pth"
-        model, hparams = DeepPhiPLNN.load(model_fpath)
+        model, hparams = DeepPhiPLNN.load(model_fpath, dtype=np.float64)
         best_models.append((model, best_idx, valid_loss_hist[-1]))
 
         # Plot validation and training histories
