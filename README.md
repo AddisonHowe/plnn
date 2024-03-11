@@ -1,11 +1,8 @@
 # plnn: A Machine Learning approach to Parameterized Landscapes
 
 ## TODO
-
-* Remove conditionals in simulate_forward
-* No bias for signal mapping (Completed)
-* Ensure noise is not too great
-* Constrained landscape. Repellor at infinity.
+* When nan encountered, reduce model constraint perameter instead of decreasing dt?
+* Also save that model and training data for debugging purposes.
 
 ## Ideas
 
