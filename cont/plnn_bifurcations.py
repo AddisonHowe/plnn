@@ -16,15 +16,6 @@ from cont.continuation import trace_curve
 
 
 XSTARTS = []
-
-# for x in XSTARTS:
-#     print("(x,y):", jnp.array(x[0]))
-#     print("F(x,y):", F(jnp.array(x[0]), jnp.zeros(2)))
-
-# P1 = lambda x: 0.
-# P2 = lambda x: -1.8314285
-
-
 maxiter = 10000
 ds = 1e-3
 min_ds = 1e-8
@@ -36,12 +27,87 @@ P2LIMS = [-4, 4]
 P1_VIEW_LIMS = [-4, 4]
 P2_VIEW_LIMS = [-4, 4]
 
+
 def get_plnn_bifurcation_curves(
         model, 
-        F, Fx, dxFxPhi, Fp,
-        p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS
+        num_starts=10,
+        p1lims=P1LIMS, p2lims=P2LIMS, xstarts=[],
+        random_p_increment=False,
+        p_increment_value=None,
+        color='k',
+        rng=None, seed=None,
+        verbosity=0
 ):
-    raise NotImplementedError()
+    if rng is None:
+        rng = np.random.default_rng(seed=seed)
+    p1lims = p1lims.copy()
+    p2lims = p2lims.copy()
+    p1lims[0] = min(p1lims[0], P1LIMS[0])
+    p1lims[1] = max(p1lims[1], P1LIMS[1])
+    p2lims[0] = min(p2lims[0], P2LIMS[0])
+    p2lims[1] = max(p2lims[1], P2LIMS[1])
+
+    curves_p = []
+    colors = []
+
+    tilt_nn_w = model.get_parameters()['tilt.w'][0]
+    tilt_nn_b = model.get_parameters()['tilt.b'][0]
+
+    if tilt_nn_b is None:
+        pass
+    else:
+        raise RuntimeError()
+
+    @jax.jit
+    def F(x, p): 
+        # return -(model.eval_grad_phi(0., x) + tilt_nn_w @ p)
+        return -(model.eval_grad_phi(0., x) + p)
+
+    @jax.jit
+    def Fx(x): 
+        return -jax.jacrev(model.eval_grad_phi, 1)(0., x)
+
+    @jax.jit
+    def dxFxPhi(x, phi):
+        jphi = lambda x1, phi1: Fx(x1) @ phi1
+        return jax.jacrev(jphi, 0)(x, phi)
+
+    # Fp = lambda x, p: -tilt_nn_w
+    Fp = lambda x, p: -np.eye(*tilt_nn_w.shape)
+
+    def solve_p(x):
+        # return -jnp.linalg.inv(tilt_nn_w) @ model.eval_grad_phi(0., x)
+        return -model.eval_grad_phi(0., x)
+    
+    r = 2
+    grad_tol = 1e-4
+    while len(xstarts) < num_starts:
+        x_tmp = r * (2*rng.random(2) - 1)  # uniform in interval [-r, r]
+        if np.linalg.norm(F(x_tmp, solve_p(x_tmp))) < grad_tol:
+            xstarts.append([x_tmp, color])
+
+    for i in range(len(xstarts)):        
+        x0 = np.array(xstarts[i][0])
+        col = xstarts[i][1]
+        p0 = np.array(solve_p(x0))
+        for sign in [1, -1]:
+            _, ps, _, _ = trace_curve(
+                x0, p0, F, Fx, dxFxPhi, Fp,
+                maxiter=maxiter, 
+                ds=ds*sign,
+                min_ds=min_ds,
+                max_ds=max_ds,
+                max_delta_p=max_delta_p,
+                rho=rho,
+                plims=[p1lims, p2lims],
+                verbosity=verbosity,
+                random_p_increment=random_p_increment,
+                p_increment_value=p_increment_value,
+                rng=rng,
+            )
+            curves_p.append(ps)
+            colors.append(col)
+    return curves_p, colors
 
 
 def parse_args(args):
@@ -96,7 +162,8 @@ def main(args):
         
     @jax.jit
     def F(x, p): 
-        return -(model.eval_grad_phi(0., x) + tilt_nn_w @ p)
+        # return -(model.eval_grad_phi(0., x) + tilt_nn_w @ p)
+        return -(model.eval_grad_phi(0., x) + p)
 
     @jax.jit
     def Fx(x): 
@@ -107,11 +174,13 @@ def main(args):
         jphi = lambda x1, phi1: Fx(x1) @ phi1
         return jax.jacrev(jphi, 0)(x, phi)
 
-    Fp = lambda x, p: -tilt_nn_w
+    # Fp = lambda x, p: -tilt_nn_w
+    Fp = lambda x, p: -np.eye(*tilt_nn_w.shape)
 
 
     def solve_p(x):
-        return -jnp.linalg.inv(tilt_nn_w) @ model.eval_grad_phi(0., x)
+        # return -jnp.linalg.inv(tilt_nn_w) @ model.eval_grad_phi(0., x)
+        return -model.eval_grad_phi(0., x)
     
     r = 2
     grad_tol = 1e-4

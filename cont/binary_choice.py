@@ -25,30 +25,36 @@ dxFxPhi = lambda x, phi: np.array([
 
 Fp = lambda x, p : np.array([[1, 0], [0, -1]])
 
+H = lambda x: -np.array([
+    [[24*x[0], -8.],
+     [-8., 0.]],
+    [[-8., 0.],
+     [0., 24*x[1]+6.]]
+])
+
 
 XSTARTS = [
-    [[-0.9899,  0.5086], 'g'],
-    [[ 1.,  0.5], 'brown'],
+    [[ 0.,  0.01], 'b'],
     [[ 0.1891, -0.1581], 'b'],
     [[-0.1891, -0.1581], 'b'],
-    [[-0.961,  0.54], 'g'],
-    [[ 0.961,  0.54], 'brown'],
-    [[ 0.,  0.01], 'b'],
+    [[ 0.9201, 0.6418], 'brown'],
+    [[-0.9201, 0.6418], 'g'],
 ]
 
 P1 = lambda x: 4*x[0]**3 - 8*x[0]*x[1]
 P2 = lambda x: -4*x[1]**3 - 3*x[1]**2 + 4*x[0]**2 - 2*x[1]
 
-maxiter = 10000
+maxiter = 100000
 ds = 1e-3
 min_ds = 1e-8
 max_ds = 1e-1
 max_delta_p = 1e-1
 rho = 1e-1
-P1LIMS = [-2, 2]
-P2LIMS = [-1, 3]
+P1LIMS = [-20, 20]
+P2LIMS = [-20, 20]
 P1_VIEW_LIMS = [-2, 2]
 P2_VIEW_LIMS = [-1, 3]
+
 
 def get_binary_choice_curves(p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS):
     p1lims = p1lims.copy()
@@ -123,6 +129,7 @@ def plot_binary_choice_bifurcation_diagram(
                 rho=rho,
                 plims=[P1LIMS, P2LIMS],
                 verbosity=verbosity,
+
             )
             curves_x.append(xs)
             curves_p.append(ps)
@@ -158,16 +165,22 @@ def parse_args(args):
     parser.add_argument('--plot_starts', action="store_true")
     parser.add_argument('--plot_first_steps', action="store_true")
     parser.add_argument('--plot_failed_to_converge_points', action="store_true")
+    parser.add_argument('--plot_critical_ps', action="store_true")
+    parser.add_argument('--plot_vecs', action="store_true")
     parser.add_argument('--show', action="store_true")
     parser.add_argument('-s', '--saveas', type=str, 
                         default="bifcurves_binary_choice.pdf")
+    parser.add_argument('-v', '--verbosity', type=int, default=0)
     return parser.parse_args(args)
 
 
 def main(args):
     plot_starts = args.plot_starts
     plot_first_steps = args.plot_first_steps
-    plot_failed_to_converge_points =args.plot_failed_to_converge_points
+    plot_failed_to_converge_points = args.plot_failed_to_converge_points
+    plot_critical_ps = args.plot_critical_ps
+    plot_vecs = args.plot_vecs
+    verbosity = args.verbosity
 
     fig1, [ax1, ax2] = plt.subplots(1, 2, figsize=(8,4))
 
@@ -177,6 +190,8 @@ def main(args):
     eigs = []
     failed_to_converge_xs = []
     failed_to_converge_ps = []
+    failed_to_converge_flags = []
+    failed_to_converge_reasons = []
     for i in range(len(XSTARTS)):
         x0 = np.array(XSTARTS[i][0])
         col = XSTARTS[i][1]
@@ -191,7 +206,8 @@ def main(args):
                 max_delta_p=max_delta_p,
                 rho=rho,
                 plims=[P1LIMS, P2LIMS],
-                verbosity=1,
+                p_increment_value=[1,0],
+                verbosity=verbosity,
             )
             curves_x.append(xs)
             curves_p.append(ps)
@@ -199,23 +215,54 @@ def main(args):
             eigs.append(np.array(d['eigs']))
             failed_to_converge_ps.append(np.array(d['failed_to_converge_ps']))
             failed_to_converge_xs.append(np.array(d['failed_to_converge_xs']))
+            failed_to_converge_flags.append(np.array(d['failed_to_converge_flags']))
+            failed_to_converge_reasons.append(np.array(d['failed_to_converge_reasons']))
 
             if plot_starts:
                 ax1.plot(ps[0,0], ps[0,1], 'o', alpha=0.2, color=col)
                 ax2.plot(xs[0,0], xs[0,1], 'o', alpha=0.2, color=col)
-            
+
             if len(ps) > 1:
                 ax1.plot(ps[:,0], ps[:,1], '-', alpha=1, color=col)
                 ax2.plot(xs[:,0], xs[:,1], '-', alpha=1, color=col)
+
+                if plot_vecs:
+                    vnormx = 1e-2
+                    tauxs = np.array(d['tauxs'])
+                    vx0 = xs
+                    vx1 = xs + vnormx * tauxs
+                    vnormp = 1e-2
+                    taups = np.array(d['taups'])
+                    vp0 = ps
+                    vp1 = ps + vnormp * taups
+                    ax1.plot(
+                        [vp0[:,0], vp1[:,0]], [vp0[:,1], vp1[:,1]], 
+                        '-', alpha=0.5, color='r'
+                    )
+                    ax2.plot(
+                        [vx0[:,0], vx1[:,0]], [vx0[:,1], vx1[:,1]], 
+                        '-', alpha=0.5, color='r'
+                    )
+
                 if plot_first_steps:
                     ax1.plot(ps[1,0], ps[1,1], '*', alpha=0.6, color=col)
-                    ax2.plot(xs[1,0], xs[1,1], '*', alpha=0.6, color=col)
-
+                    ax2.plot(xs[1,0], xs[1,1], '*', alpha=0.6, color=col)                    
+                
             if plot_failed_to_converge_points:
-                for p in d['failed_to_converge_ps']:
+                for j, p in enumerate(d['failed_to_converge_ps']):
                     ax1.plot(*p, '^', alpha=0.6, color=col)
-                for x in d['failed_to_converge_xs']:
+                    ax1.annotate(d['failed_to_converge_flags'][j], p)
+                for j, x in enumerate(d['failed_to_converge_xs']):
                     ax2.plot(*x, '^', alpha=0.6, color=col)
+                    ax2.annotate(d['failed_to_converge_flags'][j], x)
+
+            if plot_critical_ps:
+                for j, p in enumerate(d['critical_ps']):
+                    ax1.plot(*p, '+', alpha=0.6, color=col)
+                    ax1.annotate("c", p)
+                for j, x in enumerate(d['critical_xs']):
+                    ax2.plot(*x, '+', alpha=0.6, color=col)
+                    ax2.annotate("c", x)
 
     ax1.set_xlim(*P1_VIEW_LIMS)
     ax1.set_ylim(*P2_VIEW_LIMS)

@@ -277,6 +277,13 @@ class PLNN(eqx.Module):
                 tilt_params.append(layer.bias)
         return tilt_params
 
+    def get_info_string(self, usetex=True) -> str:
+        """Latex format string with model information."""
+        if usetex:
+            return f"\\noindent PLNN: \\texttt{{{self.model_type}}}"
+        else:
+            return f"PLNN<{self.model_type}>"
+
     ##########################
     ##  Simulation Methods  ##
     ##########################

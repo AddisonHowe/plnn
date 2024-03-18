@@ -93,6 +93,24 @@ class DeepPhiPLNN(PLNN):
             if layer.bias is not None:
                 phi_params.append(layer.bias)
         return phi_params + params
+    
+    def get_info_string(self, usetex=True) -> str:
+        s = super().get_info_string(usetex=usetex)
+        if not usetex:
+            return s
+        s += f"\\newline $\\sigma={self.get_sigma():.3g}$"
+        tw = self.get_parameters()['tilt.w'][0]
+        tb = self.get_parameters()['tilt.b'][0]
+        wstr = "\\\\".join(['&'.join([f"{x:.3g}" for x in row]) for row in tw])
+        wstr = f"\\begin{{bmatrix}}{wstr}\\end{{bmatrix}}"
+        if tb is None:
+            bstr = ""
+        else:
+            bstr = "\\\\".join([f"{x:.3g}" for x in tb])
+            bstr = f"+\\begin{{bmatrix}}{bstr}\\end{{bmatrix}}"
+        s += f"\\newline $\\boldsymbol{{\\tau}}=\\Psi(\\boldsymbol{{s}})"
+        s += f"={wstr}\\boldsymbol{{s}}{bstr}$"
+        return s
 
     ##############################
     ##  Core Landscape Methods  ##
