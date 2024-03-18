@@ -3,11 +3,15 @@
 """
 
 import numpy as np
+import matplotlib as mpl
+mpl.rcParams['text.latex.preamble'] = r'\usepackage{{amsmath}}'
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+import matplotlib.patches as patches
 from PIL import Image
 import time
 import matplotlib.animation as animation
+
 
 from plnn.models.plnn import PLNN
 from plnn.pl import DEFAULT_CMAP
@@ -21,16 +25,32 @@ class PLNNSimulationAnimator:
     """
 
     savegif = True
-    fps = 2                 # default frames per second
-    dpi = 100               # default resolution
-    interval = 200          # default delay between frames in milliseconds.
     figsize = (12, 9)       # default figure size
 
+    _main_scatter_size = 5
     _main_scatter_color = 'k'
+    _mins_scatter_size = 6
+    _mins_scatter_color = 'y'
+    _surf_scatter_size = 5
+    _surf_scatter_color = 'k'
     _siglinecmap = 'tab10'
-    _paramlinecmap = 'tab10'
+    _paramlinecmap = 'Accent'
     _biflinecmap = 'tab10'
     _axlimbuffer = 0.05  # percent buffer on axis lims
+    _bifcurvecolor = 'r'
+    _linewidth = 2
+    _surface_alpha = 1.0
+    
+    _font_scale_factor = 1
+    _suptitlesize    = 8 * _font_scale_factor
+    _titlesize       = 7 * _font_scale_factor
+    _axlabelsize     = 6 * _font_scale_factor
+    _axmajorticksize = 5 * _font_scale_factor
+    _axminorticksize = 4 * _font_scale_factor
+    _legendsize      = 5 * _font_scale_factor
+    _rtext_fontsize  = 6 * _font_scale_factor
+    _btext_fontsize  = 6 * _font_scale_factor
+
 
     def __init__(
             self, 
@@ -46,19 +66,21 @@ class PLNNSimulationAnimator:
             ps_saved, 
             xlims=None,
             ylims=None,
+            zlims=None,
             p0lims=None,
             p1lims=None,
             p0idx=0,
             p1idx=1,
-            phi_func = None,
+            minima=None,
             bifcurves=None,
             bifcolors=None,
             grads=None,
             grad_func=None,
-            info_str="",
+            note_string="",
             sigparams_str="",
             sig_names=None,
             param_names=None,
+            view_init=(40, -45),  # elevation, azimuthal
     ):
         """
         model      : PLNN
@@ -91,16 +113,17 @@ class PLNNSimulationAnimator:
         self.p0idx = p0idx
         self.p1idx = p1idx
         self.phi_func = model.tilted_phi
+        self.minima = minima
         self.bifcurves = bifcurves
         self.bifcolors = bifcolors
-        self.info_str = info_str
+        self.note_string = note_string
         self.sigparams_str = sigparams_str
         if sig_names is None:
             self.sig_names = [f'$s_{i}$' for i in range(self.nsigs)]
         else:
             self.sig_names = sig_names
         if param_names is None:
-            self.param_names = [f'$p_{i}$' for i in range(self.nparams)] 
+            self.param_names = [f'$\\tau_{i}$' for i in range(self.nparams)] 
         else:
             self.param_names = param_names
 
@@ -139,43 +162,100 @@ class PLNNSimulationAnimator:
             np.linspace(*self.xlims, heatmap_n),
             np.linspace(*self.ylims, heatmap_n)
         )
-        xy = np.array([self.heatmeshx.ravel(), self.heatmeshy.ravel()]).T
-        
-        phis = np.array(
-            [self.phi_func(t, xy, self.sigparams) for t in self.ts]
+        heatmap_xy = np.array([self.heatmeshx.ravel(),
+                               self.heatmeshy.ravel()]).T
+        heatmap_phis = np.array(
+            [self.phi_func(t, heatmap_xy, self.sigparams) for t in self.ts]
         )
+        minphi = heatmap_phis.min()
+        self.heatmap_phis = np.log(1 + heatmap_phis - minphi)
+
+        # 3D scatterplot phi values
+        # NOTE: Cannot currently implement 3d scatterplot due to mpl issue.
+        phis = np.array(
+            [self.phi_func(t, xy, self.sigparams) 
+             for t, xy in zip(self.ts, self.xys)]
+        )
+        self.phis = np.log(1 + phis - minphi) + 3e-1
+
+
+        self.zlims = zlims if zlims else self._buffer_lims(
+            [np.min(self.heatmap_phis), np.max(self.heatmap_phis)]
+        )
+
+        self.view_init = view_init
+
+        self.model_info_string = model.get_info_string()
+        self._rtext_list = self._generate_rtext_list()
+        self._btext_list = self._generate_btext_list()
+
+
+    def animate(
+            self, 
+            duration=None,
+            interval=200,
+            fps=2,
+            figsize=None,
+            grid_width=2,
+            grid_height=2,
+            dpi=100,
+            save_frames=[],
+            saveas='gif',
+            savepath=None,
+            suptitle="Cellular Decisions",
+    ):
+        """Generate animation.
         
-        self.phis = np.log(1 + phis - phis.min())  # log normalize
-
-
-    def animate(self, savepath=None, **kwargs):
-        """"""
-        #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
-        duration = kwargs.get('duration', None)
-        interval = kwargs.get('interval', self.interval)
-        figsize = kwargs.get('figsize', self.figsize)
-        dpi = kwargs.get('dpi', self.dpi)
-        fps = kwargs.get('fps', self.fps)
-        save_frames = kwargs.get('save_frames', [])
-        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+        Args:
+            duration (int) : total time of animation in seconds. If specified, 
+                overrides `fps` and `interval` arguments.
+            interval (int) : default delay between frames in milliseconds.
+            fps (int) : number of frames per second.
+            figsize (tuple[float]) : figure width and height. If specified, 
+                overrides `grid_width` and `grid_height` arguments.
+            grid_width (float) : width of each grid element.
+            grid_height (float) : height of each grid element.
+            dpi (int) : dots per inch resolution.
+            save_frames (list[int]) : indices of frames to save as png files.
+            saveas (str) : File type of saved movie. Options are 'gif' or 'mp4'.
+                Default 'gif'.
+            savepath (str) : File path to save the movie to, without extension.
+        Returns:
+            Animation
+        """
 
         if duration:
             fps = self.nframes / duration
             interval = 1000 / fps
         
+        grdsz = (7, 8)  # number of grid rows and columns
+        
+        if figsize is None:
+            figsize = (grid_width * grdsz[1], grid_height * grdsz[0])
+
         self.fig = plt.figure(
             dpi=dpi, 
             figsize=figsize, 
             constrained_layout=True,
         )
         
-        self.ax_main = plt.subplot2grid((4, 6), (0, 0), colspan=2, rowspan=2)
-        self.ax_clst = plt.subplot2grid((4, 6), (2, 0), colspan=2, rowspan=2)
-        self.ax_sigs = plt.subplot2grid((4, 6), (0, 2), colspan=2, rowspan=1)
-        self.ax_prms = plt.subplot2grid((4, 6), (1, 2), colspan=2, rowspan=1)
-        self.ax_heat = plt.subplot2grid((4, 6), (2, 2), colspan=2, rowspan=2)
-        self.ax_bifs = plt.subplot2grid((4, 6), (0, 4), colspan=2, rowspan=2)
-        self.ax_text = plt.subplot2grid((4, 6), (2, 4), colspan=2, rowspan=2)
+        self.ax_main = plt.subplot2grid(grdsz, (0, 0), colspan=3, rowspan=3)
+        self.ax_surf = plt.subplot2grid(grdsz, (0, 3), colspan=3, rowspan=3,
+                                        projection='3d')
+        self.ax_rmisc = plt.subplot2grid(grdsz, (0, 6), colspan=2, rowspan=5)
+        self.ax_clst = plt.subplot2grid(grdsz, (3, 0), colspan=2, rowspan=2)
+        self.ax_sigs = plt.subplot2grid(grdsz, (3, 2), colspan=2, rowspan=1)
+        self.ax_tilt = plt.subplot2grid(grdsz, (4, 2), colspan=2, rowspan=1)
+        self.ax_bifs = plt.subplot2grid(grdsz, (3, 4), colspan=2, rowspan=2)
+        self.ax_bmisc = plt.subplot2grid(grdsz, (5, 0), colspan=8, rowspan=2)
+
+        self.fig.suptitle(suptitle, size=self._suptitlesize)
+
+        for ax in self.fig.axes:
+            ax.tick_params(axis='both', which='major', 
+                           labelsize=self._axmajorticksize)
+            ax.tick_params(axis='both', which='minor', 
+                           labelsize=self._axminorticksize)
 
         print("Generating movie...", flush=True)
         tic0 =time.time()
@@ -187,11 +267,11 @@ class PLNNSimulationAnimator:
 			init_func=self.setup, 
             blit=True
         )
-        tic1 = time.time() 
+        tic1 = time.time()
         print(f"Finished in {tic1-tic0:.3g} seconds.", flush=True)
         if savepath:
             print(f"Saving animation to {savepath}", flush=True)
-            if self.savegif:
+            if saveas == 'gif':
                 fpath = savepath+'.gif'
                 self.ani.save(fpath, writer='pillow', fps=fps)
                 frames_to_save = save_frames
@@ -209,10 +289,11 @@ class PLNNSimulationAnimator:
         self._setup_main()
         self._setup_clst()
         self._setup_sigs()
-        self._setup_prms()
-        self._setup_heat()
+        self._setup_tilt()
+        self._setup_surf()
         self._setup_bifs()
-        self._setup_text()
+        self._setup_rmisc()
+        self._setup_bmisc()
         return (
             self.scat_main, self.scat_clst, *self._signal_markers,
             *self._param_markers, self._bif_marker, self.heatmap
@@ -223,10 +304,11 @@ class PLNNSimulationAnimator:
         self._update_main(i)
         self._update_clst(i)
         self._update_sigs(i)
-        self._update_prms(i)
-        self._update_heat(i)
+        self._update_tilt(i)
+        self._update_surf(i)
         self._update_bifs(i)
-        self._update_text(i)
+        self._update_rmisc(i)
+        self._update_bmisc(i)
         return (
             self.scat_main, self.scat_clst, *self._signal_markers,
             *self._param_markers, self._bif_marker, self.heatmap
@@ -238,23 +320,35 @@ class PLNNSimulationAnimator:
         
     def _setup_main(self):
         ax = self.ax_main
-        # Initialize
+        ax.set_aspect('equal')
+        # Setup main scatterplot
         self.scat_main, = ax.plot(
             [], [], 
             marker='.', 
-            markersize=4, 
+            markersize=self._main_scatter_size, 
             color=self._main_scatter_color, 
             alpha=0.75, 
+            linestyle='None', 
+            animated=True
+        )
+        # Setup minima scatterplot
+        self.scatter_mins, = ax.plot(
+            [], [], 
+            marker='*', 
+            markersize=self._mins_scatter_size, 
+            color=self._mins_scatter_color, 
+            alpha=1, 
             linestyle='None', 
             animated=True
         )
 
         # Format
         ax.axis([*self.xlims, *self.ylims])
-        title = f""
-        ax.set_title(title)
-        ax.set_xlabel(f"$x$")
-        ax.set_ylabel(f"$y$")
+        ax.set_xlabel(f"$x$", size=self._axlabelsize)
+        ax.set_ylabel(f"$y$", size=self._axlabelsize)
+        ax.set_title("cell simulation", size=self._titlesize)
+        # ax.set_xticks([])
+        # ax.set_yticks([])
         
         # Text
         pos = [self.xlims[0] + (self.xlims[1]-self.xlims[0])*.5, 
@@ -278,29 +372,65 @@ class PLNNSimulationAnimator:
             self.heatmeshx, 
             self.heatmeshy, 
             np.zeros(self.heatmeshx.shape), 
-            vmin=self.phis.min(),
-            vmax=self.phis.max(),
+            vmin=self.heatmap_phis.min(),
+            vmax=self.heatmap_phis.max(),
             cmap=DEFAULT_CMAP, 
             animated=True,
             shading='gouraud',
         )
 
+    def _setup_surf(self):
+        ax = self.ax_surf
+        ax.axis([*self.xlims, *self.ylims, *self.zlims])
+        
+        # Setup surface
+        self.surface = [ax.plot_surface(
+            self.heatmeshx, 
+            self.heatmeshy, 
+            np.ones(self.heatmeshx.shape) * np.nan, 
+            vmin=self.heatmap_phis.min(),
+            vmax=self.heatmap_phis.max(),
+            cmap=DEFAULT_CMAP, 
+            alpha=self._surface_alpha,
+            linewidth=0.1,
+            animated=True,
+        )]
+        # Setup surface scatterplot
+        # NOTE: Cannot currently implement 3d scatterplot due to mpl issue.
+        # self.surface_scatter, = ax.plot(
+        #     [], [], [],
+        #     marker='.', 
+        #     markersize=self._surf_scatter_size, 
+        #     linestyle='None', 
+        #     color=self._surf_scatter_color, 
+        #     alpha=1.0, 
+        #     zorder=2.5,
+        #     animated=True
+        # )
+        ax.view_init(*self.view_init)
+        ax.set_xlabel(f"$x$", size=self._axlabelsize)
+        ax.set_ylabel(f"$y$", size=self._axlabelsize)
+        ax.set_zlabel(f"$\phi$", size=self._axlabelsize)
+
     def _setup_clst(self):
         ax = self.ax_clst
+        ax.set_aspect('equal')
         self.scat_clst, = ax.plot(
-            [], [], marker='.', markersize=4, 
+            [], [], marker='.', markersize=self._main_scatter_size, 
             color=self._main_scatter_color, 
             alpha=0.75, linestyle='None', 
             animated=True
         )
         self.clst_index = 0
-        ax.set_xlabel(f"$x$")
-        ax.set_ylabel(f"$y$")
         ax.axis([*self.xlims, *self.ylims])
         # Text
         pos = [self.xlims[0] + (self.xlims[1]-self.xlims[0])*.5, 
                self.ylims[0] + (self.ylims[1]-self.ylims[0])*.95]
         self.clsttext = ax.text(*pos, "", fontsize='small')
+        # Format
+        ax.set_title("samples", size=self._titlesize)
+        ax.set_xlabel(f"$x$", size=self._axlabelsize)
+        ax.set_ylabel(f"$y$", size=self._axlabelsize)
 
     def _setup_sigs(self):
         ax = self.ax_sigs
@@ -311,11 +441,12 @@ class PLNNSimulationAnimator:
         for i in range(self.nsigs):
             line, = ax.plot(
                 self.ts, self.sigs[:,i], 
-                label=self.sig_names[i], 
+                linewidth=self._linewidth,
                 color=cmap(i),
+                label=self.sig_names[i], 
             )
             siglines.append(line)
-        ax.legend(siglines, self.sig_names)
+        ax.legend(siglines, self.sig_names, prop={'size': self._legendsize})
         # Add marker placeholders
         self._signal_markers = []
         for i in range(self.nsigs):
@@ -330,11 +461,12 @@ class PLNNSimulationAnimator:
         ylims = ax.get_ylim()
         ax.vlines(self.ts_saved, *ylims, linestyle=':', colors='k', alpha=0.25)
         # Axis labeling
-        ax.set_xlabel(f"$t$")
-        ax.set_ylabel(f"$s$")
+        ax.set_title("signal", size=self._titlesize)
+        ax.set_xlabel(f"$t$", size=self._axlabelsize)
+        ax.set_ylabel(f"$s$", size=self._axlabelsize)
 
-    def _setup_prms(self):
-        ax = self.ax_prms
+    def _setup_tilt(self):
+        ax = self.ax_tilt
         # Plot signals
         paramlines = []
         # cmap = plt.cm.get_cmap(self._paramlinecmap)
@@ -342,11 +474,12 @@ class PLNNSimulationAnimator:
         for i in range(self.nparams):
             line, = ax.plot(
                 self.ts, self.ps[:,i], 
-                label=self.param_names[i], 
+                linewidth=self._linewidth,
                 color=cmap(i),
+                label=self.param_names[i], 
             )
             paramlines.append(line)
-        ax.legend(paramlines, self.param_names)
+        ax.legend(paramlines, self.param_names, prop={'size': self._legendsize})
         # Add marker placeholders
         self._param_markers = []
         for i in range(self.nparams):
@@ -361,35 +494,25 @@ class PLNNSimulationAnimator:
         ylims = ax.get_ylim()
         ax.vlines(self.ts_saved, *ylims, linestyle=':', colors='k', alpha=0.25)
         # Axis labeling
-        ax.set_xlabel(f"$t$")
-        ax.set_ylabel(f"$p$")
-
-    def _setup_heat(self):
-        ax = self.ax_heat
-        # self.scat_dist, = ax.plot(
-        #     [], [], marker='.', markersize=4, 
-        #     color=self._main_scatter_color, 
-        #     alpha=0.75, linestyle='None', 
-        #     animated=True
-        # )
-        self.dist_index = 0
-        ax.set_xlabel(f"$x$")
-        ax.set_ylabel(f"$y$")
-        ax.axis([*self.xlims, *self.ylims])
-        # Text
-        pos = [self.xlims[0] + (self.xlims[1]-self.xlims[0])*.5, 
-               self.ylims[0] + (self.ylims[1]-self.ylims[0])*.95]
-        self.disttext = ax.text(*pos, "", fontsize='small')
+        ax.set_title("tilts", size=self._titlesize)
+        ax.set_xlabel(f"$t$", size=self._axlabelsize)
+        ax.set_ylabel(f"$\\tau$", size=self._axlabelsize)
 
     def _setup_bifs(self):
         ax = self.ax_bifs
+        ax.set_aspect('equal')
         ax.axis([*self.p0lims, *self.p1lims])
         # Plot bifurcation curves
         if self.bifcurves is not None:
-            self._plot_bifcurves(ax)
-        # Plot trace of parameter values
-        ax.plot(
-            self.p0s, self.p1s, alpha=0.5, linestyle=':', color='k'
+            self._plot_bifcurves(
+                ax, 
+                linestyle='-',
+                linewidth=self._linewidth,
+                color=self._bifcurvecolor,
+            )
+        # Plot trace of tilt values
+        traj = ax.plot(
+            self.p0s, self.p1s, alpha=0.5, linestyle=':', color='k',
         )
         # Add marker placeholders
         self._bif_marker, = ax.plot(
@@ -399,29 +522,81 @@ class PLNNSimulationAnimator:
             linestyle='None', animated=True
         )
         # Axis labeling
-        ax.set_xlabel(self.param_names[self.p0idx])
-        ax.set_ylabel(self.param_names[self.p1idx])
+        ax.legend(traj, ["$\\tau(t)$"], prop={'size': self._legendsize})
+        ax.set_xlabel(self.param_names[self.p0idx], size=self._axlabelsize)
+        ax.set_ylabel(self.param_names[self.p1idx], size=self._axlabelsize)
+        ax.set_title("bifurcation plot", size=self._titlesize)
 
-    def _setup_text(self):
-        ax = self.ax_text
+    def _setup_rmisc(self):
+        ax = self.ax_rmisc
         xlims = ax.get_xlim()
         ylims = ax.get_ylim()
         ax.grid(False)
         ax.set_xticks([])
         ax.set_yticks([])
-        pos = [xlims[0] + (xlims[1]-xlims[0])*.2, 
-               ylims[0] + (ylims[1]-ylims[0])*0.05]
-        self.text = ax.text(*pos, "", fontsize='small')
+        pos = [xlims[0] + (xlims[1]-xlims[0])*0.01, 
+               ylims[0] + (ylims[1]-ylims[0])*0.99]
+        self.rtext = ax.text(
+            *pos, "", 
+            horizontalalignment='left',
+            verticalalignment='top',
+            fontsize=self._rtext_fontsize,
+            usetex=False,
+            animated=True,
+        )   
+        bbox, w, h = self._calculate_text_bbox(
+            self._rtext_list, self.rtext, ax    
+        )
+        rect = patches.Rectangle(
+            (bbox.xmin, bbox.ymin-h), w, h, 
+            linewidth=1, edgecolor='None', facecolor='None', alpha=0.25
+        )
+        ax.add_patch(rect)
 
+    def _setup_bmisc(self):
+        ax = self.ax_bmisc
+        xlims = ax.get_xlim()
+        ylims = ax.get_ylim()
+        ax.grid(False)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        pos = [xlims[0] + (xlims[1]-xlims[0])*0.01, 
+               ylims[0] + (ylims[1]-ylims[0])*0.99]
+        self.btext = ax.text(
+            *pos, "", 
+            horizontalalignment='left',
+            verticalalignment='top',
+            fontsize=self._btext_fontsize,
+            usetex=True,
+            animated=True,
+        )
+        bbox, w, h = self._calculate_text_bbox(
+            self._btext_list, self.btext, ax
+        )
+        rect = patches.Rectangle(
+            (bbox.xmin, bbox.ymin-h), w, h, 
+            linewidth=1, edgecolor='None', facecolor='None', alpha=0.25
+        )
+        ax.add_patch(rect)
+        
     ######################
     ##  Update Methods  ##
     ######################
 
     def _update_main(self, i):
         ax = self.ax_main
+        self.maintext.set_text(f"t={self.get_t(i):.3f}")
+        # Update heatmap
+        phi = self.heatmap_phis[i]
+        self.heatmap.set_array(phi.ravel())
+        # Update scatterplot
         xy = self.get_xy(i)
         self.scat_main.set_data(xy)
-        self.maintext.set_text(f"t={self.get_t(i):.3f}")
+        # Update minima
+        if self.minima is not None:
+            mins = self.get_minima(i)
+            self.scatter_mins.set_data(mins)
+        # Update gradient vector field
         grads = self.get_grads_mesh(i)
         if grads is not None:
             u, v = grads
@@ -432,9 +607,27 @@ class PLNNSimulationAnimator:
             pcm = plt.get_cmap('RdBu_r')
             cnorm = colors.Normalize(vmin=0, vmax=np.max(norms))
             self.mesh_gradient.set_color(pcm(cnorm(norms).flatten()))
-        # Update heatmap
-        phi = self.phis[i]
-        self.heatmap.set_array(phi.ravel())
+
+    def _update_surf(self, i):
+        ax = self.ax_surf
+        # Update the surface plot
+        self.surface[0].remove()
+        self.surface[0] = ax.plot_surface(
+            self.heatmeshx, 
+            self.heatmeshy, 
+            self.heatmap_phis[i].reshape(self.heatmeshx.shape), 
+            vmin=self.heatmap_phis.min(),
+            vmax=self.heatmap_phis.max(),
+            cmap=DEFAULT_CMAP, 
+            alpha=self._surface_alpha,
+            linewidth=0.1,
+            animated=True,
+        )
+        # Update scatter plot
+        # NOTE: Cannot currently implement 3d scatterplot due to mpl issue.
+        # self.surface_scatter.set_data_3d(*self.get_xy(i), self.phis[i])
+        # self.surface_scatter.set_3d_properties(self.phis[i])
+        
 
     def _update_clst(self, i):
         ax = self.ax_clst
@@ -453,26 +646,11 @@ class PLNNSimulationAnimator:
         for j, sig in enumerate(sigs):
             self._signal_markers[j].set_data([[t], [sig]])
 
-    def _update_prms(self, i):
+    def _update_tilt(self, i):
         t = self.get_t(i)
         params = self.get_ps(i)
         for j, param in enumerate(params):
             self._param_markers[j].set_data([[t], [param]])
-
-    def _update_heat(self, i):
-        ax = self.ax_heat
-        t = self.get_t(i)
-        if self.dist_index >= len(self.ts_saved):
-            return 
-        dist_t = self.ts_saved[self.dist_index]
-        if t >= dist_t:
-            xy_saved = self.get_xy_saved(self.dist_index)
-            self.dist_index += 1
-            ax.plot(
-                *xy_saved,
-                marker='.', markersize=4, 
-                alpha=0.75, linestyle='None',
-            )
 
     def _update_bifs(self, i):
         params = self.get_ps(i)
@@ -480,10 +658,13 @@ class PLNNSimulationAnimator:
         p1 = params[self.p1idx]
         self._bif_marker.set_data([[p0], [p1]])
 
-    def _update_text(self, i):
-        t = self.get_t(i)
-        s = self.info_str + f"\n$t={t:.3f}$\n" + self.sigparams_str
-        self.text.set_text(s)
+    def _update_rmisc(self, i):
+        s = self.get_rtext(i)
+        self.rtext.set_text(s)
+
+    def _update_bmisc(self, i):
+        s = self.get_btext(i)
+        self.btext.set_text(s)
 
     ######################
     ##  Getter Methods  ##
@@ -513,6 +694,15 @@ class PLNNSimulationAnimator:
     def get_ps_saved(self, i):
         return self.ps_saved[i,:]
     
+    def get_minima(self, i):
+        return self.minima[i].T
+    
+    def get_rtext(self, i):
+        return "" if i >= len(self._rtext_list) else self._rtext_list[i]
+    
+    def get_btext(self, i):
+        return "" if i >= len(self._btext_list) else self._btext_list[i]
+    
     ######################
     ##  Helper Methods  ##
     ######################
@@ -533,9 +723,66 @@ class PLNNSimulationAnimator:
         else:
             return None
 
-    def _plot_bifcurves(self, ax, linestyle='--'):
+    def _plot_bifcurves(self, ax, linestyle='-', linewidth=1, color=None):
         ncurves = len(self.bifcurves)
         for i in range(ncurves):
-            color = self.bifcolors[i]
+            if color is None:
+                c = self.bifcolors[i]
+            else:
+                c = color
             curve = self.bifcurves[i]
-            ax.plot(curve[:,0], curve[:,1], color=color, linestyle=linestyle)
+            ax.plot(
+                curve[:,0], curve[:,1], 
+                linewidth=linewidth,
+                linestyle=linestyle,
+                color=c, 
+            )
+
+    def _generate_rtext_list(self):
+        txtlist = []
+        for i in range(self.nframes):
+            txtlist.append(self._build_rtext(i))
+        return txtlist
+
+    def _generate_btext_list(self):
+        txtlist = []
+        for i in range(self.nframes):
+            txtlist.append(self._build_btext(i))
+        return txtlist
+    
+    def _build_rtext(self, i):
+        """Right miscellaneous box text."""
+        t = self.get_t(i)
+        sig = self.get_sigs(i)
+        sig_str = ", ".join([f"{x:.3g}" for x in sig])
+        tau = self.get_ps(i)
+        tau_str = ", ".join([f"{x:.3g}" for x in tau])
+        s = f"$t={t:.3f}$" 
+        s += f"\n$\\boldsymbol{{s}}=({sig_str})^T$"
+        s += f"\n$\\boldsymbol{{\\tau}}=({tau_str})^T$"
+        if self.sigparams_str:
+            s += "\n" + self.sigparams_str
+        return s
+    
+    def _build_btext(self, i):
+        """Bottom miscellaneous box text."""
+        s = self.model_info_string + f"\\newline\\texttt{{{self.note_string}}}"
+        return s
+    
+    def _calculate_text_bbox(self, string_list, text, ax):
+        transf = ax.transData.inverted()
+        maxw = 0
+        maxh = 0
+        s0 = text.get_text()
+        bbox = text.get_window_extent().transformed(transf)
+        for s in string_list:
+            text.set_text(s)
+            bb = text.get_window_extent().transformed(transf)
+            w, h = bb.width, bb.height
+            if w > maxw:
+                maxw = w
+            if h > maxh:
+                maxh = h
+        text.set_text(s0)
+        return bbox, maxw, maxh
+
