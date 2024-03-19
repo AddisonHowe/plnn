@@ -31,9 +31,9 @@ P2_VIEW_LIMS = [-4, 4]
 def get_plnn_bifurcation_curves(
         model, 
         num_starts=10,
-        p1lims=P1LIMS, p2lims=P2LIMS, xstarts=[],
-        random_p_increment=False,
-        p_increment_value=None,
+        p1lims=P1LIMS, 
+        p2lims=P2LIMS, 
+        xstarts=[],
         color='k',
         rng=None, seed=None,
         verbosity=0
@@ -91,7 +91,7 @@ def get_plnn_bifurcation_curves(
         col = xstarts[i][1]
         p0 = np.array(solve_p(x0))
         for sign in [1, -1]:
-            _, ps, _, _ = trace_curve(
+            xs, ps, info, = trace_curve(
                 x0, p0, F, Fx, dxFxPhi, Fp,
                 maxiter=maxiter, 
                 ds=ds*sign,
@@ -101,8 +101,6 @@ def get_plnn_bifurcation_curves(
                 rho=rho,
                 plims=[p1lims, p2lims],
                 verbosity=verbosity,
-                random_p_increment=random_p_increment,
-                p_increment_value=p_increment_value,
                 rng=rng,
             )
             curves_p.append(ps)

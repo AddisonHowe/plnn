@@ -3,6 +3,8 @@
 ## TODO
 * When nan encountered, reduce model constraint perameter instead of decreasing dt?
 * Also save that model and training data for debugging purposes.
+* Implement an *algebraic* PLNN
+* Implement heteroclinic orbit algorithm minimizing orthogonal component of path connecting saddles.
 
 ## Ideas
 
