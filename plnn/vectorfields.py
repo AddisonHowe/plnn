@@ -119,7 +119,7 @@ def find_minima_along_tilt_trajectory(
     assert np.shape(x0_range) == (d, 2), "x0_range should have shape (d, 2)"
 
     # Divide the trajectory into segments.
-    ndivisions = min(n, ndivisions)
+    ndivisions = min(k, ndivisions)
     div_points, div_idxs = divide_trajectory(
         tilt_trajectory, 
         npoints=ndivisions, 

@@ -3,6 +3,7 @@
 """
 
 import json
+import jax
 import jax.numpy as jnp
 import jax.random as jrandom
 import jax.tree_util as jtu
@@ -18,23 +19,58 @@ class AlgebraicPL(PLNN):
 
     phi_module: AbstractAlgebraicPotential
     algebraic_phi_id: str
+    tilt_module: eqx.Module
 
     def __init__(
             self, 
             key, dtype=jnp.float32, *,
+            ndims=2,
+            nparams=2,
+            nsigs=2,
+            sigma=1e-2,
             phi_module=None,
             algebraic_phi_id=None,
+            tilt_weights=None,
+            tilt_bias=None,
             **kwargs
     ):
         key, subkey = jrandom.split(key, 2)
-        super().__init__(subkey, dtype=dtype, confine=False, 
-                         confinement_factor=1, **kwargs)
+        super().__init__(
+            subkey, dtype=dtype, 
+            ndims=ndims, nsigs=nsigs, nparams=nparams, 
+            confine=False, confinement_factor=1, sigma_init=sigma, 
+            tilt_final_act=None, tilt_hidden_dims=[],
+            include_tilt_bias=True, 
+            tilt_hidden_acts=None, 
+            tilt_layer_normalize=False,
+            **kwargs
+        )
         self.model_type = "algebraic_plnn"
+        
+        # Initialize phi module
         if algebraic_phi_id is None:
             self.phi_module = phi_module
         else:
             self.phi_module = get_phi_module_from_id(algebraic_phi_id)
-        self.algebraic_phi_id = self.phi_module.get_name()
+        self.algebraic_phi_id = self.phi_module.get_id()
+        
+        # Initialize tilt module
+        if tilt_weights is None:
+            tilt_weights = jnp.zeros([self.ndim, self.nparams], dtype=dtype)
+            tilt_weights[jnp.arange(self.nparams), jnp.arange(self.nparams)] = 1.
+            assert tilt_weights.sum() == self.nparams
+        else:
+            tilt_weights = jnp.array(tilt_weights, dtype=dtype)
+        
+        if tilt_bias is None:
+            tilt_bias = jnp.zeros(self.ndim, dtype=dtype)
+        else:
+            tilt_bias = jnp.array(tilt_bias, dtype=dtype)
+
+        get_weights = lambda m: m.layers[0].weight
+        get_bias = lambda m: m.layers[0].bias
+        self.tilt_module = eqx.tree_at(get_weights, self.tilt_module, tilt_weights)
+        self.tilt_module = eqx.tree_at(get_bias, self.tilt_module, tilt_bias)
 
 
     ######################
@@ -129,15 +165,12 @@ class AlgebraicPL(PLNN):
         ncells=100, 
         signal_type='jump', 
         nsigparams=3, 
-        sigma_init=1e-2, 
+        sigma=1e-2, 
         solver='euler', 
         dt0=1e-2, 
         sample_cells=True, 
-        include_tilt_bias=False,
-        tilt_hidden_dims=[],
-        tilt_hidden_acts=None,
-        tilt_final_act=None,
-        tilt_layer_normalize=False,
+        tilt_weights=None,
+        tilt_bias=None,
         phi_module=None,
         algebraic_phi_id=None,
     ) -> tuple['AlgebraicPL', dict]:
@@ -152,7 +185,7 @@ class AlgebraicPL(PLNN):
             ncells
             signal_type
             nsigparams
-            sigma_init
+            sigma
             solver
             dt0
             confine
@@ -178,17 +211,14 @@ class AlgebraicPL(PLNN):
             ncells=ncells,
             signal_type=signal_type, 
             nsigparams=nsigparams,
-            sigma_init=sigma_init,
+            sigma=sigma,
             solver=solver, 
             dt0=dt0, 
             sample_cells=sample_cells,
-            include_tilt_bias=include_tilt_bias,
             phi_module=phi_module,
             algebraic_phi_id=algebraic_phi_id,
-            tilt_hidden_dims=tilt_hidden_dims, 
-            tilt_hidden_acts=tilt_hidden_acts, 
-            tilt_final_act=tilt_final_act,
-            tilt_layer_normalize=tilt_layer_normalize,
+            tilt_weights=tilt_weights,
+            tilt_bias=tilt_bias,
         )
         hyperparams = model.get_hyperparameters()
         model = jtu.tree_map(

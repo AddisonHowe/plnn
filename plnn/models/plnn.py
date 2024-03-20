@@ -173,41 +173,9 @@ class PLNN(eqx.Module):
             (Array) Final states, across batches. Shape (b,n,d).
         """
         # Parse the inputs
-        fwdvec = jax.vmap(self.simulate_forward, 0)
+        fwdvec = jax.vmap(self.simulate_ensemble, 0)
         key, sample_key = jrandom.split(key, 2)
         if self.sample_cells and self.ncells > 1:
-            y0 = self._sample_y0(sample_key, y0)
-        batch_keys = jax.random.split(key, t0.shape[0])
-        return fwdvec(t0, t1, y0, sigparams, batch_keys)
-    
-    def calldense(
-        self, 
-        t0: Float[Array, "b"],
-        t1: Float[Array, "b"],
-        y0: Float[Array, "b ncells ndims"],
-        sigparams: Float[Array, "b nsigs nsigparams"],
-        key: Array,
-    ) -> Float[Array, "b ncells ndims"]:
-        """Dense version of forward call. Acts on batched data.
-
-        Simulate across batches a number of initial conditions between times t0
-        and t1, where t0 and t1 are arrays. Return arrays including all 
-        evaluated times.
-        
-        Args:
-            t0 (Array) : Initial times. Shape (b,).
-            t1 (Array) : End times. Shape (b,).
-            y0 (Array) : Initial conditions. Shape (b,n,d).
-            sigparams (Array) : Signal parameters. Shape (b,nsigs,nsigparams).
-            key (Array) : PRNGKey.
-
-        Returns:
-            (Array) Final states, across batches. Shape (b,?,n,d).
-        """
-        # Parse the inputs
-        fwdvec = jax.vmap(self.simulate_dense_forward, 0)
-        key, sample_key = jrandom.split(key, 2)
-        if self.sample_cells:
             y0 = self._sample_y0(sample_key, y0)
         batch_keys = jax.random.split(key, t0.shape[0])
         return fwdvec(t0, t1, y0, sigparams, batch_keys)
@@ -363,7 +331,7 @@ class PLNN(eqx.Module):
         )
         return sol.ys
 
-    def simulate_forward(
+    def simulate_ensemble(
         self,
         t0: Float,
         t1: Float,
@@ -386,97 +354,6 @@ class PLNN(eqx.Module):
         subkeys = jrandom.split(key, len(y0))
         vecsim = jax.vmap(self.simulate_path, (None, None, 0, None, 0))
         return vecsim(t0, t1, y0, sigparams, subkeys).squeeze(1)
-    
-    def simulate_dense_forward(
-        self,
-        t0: Float,
-        t1: Float,
-        y0: Float[Array, "ncells ndims"],
-        sigparams: Float[Array, "nsigs nsigparams"],
-        key: Array,
-    )->Float[Array, "? ncells ndims"]:
-        """Evolve an ensemble forward in time and return all evaluated states.
-        
-        Args:
-            t0 (Array) : Initial time. Shape (1,).
-            t1 (Array) : End time. Shape (1,).
-            y0 (Array) : Initial condition. Shape (n,d).
-            sigparams (Array) : Signal parameters. Shape (nsigs,nsigparams).
-            key (Array) : PRNGKey.
-
-        Returns:
-            Array : Final state. Shape (?,n,d).
-        """
-        subkeys = jrandom.split(key, len(y0))
-        vecsim = jax.vmap(self.simulate_dense_path, (None, None, 0, None, 0))
-        return vecsim(t0, t1, y0, sigparams, subkeys)
-    
-    def simulate_ensemble_with_saves(
-        self,
-        t0: Float,
-        t1: Float,
-        y0: Float[Array, "ncells ndims"],
-        sigparams: Float[Array, "nsigs nsigparams"],
-        saveat: SaveAt,
-        key: Array,
-    )->Float[Array, "? ncells ndims"]:
-        """Evolve an ensemble forward in time and return all evaluated states.
-        
-        Args:
-            t0 (Array) : Initial time. Shape (1,).
-            t1 (Array) : End time. Shape (1,).
-            y0 (Array) : Initial condition. Shape (n,d).
-            sigparams (Array) : Signal parameters. Shape (nsigs,nsigparams).
-            saveat (diffrax.SaveAt) : Times at which to save.
-            key (Array) : PRNGKey.
-
-        Returns:
-            Array : Final state. Shape (?,n,d).
-        """
-        subkeys = jrandom.split(key, len(y0))
-        vecsim = jax.vmap(self.simulate_path_with_saves, (None, None, 0, None, None, 0))
-        return vecsim(t0, t1, y0, sigparams, saveat, subkeys)
-    
-    def simulate_dense_path(
-        self,
-        t0: Float,
-        t1: Float,
-        y0: Float[Array, "ndims"],
-        sigparams: Float[Array, "nsigs nsigparams"],
-        key: Array,
-    )->Float[Array, "? ndims"]:
-        """Evolve a single cell forward in time and return all evaluated states.
-        
-        Args:
-            t0 (Array) : Initial time. Shape (1,).
-            t1 (Array) : End time. Shape (1,).
-            y0 (Array) : Initial condition. Shape (d,).
-            sigparams (Array) : Signal parameters. Shape (nsigs,nsigparams).
-            key (Array) : PRNGKey.
-
-        Returns:
-            Array : Final state. Shape (?,d).
-        """
-        drift = lambda t, y, args: self.drift(t, y, sigparams)
-        diffusion = lambda t, y, args: self.diffusion(t, y)
-        brownian_motion = VirtualBrownianTree(
-            t0, t1, tol=1e-3, 
-            shape=(len(y0),), 
-            key=key
-        )
-        terms = MultiTerm(
-            ODETerm(drift), 
-            WeaklyDiagonalControlTerm(diffusion, brownian_motion)
-        )
-        solver = _SOLVER_KEYS[self.solver]()
-        saveat = SaveAt(t0=True, t1=True, steps=True)
-        sol = diffeqsolve(
-            terms, solver, 
-            t0, t1, dt0=self.dt0, 
-            y0=y0, 
-            saveat=saveat
-        )
-        return sol.ts, sol.ys
     
     def simulate_path_with_saves(
         self,
@@ -520,7 +397,33 @@ class PLNN(eqx.Module):
         )
         return sol.ts, sol.ys
     
-    def simulate_landscape(
+    def simulate_ensemble_with_saves(
+        self,
+        t0: Float,
+        t1: Float,
+        y0: Float[Array, "ncells ndims"],
+        sigparams: Float[Array, "nsigs nsigparams"],
+        saveat: SaveAt,
+        key: Array,
+    )->Float[Array, "? ncells ndims"]:
+        """Evolve an ensemble forward in time and return all evaluated states.
+        
+        Args:
+            t0 (Array) : Initial time. Shape (1,).
+            t1 (Array) : End time. Shape (1,).
+            y0 (Array) : Initial condition. Shape (n,d).
+            sigparams (Array) : Signal parameters. Shape (nsigs,nsigparams).
+            saveat (diffrax.SaveAt) : Times at which to save.
+            key (Array) : PRNGKey.
+
+        Returns:
+            Array : Final state. Shape (?,n,d).
+        """
+        subkeys = jrandom.split(key, len(y0))
+        vecsim = jax.vmap(self.simulate_path_with_saves, (None, None, 0, None, None, 0))
+        return vecsim(t0, t1, y0, sigparams, saveat, subkeys)
+    
+    def run_landscape_simulation(
             self,
             x0,
             tfin,
