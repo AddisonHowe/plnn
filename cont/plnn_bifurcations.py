@@ -35,11 +35,6 @@ def get_functions_from_model(model):
     tilt_nn_w = model.get_parameters()['tilt.w'][0]
     tilt_nn_b = model.get_parameters()['tilt.b'][0]
 
-    if tilt_nn_b is None:
-        pass
-    else:
-        raise RuntimeError()
-
     @jax.jit
     def F(x, p): 
         return -(model.eval_grad_phi(0., x) + p)

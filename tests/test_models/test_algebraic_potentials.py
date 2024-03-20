@@ -15,7 +15,7 @@ from plnn.models.algebraic_potentials import get_phi_module_from_id
 class NoGradBinaryChoicePotential(AbstractAlgebraicPotential):
 
     def __init__(self):
-        super().__init__(ndims=2, name="binary choice nograd")
+        super().__init__(ndims=2, id="binary choice nograd")
 
     def phi(self, x):
         x, y = x
@@ -27,7 +27,7 @@ class NoGradBinaryChoicePotential(AbstractAlgebraicPotential):
 class NoGradBinaryFlipPotential(AbstractAlgebraicPotential):
 
     def __init__(self):
-        super().__init__(ndims=2, name="binary flip nograd")
+        super().__init__(ndims=2, id="binary flip nograd")
 
     def phi(self, x):
         x, y = x

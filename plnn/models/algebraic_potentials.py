@@ -1,4 +1,4 @@
-"""
+"""Algebraic Potential Functions
 
 """
 
@@ -21,11 +21,11 @@ def get_phi_module_from_id(id):
 class AbstractAlgebraicPotential(eqx.Module):
     
     ndims: int
-    name: str
+    id: str
 
-    def __init__(self, ndims, name):
+    def __init__(self, ndims, id):
         self.ndims = ndims
-        self.name = name
+        self.id = id
 
     @abstractmethod
     def phi(self, x: Float[Array, "ndims"]) -> Float:
@@ -34,8 +34,8 @@ class AbstractAlgebraicPotential(eqx.Module):
     def grad_phi(self, x: Float[Array, "ndims"]) -> Float[Array, "ndims"]:
         return jax.jacrev(self.phi)(x)
     
-    def get_name(self) -> str:
-        return self.name
+    def get_id(self) -> str:
+        return self.id
     
 
 ############################
@@ -45,7 +45,7 @@ class AbstractAlgebraicPotential(eqx.Module):
 class BinaryChoicePotential(AbstractAlgebraicPotential):
 
     def __init__(self):
-        super().__init__(ndims=2, name="binary choice")
+        super().__init__(ndims=2, id="binary choice")
 
     def phi(self, x: Float[Array, "2"]) -> Float:
         x, y = x
@@ -63,7 +63,7 @@ class BinaryChoicePotential(AbstractAlgebraicPotential):
 class BinaryFlipPotential(AbstractAlgebraicPotential):
 
     def __init__(self):
-        super().__init__(ndims=2, name="binary flip")
+        super().__init__(ndims=2, id="binary flip")
 
     def phi(self, x: Float[Array, "2"]) -> Float:
         x, y = x
