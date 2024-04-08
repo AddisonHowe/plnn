@@ -14,6 +14,8 @@ def get_phi_module_from_id(id):
         return BinaryChoicePotential()
     elif id == "binary flip" or id == "phi2":
         return BinaryFlipPotential()
+    elif id == "stitched" or id == "phi3":
+        return StichedBinaryPotential()
     else:
         raise RuntimeError(f"Unknown Algebraic Potential ID: {id}")
 
@@ -76,4 +78,23 @@ class BinaryFlipPotential(AbstractAlgebraicPotential):
             4*x[0]**3 + 3*x[0]*x[0] - 2*x[1]*x[1] - 2*x[0],
             4*x[1]**3 - 4*x[0]*x[1]
         ]).T
+    
+
+class StichedBinaryPotential(AbstractAlgebraicPotential):
+
+    r1: Float
+    r2: Float
+
+    def __init__(self, r1: Float=1., r2: Float=1.):
+        super().__init__(ndims=2, id="stitched")
+        self.r1 = r1
+        self.r2 = r2
+
+    def phi(self, x: Float[Array, "2"]) -> Float:
+        x, y = x
+        u, v = x - 2., y - 1.  # translation of x, y for F2
+        c = 0.5 * (jnp.tanh(10.*(x - 0.5)) + 1.)  # chi transition function
+        f1 = x**4 + y**4 + y**3 - 4*x*x*y + y*y
+        f2 = u**4 + v**4 + u**3 - 2*u*v*v - u*u
+        return self.r1 * (1. - c) * f1 + self.r2 * c * f2
     
