@@ -423,6 +423,45 @@ class PLNN(eqx.Module):
         vecsim = jax.vmap(self.simulate_path_with_saves, (None, None, 0, None, None, 0))
         return vecsim(t0, t1, y0, sigparams, saveat, subkeys)
     
+    def burnin_path(
+            self,
+            tburn: Float,
+            y0: Float[Array, "ndims"],
+            sigparams: Float[Array, "nsigs nsigparams"],
+            key: Array,
+    )->Float[Array, "ndims"]:
+        drift = lambda t, y, args: self.drift(0., y, sigparams)
+        diffusion = lambda t, y, args: self.diffusion(0., y)
+        brownian_motion = VirtualBrownianTree(
+            0., tburn, tol=1e-3, 
+            shape=(len(y0),), 
+            key=key
+        )
+        terms = MultiTerm(
+            ODETerm(drift), 
+            WeaklyDiagonalControlTerm(diffusion, brownian_motion)
+        )
+        solver = _SOLVER_KEYS[self.solver]()
+        saveat = SaveAt(t1=True)
+        sol = diffeqsolve(
+            terms, solver, 
+            0., tburn, dt0=self.dt0, 
+            y0=y0, 
+            saveat=saveat
+        )
+        return sol.ys
+    
+    def burnin_ensemble(
+            self,
+            tburn: Float,
+            y0: Float[Array, "ncells ndims"],
+            sigparams: Float[Array, "nsigs nsigparams"],
+            key: Array,
+    )->Float[Array, "ncells ndims"]:
+        subkeys = jrandom.split(key, len(y0))
+        vecsim = jax.vmap(self.burnin_path, (None, 0, None, 0))
+        return vecsim(tburn, y0, sigparams, subkeys).squeeze(1)
+    
     def run_landscape_simulation(
             self,
             x0,
@@ -430,6 +469,7 @@ class PLNN(eqx.Module):
             dt_save,
             sigparams,
             key,
+            burnin=1e-2,
     ):
         """TODO: Documentation
         """
@@ -444,10 +484,12 @@ class PLNN(eqx.Module):
             )
         saveat = SaveAt(subs=subsaves_list)
 
-        key, subkey = jax.random.split(key, 2)
+        key, subkey1, subkey2 = jax.random.split(key, 3)
         
+        x0 = self.burnin_ensemble(burnin, x0, sigparams, subkey1)
+
         ts, ys = self.simulate_ensemble_with_saves(
-            0, tfin, x0, sigparams, saveat, subkey
+            0, tfin, x0, sigparams, saveat, subkey2
         )
 
         ts = [tt[0] for tt in ts]
