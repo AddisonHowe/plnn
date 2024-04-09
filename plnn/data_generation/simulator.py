@@ -24,7 +24,9 @@ class Simulator:
             dt=1e-2, 
             burnin=0, 
             dt_save=None, 
-            rng=np.random.default_rng()
+            rng=np.random.default_rng(),
+            param_args=None,
+            burnin_signal=None,
     ):
         """Run a simulation.
 
@@ -53,23 +55,21 @@ class Simulator:
         # Simulation timesteps
         ts = np.linspace(0., tfin, 1 + int(tfin / dt))
         
-        # Initial state
+        # Initialize all cells at given state `x0`
         x0 = np.array(x0)
         dim = x0.shape[-1]
         xs_save = np.zeros([nsaves, ncells, dim])
         xs_save[0] = x0
         
-        # Initial signals
+        # Initialize signals and parameters for burnin phase
         sig0 = self.signal_func(t0)
+        if burnin_signal is not None:
+            sig0[:] = burnin_signal            
+        p0 = self.param_func(0., sig0, param_args)
         sig_shape = sig0.shape
-        sig_save = np.zeros([nsaves, *sig_shape])
-        sig_save[0] = sig0
-
-        # Initial parameters
-        p0 = self.param_func(sig0)
         ps_shape = p0.shape
+        sig_save = np.zeros([nsaves, *sig_shape])
         ps_save = np.zeros([nsaves, *ps_shape])
-        ps_save[0] = p0
         
         # Initialize noise array
         dw = np.empty(xs_save[0].shape)
@@ -78,21 +78,27 @@ class Simulator:
         x = xs_save[0].copy()
         sig = sig0.copy()
         p = p0.copy()
-
+        
         # Burnin steps: Update only x. Signal and parameters are fixed.
         for i in range(burnin):
             dw[:] = np.sqrt(dt) * rng.standard_normal(x.shape)
             term1 = dt * self.f(t0, x, p)
             term2 = dw * self.noise_func(t0, x)
             x += term1 + term2
-                
+
+        # Reinitialize signals and parameters for main steps
+        sig0 = self.signal_func(t0)
+        p0 = self.param_func(0., sig0, param_args)
+
         # Euler steps
         xs_save[0] = x
+        sig_save[0] = sig0
+        ps_save[0] = p0
         save_counter = 1
         for i, t in zip(range(1, len(ts)), ts[0:-1]):
             dw[:] = np.sqrt(dt) * rng.standard_normal(x.shape)
             sig = self.signal_func(t)
-            p = self.param_func(sig)
+            p = self.param_func(t, sig, param_args)
             term1 = dt * self.f(t, x, p)
             term2 = dw * self.noise_func(t, x)
             x += term1 + term2
