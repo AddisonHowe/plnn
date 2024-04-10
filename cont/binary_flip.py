@@ -58,7 +58,15 @@ X_VIEW_LIMS = [-2, 2]
 Y_VIEW_LIMS = [-2, 2]
 
 
-def get_binary_flip_curves(p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS):
+def get_binary_flip_curves(
+        p1lims=P1LIMS, 
+        p2lims=P2LIMS, 
+        xstarts=XSTARTS,
+        rng=None,
+        seed=None,
+):
+    if rng is None:
+        rng = np.random.default_rng(seed=seed)
     p1lims = p1lims.copy()
     p2lims = p2lims.copy()
     p1lims[0] = min(p1lims[0], P1LIMS[0])

@@ -18,6 +18,9 @@ def parse_args(args):
     parser.add_argument('--dt_save', type=float, default=1e-1)
     parser.add_argument('--burnin', type=float, default=0.5,
                         help="Burnin time as a factor of the total duration.")
+    parser.add_argument('--burnin_signal', type=float, nargs='+', 
+                        default=None,
+                        help="Signal to use during burnin phase.")
 
     parser.add_argument('--landscape_name', type=str, required=True, 
                         choices=['phi1', 'phi2'])
@@ -115,6 +118,7 @@ def main(args):
     dt_save = args.dt_save
     ncells = args.ncells
     burnin = int(args.burnin * tfin // dt)
+    burnin_signal = args.burnin_signal
     nsignals = args.nsignals
     signal_schedule = args.signal_schedule
     s10_range = args.s10_range
@@ -188,6 +192,7 @@ def main(args):
             dt=dt, 
             dt_save=dt_save, 
             burnin=burnin,
+            burnin_signal=burnin_signal,
             nsignals=nsignals,
             signal_schedule=signal_schedule, 
             sigparams=sigparams,
@@ -223,6 +228,7 @@ def main(args):
                     dt=args.dt, 
                     dt_save=ani_dt, 
                     burnin=burnin,
+                    burnin_signal=burnin_signal,
                     nsignals=args.nsignals,
                     signal_schedule=args.signal_schedule, 
                     sigparams=sigparams,
