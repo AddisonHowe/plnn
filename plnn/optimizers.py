@@ -82,6 +82,15 @@ def select_optimizer(
         optimizer = optax.inject_hyperparams(optax.adam)(
             learning_rate=lr_sched, 
         )
+    elif optimization_method == 'adamw':
+        optimizer = optax.inject_hyperparams(optax.adamw)(
+            learning_rate=lr_sched, 
+            b1=0.9, 
+            b2=0.999, 
+            eps=1e-08, 
+            eps_root=0.0,
+            weight_decay=optim_args.get('weight_decay'),
+        )
     elif optimization_method == 'rms':
         optimizer = optax.inject_hyperparams(optax.rmsprop)(
             learning_rate=lr_sched,
