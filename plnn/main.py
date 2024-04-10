@@ -151,7 +151,7 @@ def parse_args(args):
         description="Specifications of the optimization training algorithm."
     )
     grp_op.add_argument('--optimizer', type=str, default="sgd", 
-                        choices=['sgd', 'adam', 'rms'])
+                        choices=['sgd', 'adam', 'adamw', 'rms'])
     grp_op.add_argument('--momentum', type=float, default=0.9)
     grp_op.add_argument('--weight_decay', type=float, default=0.)
     grp_op.add_argument('--clip', type=float, default=1.0)
