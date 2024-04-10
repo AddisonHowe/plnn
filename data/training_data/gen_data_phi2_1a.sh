@@ -22,6 +22,7 @@ dt=0.001
 dt_save=10.0
 ncells=500
 burnin=0.05
+burnin_signal="-0.25 0.00"
 nsignals=2
 signal_schedule=sigmoid
 param_func=identity
@@ -39,6 +40,7 @@ python plnn/data_generation/generate_data.py \
     -o data/training_data/${runname}/training \
     --nsims $nsims_train \
     --tfin $tfin --dt $dt --dt_save $dt_save --ncells $ncells --burnin $burnin \
+    --burnin_signal $burnin_signal \
     --landscape_name ${landscape} \
     --nsignals $nsignals \
     --signal_schedule $signal_schedule \
@@ -64,6 +66,7 @@ python plnn/data_generation/generate_data.py \
     -o data/training_data/${runname}/validation \
     --nsims $nsims_valid \
     --tfin $tfin --dt $dt --dt_save $dt_save --ncells $ncells --burnin $burnin \
+    --burnin_signal $burnin_signal \
     --landscape_name ${landscape} \
     --nsignals $nsignals \
     --signal_schedule $signal_schedule \

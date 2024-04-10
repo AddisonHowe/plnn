@@ -22,7 +22,11 @@ def get_fold_curves(
         max_delta_p=1e-2,
         rho=1e-1,
         verbosity=0,
+        rng=None,
+        seed=None,
 ):
+    if rng is None:
+        rng = np.random.default_rng(seed=seed)
     curves_p = []
     colors = []
     for i in range(len(xstarts)):
@@ -39,9 +43,11 @@ def get_fold_curves(
             rho=rho,
             plims=[p1lims, p2lims],
             verbosity=verbosity,
+            rng=rng,
         )
-        curves_p.append(ps)
-        colors.append(col)
+        if len(ps) > 0:
+            curves_p.append(ps)
+            colors.append(col)
     return curves_p, colors
 
 

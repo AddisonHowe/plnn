@@ -90,12 +90,12 @@ def get_plnn_bifurcation_curves(
         xlims=XLIMS,
         ylims=YLIMS,
         color='k',
-        rng=None, seed=None,
+        rng=None,
+        seed=None,
         verbosity=0
 ):
     if rng is None:
         rng = np.random.default_rng(seed=seed)
-
     p1lims = p1lims.copy()
     p2lims = p2lims.copy()
     p1lims[0] = min(p1lims[0], P1LIMS[0])
@@ -125,6 +125,7 @@ def get_plnn_bifurcation_curves(
         max_delta_p=MAX_DELTA_P,
         rho=RHO,
         verbosity=verbosity,
+        rng=rng,
     )
     return curves_p, colors 
 

@@ -57,7 +57,15 @@ X_VIEW_LIMS = [-2, 2]
 Y_VIEW_LIMS = [-2, 2]
 
 
-def get_binary_choice_curves(p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS):
+def get_binary_choice_curves(
+        p1lims=P1LIMS, 
+        p2lims=P2LIMS, 
+        xstarts=XSTARTS,
+        rng=None,
+        seed=None,
+):
+    if rng is None:
+        rng = np.random.default_rng(seed=seed)
     p1lims = p1lims.copy()
     p2lims = p2lims.copy()
     p1lims[0] = min(p1lims[0], P1LIMS[0])
@@ -78,6 +86,7 @@ def get_binary_choice_curves(p1lims=P1LIMS, p2lims=P2LIMS, xstarts=XSTARTS):
         max_ds=MAX_DS,
         max_delta_p=MAX_DELTA_P,
         rho=RHO,
+        rng=rng,
     )
     return curves_p, colors
 
