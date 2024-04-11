@@ -10,7 +10,7 @@ plt.style.use('figures/fig1.mplstyle')
 from plnn.pl import plot_landscape
 
 
-OUTDIR = "out/figures/fig1_out"
+OUTDIR = "figures/out/fig1_out"
 SAVEPLOTS = True
 
 os.makedirs(OUTDIR, exist_ok=True)

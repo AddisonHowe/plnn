@@ -13,7 +13,7 @@ from plnn.models import DeepPhiPLNN
 from plnn.pl import plot_loss_history, plot_sigma_history
 
 
-OUTDIR = "out/figures/fig2_out"
+OUTDIR = "figures/out/fig2_out"
 SAVEPLOTS = True
 
 os.makedirs(OUTDIR, exist_ok=True)
