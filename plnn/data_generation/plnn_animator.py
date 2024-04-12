@@ -31,6 +31,9 @@ class PLNNSimulationAnimator:
     _main_scatter_color = 'k'
     _mins_scatter_size = 6
     _mins_scatter_color = 'y'
+    _mins_scatter_alpha = 0.5
+    _clst_scatter_color1 = 'r'
+    _clst_scatter_color2 = 'k'
     _surf_scatter_size = 5
     _surf_scatter_color = 'k'
     _siglinecmap = 'tab10'
@@ -295,7 +298,7 @@ class PLNNSimulationAnimator:
         self._setup_rmisc()
         self._setup_bmisc()
         return (
-            self.scat_main, self.scat_clst, *self._signal_markers,
+            self.scat_main, self.scat_clst1, *self._signal_markers,
             *self._param_markers, self._bif_marker, self.heatmap
         )
         
@@ -310,7 +313,7 @@ class PLNNSimulationAnimator:
         self._update_rmisc(i)
         self._update_bmisc(i)
         return (
-            self.scat_main, self.scat_clst, *self._signal_markers,
+            self.scat_main, self.scat_clst1, *self._signal_markers,
             *self._param_markers, self._bif_marker, self.heatmap
         )
 
@@ -337,7 +340,7 @@ class PLNNSimulationAnimator:
             marker='*', 
             markersize=self._mins_scatter_size, 
             color=self._mins_scatter_color, 
-            alpha=1, 
+            alpha=self._mins_scatter_alpha, 
             linestyle='None', 
             animated=True
         )
@@ -415,13 +418,23 @@ class PLNNSimulationAnimator:
     def _setup_clst(self):
         ax = self.ax_clst
         ax.set_aspect('equal')
-        self.scat_clst, = ax.plot(
+        self.scat_clst1, = ax.plot(
             [], [], marker='.', markersize=self._main_scatter_size, 
-            color=self._main_scatter_color, 
-            alpha=0.75, linestyle='None', 
-            animated=True
+            color=self._clst_scatter_color1, 
+            alpha=0.5, linestyle='None', 
+            animated=True,
+            label='previous'
+        )
+        self.scat_clst2, = ax.plot(
+            [], [], marker='.', markersize=self._main_scatter_size, 
+            color=self._clst_scatter_color2, 
+            alpha=0.5, linestyle='None', 
+            animated=True,
+            label='current'
         )
         self.clst_index = 0
+        ax.legend([self.scat_clst1, self.scat_clst2], 
+                  ['previous', 'current'], prop={'size': self._legendsize})
         ax.axis([*self.xlims, *self.ylims])
         # Text
         pos = [self.xlims[0] + (self.xlims[1]-self.xlims[0])*.5, 
@@ -638,7 +651,8 @@ class PLNNSimulationAnimator:
         if t >= clst_t:
             xy_saved = self.get_xy_saved(self.clst_index)
             self.clst_index += 1
-            self.scat_clst.set_data(xy_saved)
+            self.scat_clst1.set_data(self.scat_clst2.get_data())
+            self.scat_clst2.set_data(xy_saved)
 
     def _update_sigs(self, i):
         t = self.get_t(i)
