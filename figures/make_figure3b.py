@@ -69,9 +69,16 @@ FIGSIZE = (5*sf, 5*sf)
 
 fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
 
-bifcurves, bifcolors = get_binary_flip_curves(rng=rng)
-for curve, color in zip(bifcurves, bifcolors):
-    ax.plot(curve[:,0], curve[:,1], '-', color=color)
+bifcurves_true, bifcolors_true = get_binary_flip_curves(rng=rng)
+# Add the flip bifurcation curve
+flipcurve = np.zeros([100, 2])
+flipcurve[:,0] = np.linspace(-1.5, 0, flipcurve.shape[0])
+bifcurves_true.append(flipcurve)
+bifcolors_true.append('purple')
+
+for curve, color in zip(bifcurves_true, bifcolors_true):
+    linestyle = ':' if color == 'purple' else '-'
+    ax.plot(curve[:,0], curve[:,1], linestyle=linestyle, color=color)
 
 ax.set_xlim(-2, 2)
 ax.set_ylim(-2, 2)
@@ -81,13 +88,52 @@ ax.set_ylabel("$\\tau_2$")
 plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
 
 
+#################################  Bif diagram of true landscape in signals
+FIGNAME = "phi2_bifs_signals"
+FIGSIZE = (5*sf, 5*sf)
+
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+
+for curve, color in zip(bifcurves_true, bifcolors_true):
+    if len(curve) > 1:
+        linestyle = ':' if color == 'purple' else '-'
+        ax.plot(curve[:,0], curve[:,1], linestyle=linestyle, color=color)
+
+ax.set_xlim(-2, 2)
+ax.set_ylim(-2, 2)
+ax.set_xlabel("$s_1$")
+ax.set_ylabel("$s_2$")
+
+plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
+
+
 #################################  Load the inferred landscape
 
-MODELDIR = "data/trained_models/model_phi2_1a_v1_20240311_131333"
+MODELDIR = "data/trained_models/model_phi2_1a_v1_20240410_134646"
 
 model, hps, idx, name, fpath = load_model_from_directory(MODELDIR)
 logged_args, training_info = load_model_training_metadata(MODELDIR)
 
+tilt_weights = model.get_parameters()['tilt.w'][0]
+tilt_bias = model.get_parameters()['tilt.b'][0]
+noise_parameter = model.get_sigma()
+
+if tilt_bias is None:
+    tilt_bias = np.zeros(tilt_weights.shape[0])
+else:
+    tilt_bias = tilt_bias[0]
+
+def signal_to_tilts(signal):
+    return np.dot(tilt_weights, signal) + tilt_bias
+
+def tilts_to_signals(tilts):
+    assert tilts.shape[0] == 2
+    y = tilts - tilt_bias[:,None]
+    return np.linalg.solve(tilt_weights, y)
+
+print("tilt weights:\n", tilt_weights)
+print("tilt bias:\n", tilt_bias)
+print("inferred noise:\n", noise_parameter)
 
 #################################  Heatmap of inferred landscape
 
@@ -123,10 +169,10 @@ FIGSIZE = (5*sf, 5*sf)
 
 fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
 
-bifcurves, bifcolors = get_plnn_bifurcation_curves(
+bifcurves_inferred, bifcolors_inferred = get_plnn_bifurcation_curves(
     model, num_starts=100, rng=rng
 )
-for curve, color in zip(bifcurves, bifcolors):
+for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
     ax.plot(curve[:,0], curve[:,1], '-', color=color)
 
 ax.set_xlim(-2, 2)
@@ -137,5 +183,72 @@ ax.set_ylabel("$\\tau_2$")
 plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
 
 
-# ##############################################################################
-# ##############################################################################
+#################################  Bif diagram of inferred landscape in signals
+FIGNAME = "phi2_bifs_signals_inferred"
+FIGSIZE = (5*sf, 5*sf)
+
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+
+for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
+    if len(curve) > 1:
+        curve_signal = tilts_to_signals(curve.T).T
+        ax.plot(curve_signal[:,0], curve_signal[:,1], '-', color=color)
+
+ax.set_xlabel("$s_1$")
+ax.set_ylabel("$s_2$")
+
+# ax.set_xlim()
+# ax.set_ylim()
+
+plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
+
+
+#################################  Combined bif diagram
+FIGNAME = "phi2_combined_bifs"
+FIGSIZE = (5*sf, 5*sf)
+
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+
+for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
+    if len(curve) > 1:
+        ax.plot(curve[:,0], curve[:,1], '-', color=color)
+
+for curve, color in zip(bifcurves_true, bifcolors_true):
+    if len(curve) > 1:
+        ax.plot(curve[:,0], curve[:,1], '--', color=color)
+
+ax.set_xlabel("$\\tau_1$")
+ax.set_ylabel("$\\tau_2$")
+
+ax.set_xlim([-2, 2])
+ax.set_ylim([-2, 2])
+
+plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
+
+
+#################################  Combined bif diagram in signals
+FIGNAME = "phi2_combined_bifs_signals"
+FIGSIZE = (5*sf, 5*sf)
+
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+
+for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
+    if len(curve) > 1:
+        curve_signal = tilts_to_signals(curve.T).T
+        ax.plot(curve_signal[:,0], curve_signal[:,1], '-', color=color)
+
+for curve, color in zip(bifcurves_true, bifcolors_true):
+    if len(curve) > 1:
+        ax.plot(curve[:,0], curve[:,1], '--', color=color)
+
+ax.set_xlabel("$s_1$")
+ax.set_ylabel("$s_2$")
+
+ax.set_xlim([-4, 4])
+ax.set_ylim([-4, 4])
+
+plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
+
+
+##############################################################################
+##############################################################################

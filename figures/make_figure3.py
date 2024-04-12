@@ -1,10 +1,10 @@
 """Figure 3 Script
 
-Generate plots used in Figure 3 of the accompanying manuscript.
+Generate plots used in Figure 3 of the accompanying manuscript, corresponding
+to the binary choice landscape.
 """
 
 import os
-from glob import glob
 import numpy as np
 import jax
 jax.config.update("jax_enable_x64", True)
@@ -12,12 +12,10 @@ jax.config.update("jax_enable_x64", True)
 import matplotlib.pyplot as plt
 plt.style.use('figures/fig3.mplstyle')
 
-from plnn.models import DeepPhiPLNN
 from plnn.io import load_model_from_directory, load_model_training_metadata
 from plnn.pl import plot_landscape, plot_phi
 
 from cont.binary_choice import get_binary_choice_curves
-from cont.binary_flip import get_binary_flip_curves
 from cont.plnn_bifurcations import get_plnn_bifurcation_curves 
 
 SEED = 12345
@@ -32,9 +30,6 @@ os.makedirs(OUTDIR, exist_ok=True)
 
 def func_phi1_star(x, y, p1=0, p2=0):
     return x**4 + y**4 + y**3 - 4*x*x*y + y*y + p1*x + p2*y
-
-def func_phi2_star(x, y, p1=0, p2=0):
-    return x**4 + y**4 + x**3 - 2*x*y*y - x*x + p1*x + p2*y
 
 sf = 1/2.54  # scale factor from [cm] to inches
 
@@ -113,6 +108,7 @@ logged_args, training_info = load_model_training_metadata(MODELDIR)
 
 tilt_weights = model.get_parameters()['tilt.w'][0]
 tilt_bias = model.get_parameters()['tilt.b'][0]
+noise_parameter = model.get_sigma()
 
 if tilt_bias is None:
     tilt_bias = np.zeros(tilt_weights.shape[0])
@@ -129,6 +125,7 @@ def tilts_to_signals(tilts):
 
 print("tilt weights:\n", tilt_weights)
 print("tilt bias:\n", tilt_bias)
+print("inferred noise:\n", noise_parameter)
 
 #################################  Heatmap of inferred landscape
 
@@ -198,7 +195,7 @@ ax.set_ylabel("$s_2$")
 plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
 
 
-# #################################  Combined bif diagram
+##################################  Combined bif diagram
 FIGNAME = "phi1_combined_bifs"
 FIGSIZE = (5*sf, 5*sf)
 
@@ -221,7 +218,7 @@ ax.set_ylim([-1, 3])
 plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
 
 
-# #################################  Combined bif diagram in signals
+##################################  Combined bif diagram in signals
 FIGNAME = "phi1_combined_bifs_signals"
 FIGSIZE = (5*sf, 5*sf)
 
@@ -245,6 +242,5 @@ ax.set_ylim([-1, 5])
 plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
 
 
-
-# # ##############################################################################
-# # ##############################################################################
+##############################################################################
+##############################################################################
