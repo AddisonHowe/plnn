@@ -68,19 +68,19 @@ def get_argparser():
 
 
 def plot_diagrams(
-        args, 
+        argdict, 
         xstarts, p1func, p2func, 
         F, J, dxFxPhi, Fp,
         maxiter, ds, min_ds, max_ds, max_delta_p, rho, p1lims, p2lims,
         p1_view_lims, p2_view_lims, x_view_lims, y_view_lims,
 ):
-    plot_estimates = args.plot_estimates
-    plot_starts = args.plot_starts
-    plot_first_steps = args.plot_first_steps
-    plot_failed_to_converge_points = args.plot_failed_to_converge_points
-    plot_critical_ps = args.plot_critical_ps
-    plot_vecs = args.plot_vecs
-    verbosity = args.verbosity
+    plot_estimates = argdict['plot_estimates']
+    plot_starts = argdict['plot_starts']
+    plot_first_steps = argdict['plot_first_steps']
+    plot_failed_to_converge_points = argdict['plot_failed_to_converge_points']
+    plot_critical_ps = argdict['plot_critical_ps']
+    plot_vecs = argdict['plot_vecs']
+    verbosity = argdict['verbosity']
 
     fig1, [ax1, ax2] = plt.subplots(1, 2, figsize=(8,4))
 

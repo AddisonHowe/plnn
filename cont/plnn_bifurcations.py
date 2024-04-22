@@ -164,7 +164,7 @@ def main(args):
     )
 
     plot_diagrams(
-        args,
+        vars(args),
         xstarts, p1func, p2func, 
         F, J, dxFxPhi, Fp,
         MAXITER, DS, MIN_DS, MAX_DS, MAX_DELTA_P, RHO, P1LIMS, P2LIMS,

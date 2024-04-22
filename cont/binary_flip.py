@@ -4,6 +4,7 @@
 
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
 
 from cont.fold_curves import get_fold_curves, get_argparser, plot_diagrams
 
@@ -91,9 +92,41 @@ def get_binary_flip_curves(
     return curves_p, colors
 
 
+def plot_binary_flip_bifurcation_diagram(
+        ax=None,
+        rng=None,
+        xlim=[-2, 2],
+        ylim=[-2, 2],
+        xlabel="$p_1$",
+        ylabel="$p_2$",
+        tight_layout=False,
+        saveas=None,
+        show=False,
+):
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+    bifcurves, bifcolors = get_binary_flip_curves(
+        rng=rng
+    )
+    for curve, color in zip(bifcurves, bifcolors):
+        ax.plot(
+            curve[:,0], curve[:,1], 
+            linestyle='-', 
+            color=color,
+        )  
+    ax.set_xlim(*xlim)
+    ax.set_ylim(*ylim)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    if tight_layout: plt.tight_layout()
+    if saveas: plt.savefig(saveas, bbox_inches='tight')
+    if show: plt.show()
+    return ax
+
+
 def main(args):
     plot_diagrams(
-        args,
+        vars(args),
         XSTARTS, P1, P2, 
         F, J, dxFxPhi, Fp,
         MAXITER, DS, MIN_DS, MAX_DS, MAX_DELTA_P, RHO, P1LIMS, P2LIMS,

@@ -35,7 +35,7 @@ class NoGradBinaryFlipPotential(AbstractAlgebraicPotential):
         y2 = y*y
         return x2*x2 + y2*y2 + x2*x - 2*x*y2 - x2
         
-def get_algebraic_potential(id):
+def get_algebraic_potential(id, args={}):
     if id == "binary choice":
         return get_phi_module_from_id('phi1')
     elif id == "binary flip":
@@ -44,6 +44,8 @@ def get_algebraic_potential(id):
         return NoGradBinaryChoicePotential()
     elif id == "binary flip nograd":
         return NoGradBinaryFlipPotential()
+    elif id == "quadratic":
+        return get_phi_module_from_id('quadratic', args=args)
 
 
 ###############################################################################
@@ -74,7 +76,6 @@ class TestBinaryChoice:
         msg = f"Expected:\n{phi_exp}\nGot:\n{phi}"
         assert jnp.allclose(phi, phi_exp, rtol=rtol, atol=atol), msg
             
-
     @pytest.mark.parametrize('x, grad_phi_exp', [
         [[0., 0.], [0, 0]],
         [[0., 1.], [0, 9]],
@@ -89,7 +90,6 @@ class TestBinaryChoice:
         msg = f"Expected:\n{grad_phi_exp}\nGot:\n{grad_phi}"
         assert jnp.allclose(grad_phi, grad_phi_exp, rtol=rtol, atol=atol), msg
             
-
 
 @pytest.mark.parametrize('id', ['binary flip', 'binary flip nograd'])
 @pytest.mark.parametrize('dtype, rtol, atol', [
@@ -129,3 +129,45 @@ class TestBinaryFlip:
         msg = f"Expected:\n{grad_phi_exp}\nGot:\n{grad_phi}"
         assert jnp.allclose(grad_phi, grad_phi_exp, rtol=rtol, atol=atol), msg
 
+
+@pytest.mark.parametrize('id', ['quadratic'])
+@pytest.mark.parametrize('dtype, rtol, atol', [
+    [jnp.float32, 1e-5, 1e-8],
+    [jnp.float64, 1e-5, 1e-8],
+])
+class TestQuadraticLandscape:
+
+    def _get_model(self, id, a, b):
+        return get_algebraic_potential(id, {'a': a, 'b': b})
+    
+    @pytest.mark.parametrize('a, b, x, phi_exp', [
+        [1., 1., [0., 0.], 0.],
+        [1., 1., [0., 1.], 1.],
+        [1., 1., [1., 0.], 1.],
+        [1., 1., [1., 1.], 2.],
+        [1., 1., [2., 1.], 5.],
+        [4., 9., [1., 1.], 13.],
+    ])
+    def test_phi(self, id, dtype, rtol, atol, a, b, x, phi_exp):
+        m = self._get_model(id, a, b)
+        x = jnp.array(x, dtype=dtype)
+        phi_exp = jnp.array(phi_exp, dtype=dtype)
+        phi = m.phi(x)
+        msg = f"Expected:\n{phi_exp}\nGot:\n{phi}"
+        assert jnp.allclose(phi, phi_exp, rtol=rtol, atol=atol), msg
+
+    @pytest.mark.parametrize('a, b, x, grad_phi_exp', [
+        [1., 1., [0., 0.], [0., 0.]],
+        [1., 1., [0., 1.], [0., 2.]],
+        [1., 1., [1., 0.], [2., 0.]],
+        [1., 1., [1., 1.], [2., 2.]],
+        [1., 1., [2., 1.], [4., 2.]],
+        [4., 9., [1., 1.], [8., 18.]],
+    ])
+    def test_grad_phi(self, id, dtype, rtol, atol, a, b, x, grad_phi_exp):
+        m = self._get_model(id, a, b)
+        x = jnp.array(x, dtype=dtype)
+        grad_phi_exp = jnp.array(grad_phi_exp, dtype=dtype)
+        grad_phi = m.grad_phi(x)
+        msg = f"Expected:\n{grad_phi_exp}\nGot:\n{grad_phi}"
+        assert jnp.allclose(grad_phi, grad_phi_exp, rtol=rtol, atol=atol), msg
