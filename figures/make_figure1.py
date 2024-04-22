@@ -16,7 +16,7 @@ SAVEPLOTS = True
 os.makedirs(OUTDIR, exist_ok=True)
 
 def func_phi1_star(x, y, p1=0, p2=0):
-    return x**4 + y**4 + y**3 - 4*x*x*y + y*y - p1*x + p2*y
+    return x**4 + y**4 + y**3 - 4*x*x*y + y*y + p1*x + p2*y
 
 def func_phi2_star(x, y, p1=0, p2=0):
     return x**4 + y**4 + x**3 - 2*x*y*y - x*x + p1*x + p2*y
@@ -41,7 +41,7 @@ plot_landscape(
     func_phi1_star, r=r, res=res, params=[0, 0], 
     lognormalize=lognormalize,
     clip=clip,
-    title=f"$\phi_1^*$ (untilted)",
+    title=f"$\phi$ untilted",
     title_fontsize=8,
     ncontours=10,
     contour_linewidth=0.5,
@@ -60,16 +60,18 @@ plot_landscape(
     minimum=50,
     clip=100,
     include_cbar=False,
-    title=f"$\phi_1^*$ (untilted)",
+    title=f"$\phi$ untilted",
     title_fontsize=9,
     alpha=0.75,
     xlims=[-3.5, 3.5],
     ylims=[-3.5, 3.5],
     zlims=[0, 150],
+    zlabel="$\phi$",
     view_init=[35, -45],  # elevation, aximuthal 
     ncontours=10,
     contour_linewidth=0.5,
     equal_axes=True,
+    tight_layout=True,
     saveas=f"{OUTDIR}/{FIGNAME2}" if SAVEPLOTS else None,
     figsize=FIGSIZE2,
 );
@@ -81,7 +83,7 @@ plot_landscape(
 FIGNAME1 = "phi2_heatmap_untilted"
 FIGSIZE1 = (5*sf, 5*sf)
 FIGNAME2 = "phi2_landscape_untilted"
-FIGSIZE2 = (5*sf, 5*sf)
+FIGSIZE2 = (6*sf, 6*sf)
 
 r = 4       # box radius
 res = 200   # resolution
@@ -134,10 +136,11 @@ FIGNAME = "phi1_heatmap_tilted"  # appended with index i
 FIGSIZE = (4*sf, 4*sf)
 
 PARAMS_PHI1 = [
-    [ 1.0,  1.0],
-    [ 1.0, -1.0],
-    [-1.0,  1.0],
-    [-1.0, -1.0],
+    [ 0,  0],
+    [-0.25,  1.00],
+    [ 0.25,  1.00],
+    [-0.50,  0.00],
+    [ 0.50,  0.00],
 ]
 r = 4       # box radius
 res = 200   # resolution
@@ -215,14 +218,13 @@ FIGSIZE = (4*sf, 4*sf)
 fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
 
 plot_binary_choice_bifurcation_diagram(
-    verbosity=0,
-    show=False,
-    saveas=None,
     ax=ax,
+    xlabel="$\\tau_1$",
+    ylabel="$\\tau_2$",
 )
 
 for p in PARAMS_PHI1:
-    ax.plot(*p, '.k', alpha=0.8)
+    ax.plot(*p, '.k', alpha=0.8, markersize=1)
 
 if SAVEPLOTS:
     plt.savefig(f"{OUTDIR}/phi1_bifdiagram")
@@ -237,10 +239,9 @@ from cont.binary_flip import plot_binary_flip_bifurcation_diagram
 
 FIGSIZE = (4*sf, 4*sf)
 
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+
 plot_binary_flip_bifurcation_diagram(
-    verbosity=0,
-    show=False,
-    saveas=None,
     ax=ax,
 )
 

@@ -1,4 +1,4 @@
-"""Figure 3 Script
+"""Figure 3a Script
 
 Generate plots used in Figure 3 of the accompanying manuscript, corresponding
 to the binary choice landscape.
@@ -23,7 +23,7 @@ SEED = 12345
 rng = np.random.default_rng(seed=SEED)
 
 
-OUTDIR = "figures/out/fig3_out"
+OUTDIR = "figures/out/fig3a_out"
 SAVEPLOTS = True
 
 os.makedirs(OUTDIR, exist_ok=True)
