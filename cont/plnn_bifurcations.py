@@ -15,7 +15,7 @@ from cont.fold_curves import get_fold_curves, get_argparser, plot_diagrams
 MAXITER = 10000
 DS = 1e-3
 MIN_DS = 1e-8
-MAX_DS = 1e-1
+MAX_DS = 1e-2
 MAX_DELTA_P = 1e-1
 RHO = 1e-1
 P1LIMS = [-4, 4]
@@ -90,6 +90,12 @@ def get_plnn_bifurcation_curves(
         xlims=XLIMS,
         ylims=YLIMS,
         color='k',
+        maxiter=MAXITER,
+        ds=DS,
+        min_ds=MIN_DS,
+        max_ds=MAX_DS,
+        max_delta_p=MAX_DELTA_P,
+        rho=RHO,
         rng=None,
         seed=None,
         verbosity=0
@@ -118,12 +124,12 @@ def get_plnn_bifurcation_curves(
         p2func, 
         p1lims=p1lims, 
         p2lims=p2lims, 
-        maxiter=MAXITER, 
-        ds=DS, 
-        min_ds=MIN_DS, 
-        max_ds=MAX_DS,
-        max_delta_p=MAX_DELTA_P,
-        rho=RHO,
+        maxiter=maxiter, 
+        ds=ds, 
+        min_ds=min_ds, 
+        max_ds=max_ds,
+        max_delta_p=max_delta_p,
+        rho=rho,
         verbosity=verbosity,
         rng=rng,
     )

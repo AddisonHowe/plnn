@@ -59,7 +59,7 @@ def load_model_from_directory(
 
 def load_model_training_metadata(
         modeldir, 
-) -> Tuple[int, dict, dict]:
+) -> Tuple[dict, dict]:
     """Load metadata from the model training process, including loss history.
 
     Args:
@@ -73,17 +73,20 @@ def load_model_training_metadata(
                 loss_hist_valid : Validation loss history.
                 sigma_hist : Value of the noise parameter at each epoch.
                 learning_rate_hist : Learning rate used at each epoch.
+                tilt_weight_hist : History of the weights of the tilt transform.
     """
     loss_hist_train = np.load(f"{modeldir}/training_loss_history.npy")
     loss_hist_valid = np.load(f"{modeldir}/validation_loss_history.npy")
     lr_hist = np.load(f"{modeldir}/learning_rate_history.npy")
     sigma_hist = np.load(f"{modeldir}/sigma_history.npy")
+    tilt_weight_hist = np.load(f"{modeldir}/tilt_weights_history.npy")
     logged_args = _load_args_from_log(f"{modeldir}/log_args.txt")
     return_dict = {
         "loss_hist_train" : loss_hist_train,
         "loss_hist_valid" : loss_hist_valid,
         "learning_rate_hist" : lr_hist,
         "sigma_hist" : sigma_hist,
+        "tilt_weight_hist" : tilt_weight_hist,
     }
     return logged_args, return_dict
 

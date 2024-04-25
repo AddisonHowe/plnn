@@ -48,6 +48,14 @@ def plot_loss_history(
         startidx=0, 
         log=False, 
         title="Loss History", 
+        color_train='r',
+        color_valid='b',
+        marker_train='.',
+        marker_valid='.',
+        linestyle_train='-',
+        linestyle_valid='-',
+        linewidth_train=1,
+        linewidth_valid=1,
         alpha_train=0.9,
         alpha_valid=0.5,
         saveas=None,
@@ -57,10 +65,22 @@ def plot_loss_history(
         fig, ax = plt.subplots(1, 1)
     erange = np.arange(startidx, len(loss_hist_train))
     fplot = ax.semilogy if log else ax.plot
-    fplot(1 + erange, loss_hist_train[erange], 'r.-', 
-          label="Training", alpha=alpha_train)
-    fplot(1 + erange, loss_hist_valid[erange], 'b.-', 
-          label="Validation", alpha=alpha_valid)
+    fplot(
+        1 + erange, loss_hist_train[erange], 
+        color=color_train,
+        marker=marker_train,
+        linestyle=linestyle_train,
+        linewidth=linewidth_train,
+        label="Training", alpha=alpha_train
+    )
+    fplot(
+        1 + erange, loss_hist_valid[erange], 
+        color=color_valid,
+        marker=marker_valid,
+        linestyle=linestyle_valid,
+        linewidth=linewidth_valid,
+        label="Validation", alpha=alpha_valid
+    )
     ax.set_xlabel(f"epoch")
     ax.set_ylabel(f"loss")
     ax.set_title(title)
@@ -94,6 +114,10 @@ def plot_train_vs_valid_history(
 def plot_sigma_history(
         sigma_history, 
         log=False, 
+        color='k',
+        linestyle='-',
+        linewidth=2,
+        marker='.',
         title="Inferred noise parameter", 
         saveas=None,
         ax=None,
@@ -102,7 +126,13 @@ def plot_sigma_history(
     if ax is None:
         fig, ax = plt.subplots(1, 1)
     fplot = ax.semilogy if log else ax.plot
-    fplot(sigma_history, 'k.-')
+    fplot(
+        sigma_history, 
+        color=color,
+        linestyle=linestyle,
+        marker=marker,
+        linewidth=linewidth,
+    )
     if sigma_true is not None:
         xlims = ax.get_xlim()
         ax.hlines(

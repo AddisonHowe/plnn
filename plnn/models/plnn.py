@@ -278,6 +278,7 @@ class PLNN(eqx.Module):
             self,
             t: Float, 
             y: Float[Array, "ndims"], 
+            args=None
     ) -> Float[Array, "ndims"]:
         """Diffusion term used in `simulate_path` method.
 
@@ -310,16 +311,14 @@ class PLNN(eqx.Module):
         Returns:
             Array : Final state. Shape (d,).
         """
-        drift = lambda t, y, args: self.drift(t, y, sigparams)
-        diffusion = lambda t, y, args: self.diffusion(t, y)
         brownian_motion = VirtualBrownianTree(
             t0, t1, tol=1e-3, 
             shape=(len(y0),), 
             key=key
         )
         terms = MultiTerm(
-            ODETerm(drift), 
-            WeaklyDiagonalControlTerm(diffusion, brownian_motion)
+            ODETerm(self.drift), 
+            WeaklyDiagonalControlTerm(self.diffusion, brownian_motion)
         )
         solver = _SOLVER_KEYS[self.solver]()
         saveat = SaveAt(t1=True)
@@ -327,7 +326,8 @@ class PLNN(eqx.Module):
             terms, solver, 
             t0, t1, dt0=self.dt0, 
             y0=y0, 
-            saveat=saveat
+            saveat=saveat,
+            args=sigparams,
         )
         return sol.ys
 
@@ -377,23 +377,22 @@ class PLNN(eqx.Module):
         Returns:
             Array : Final state. Shape (?,d).
         """
-        drift = lambda t, y, args: self.drift(t, y, sigparams)
-        diffusion = lambda t, y, args: self.diffusion(t, y)
         brownian_motion = VirtualBrownianTree(
             t0, t1, tol=1e-3, 
             shape=(len(y0),), 
             key=key
         )
         terms = MultiTerm(
-            ODETerm(drift), 
-            WeaklyDiagonalControlTerm(diffusion, brownian_motion)
+            ODETerm(self.drift), 
+            WeaklyDiagonalControlTerm(self.diffusion, brownian_motion)
         )
         solver = _SOLVER_KEYS[self.solver]()
         sol = diffeqsolve(
             terms, solver, 
             t0, t1, dt0=self.dt0, 
             y0=y0, 
-            saveat=saveat
+            saveat=saveat,
+            args=sigparams,
         )
         return sol.ts, sol.ys
     
@@ -447,7 +446,7 @@ class PLNN(eqx.Module):
             terms, solver, 
             0., tburn, dt0=self.dt0, 
             y0=y0, 
-            saveat=saveat
+            saveat=saveat,
         )
         return sol.ys
     
