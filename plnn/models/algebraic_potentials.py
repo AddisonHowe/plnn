@@ -9,13 +9,15 @@ from jaxtyping import Array, Float
 import equinox as eqx
 
 
-def get_phi_module_from_id(id):
+def get_phi_module_from_id(id, args={}):
     if id == "binary choice" or id == "phi1":
         return BinaryChoicePotential()
     elif id == "binary flip" or id == "phi2":
         return BinaryFlipPotential()
     elif id == "stitched" or id == "phi3":
         return StichedBinaryPotential()
+    elif id == "quadratic" or id == "phiq":
+        return QuadraticPotential(a=args.get('a', 1.), b=args.get('b', 1.))
     else:
         raise RuntimeError(f"Unknown Algebraic Potential ID: {id}")
 
@@ -59,7 +61,7 @@ class BinaryChoicePotential(AbstractAlgebraicPotential):
         return jnp.array([
             4*x[0]**3 - 8*x[0]*x[1],
             4*x[1]**3 + 3*x[1]*x[1] - 4*x[0]*x[0] + 2*x[1]
-        ]).T
+        ])
     
 
 class BinaryFlipPotential(AbstractAlgebraicPotential):
@@ -77,7 +79,7 @@ class BinaryFlipPotential(AbstractAlgebraicPotential):
         return jnp.array([
             4*x[0]**3 + 3*x[0]*x[0] - 2*x[1]*x[1] - 2*x[0],
             4*x[1]**3 - 4*x[0]*x[1]
-        ]).T
+        ])
     
 
 class StichedBinaryPotential(AbstractAlgebraicPotential):
@@ -97,4 +99,25 @@ class StichedBinaryPotential(AbstractAlgebraicPotential):
         f1 = x**4 + y**4 + y**3 - 4*x*x*y + y*y
         f2 = u**4 + v**4 + u**3 - 2*u*v*v - u*u
         return self.r1 * (1. - c) * f1 + self.r2 * c * f2
+    
+
+class QuadraticPotential(AbstractAlgebraicPotential):
+
+    a: Float[Array, "()"]
+    b: Float[Array, "()"]
+
+    def __init__(self, a=1., b=1.):
+        super().__init__(ndims=2, id="quadratic")
+        self.a = jnp.array(a)
+        self.b = jnp.array(b)
+
+    def phi(self, x: Float[Array, "2"]) -> Float:
+        x, y = x
+        return x*x*self.a + y*y*self.b
+    
+    def grad_phi(self, x: Float[Array, "2"]) -> Float[Array, "2"]:
+        return jnp.array([
+            2*self.a*x[0],
+            2*self.b*x[1]
+        ])
     
