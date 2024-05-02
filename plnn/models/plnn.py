@@ -667,6 +667,23 @@ class PLNN(eqx.Module):
         tau = self.grad_tilt(t, sigparams)
         return grad_phi + tau
     
+    def eval_jacobian(
+        self, 
+        t: Float, 
+        y: Float[Array, "ndims"], 
+        sigparams: Float[Array, "nsigs nsigparams"],
+    ) -> Float[Array, "ndims ndims"]:
+        """Evaluate drift term. 
+
+        Args:
+            t (Scalar)        : Time.
+            y (Array)         : State. Shape (d,).
+            sigparams (Array) : Signal parameters. Shape (nsigs, nsigparams).
+        Returns:
+            Array of shape (d,d).
+        """
+        return jax.jacfwd(self.eval_f, 1)(t, y, sigparams)
+    
     ####################################
     ##  Vectorized Landscape Methods  ##
     ####################################
@@ -764,6 +781,23 @@ class PLNN(eqx.Module):
             Array of shape (n,d).
         """
         return jax.vmap(self.eval_tilted_grad_phi, (None, 0, None))(t, y, sigparams)
+    
+    def jacobian(
+        self, 
+        t: Float, 
+        y: Float[Array, "ncells ndims"],
+        sigparams: Float[Array, "nsigs nsigparams"]
+    ) -> Float[Array, "ncells ndims ndims"]:
+        """Jacobian of field f, vectorized across a set of cells.
+
+        Args:
+            t (Scalar) : Time.
+            y (Array)  : State. Shape (n,d).
+            sigparams (Array) : Signal parameters. Shape (nsigs, nsigparams).
+        Returns:
+            Array of shape (n,d,d).
+        """
+        return jax.vmap(self.eval_jacobian, (None, 0, None))(t, y, sigparams)
     
     #######################################
     ##  Convenience Landscape Functions  ##

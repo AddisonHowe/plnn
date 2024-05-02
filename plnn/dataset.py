@@ -232,11 +232,16 @@ def get_dataloaders(
         nsims_valid,
         batch_size_train=1,
         batch_size_valid=1,
+        batch_size_test=1,
         ndims=2,
         dtype=np.float64,
         shuffle_train=True,
         shuffle_valid=False,
+        shuffle_test=False,
         return_datasets=False,
+        include_test_data=False,
+        datdir_test="",
+        nsims_test=None,
     ):
     """TODO
 
@@ -280,8 +285,27 @@ def get_dataloaders(
         shuffle=shuffle_valid,
     )
 
+    return_datasets = [train_dataset, valid_dataset]
+    return_dataloaders = [train_dataloader, valid_dataloader]
+
+    if include_test_data:
+        test_dataset = LandscapeSimulationDataset(
+            datdir_test, nsims_test, ndims, 
+            transform=None, 
+            target_transform=None,
+            dtype=dtype,
+        )
+        test_dataloader = NumpyLoader(
+            test_dataset, 
+            batch_size=batch_size_test, 
+            shuffle=shuffle_test,
+        )
+        return_datasets.append(test_dataset)
+        return_dataloaders.append(test_dataloader)
+
     if return_datasets:
-        return train_dataloader, valid_dataloader, train_dataset, valid_dataset
+        return tuple(return_dataloaders + return_datasets)
     else:
-        return train_dataloader, valid_dataloader
+        return tuple(return_dataloaders)
+    
     

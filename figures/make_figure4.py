@@ -1,19 +1,23 @@
-"""Figure 2 Script
+"""Figure 4 Script
 
-Generate plots used in Figure 2 of the accompanying manuscript.
+Generate plots used in Figure 4 of the accompanying manuscript.
 """
 
 import os
 from glob import glob
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use('figures/fig2.mplstyle')
+plt.style.use('figures/fig4.mplstyle')
 
 from plnn.models import DeepPhiPLNN
 from plnn.pl import plot_loss_history, plot_sigma_history
 
+from cont.plnn_bifurcations import get_plnn_bifurcation_curves 
 
-OUTDIR = "figures/out/fig2_out"
+SEED = 31324
+rng = np.random.default_rng(seed=SEED)
+
+OUTDIR = "figures/out/fig4_out"
 SAVEPLOTS = True
 
 os.makedirs(OUTDIR, exist_ok=True)
@@ -26,12 +30,14 @@ def collect_r_indices(directory, basename):
     ridxs = np.sort(ridxs)
     return ridxs
 
+sf = 1/2.54  # scale factor from [cm] to inches
+
 ##############################################################################
 ##############################################################################
 ##  Transition Study Results
 
 FIGNAME = "transition_rate_study"
-FIGSIZE = (8,5)
+FIGSIZE = (12*sf,10*sf)
 BUFFER_L_FACTOR = 0.05
 BUFFER_R_FACTOR = 1.05
 BUFFER_T = 0.2
@@ -50,23 +56,23 @@ run_and_data_ids = [
     ("transition_rate_study_model_training_kl1_1", "tr_study4"),
     ("transition_rate_study_model_training_kl1_1", "tr_study5"),
     ("transition_rate_study_model_training_kl1_1", "tr_study6"),
-    ("transition_rate_study_model_training_kl1_2", "tr_study1"),
-    ("transition_rate_study_model_training_kl1_2", "tr_study2"),
-    ("transition_rate_study_model_training_kl1_2", "tr_study3"),
-    ("transition_rate_study_model_training_kl1_2", "tr_study4"),
-    ("transition_rate_study_model_training_kl1_2", "tr_study5"),
-    ("transition_rate_study_model_training_kl1_2", "tr_study6"),
+    # ("transition_rate_study_model_training_kl1_2", "tr_study1"),N
+    # ("transition_rate_study_model_training_kl1_2", "tr_study2"),
+    # ("transition_rate_study_model_training_kl1_2", "tr_study3"),
+    # ("transition_rate_study_model_training_kl1_2", "tr_study4"),
+    # ("transition_rate_study_model_training_kl1_2", "tr_study5"),
+    # ("transition_rate_study_model_training_kl1_2", "tr_study6"),
     # ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study1"),
     # ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study2"),
     # ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study3"),
     # ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study4"),
     # ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study5"),
     # ("transition_rate_study_model_training_kl1_fix_noise",  "tr_study6"),
-    ("transition_rate_study_model_training_kl2",            "tr_study201"),
-    ("transition_rate_study_model_training_kl2",            "tr_study202"),
-    ("transition_rate_study_model_training_kl2",            "tr_study203"),
-    ("transition_rate_study_model_training_kl2",            "tr_study204"),
-    ("transition_rate_study_model_training_kl2",            "tr_study205"),
+    # ("transition_rate_study_model_training_kl2_1", "tr_study201"),
+    # ("transition_rate_study_model_training_kl2_1", "tr_study202"),
+    # ("transition_rate_study_model_training_kl2_1", "tr_study203"),
+    # ("transition_rate_study_model_training_kl2_1", "tr_study204"),
+    # ("transition_rate_study_model_training_kl2_1", "tr_study205"),
     # ("transition_rate_study_model_training_kl2",            "tr_study206"),
     # ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study201"),
     # ("transition_rate_study_model_training_kl2_fix_noise",  "tr_study202"),
@@ -165,6 +171,24 @@ for run_id, data_id in run_and_data_ids:
             show=False,
         )
 
+        # Plot bifurcation curves
+        fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+
+        bifcurves_inferred, bifcolors_inferred = get_plnn_bifurcation_curves(
+            model, num_starts=100, rng=rng
+        )
+        for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
+            ax.plot(curve[:,0], curve[:,1], '.', color=color)
+
+        ax.set_xlim(-2, 2)
+        ax.set_ylim(-1, 3)
+        ax.set_xlabel("$\\tau_1$")
+        ax.set_ylabel("$\\tau_2$")
+
+        plt.savefig(f"{outsubdir}/bifs_r{ridx}.pdf", bbox_inches='tight')
+        plt.close()
+
+
     log_r_vals = np.array(log_r_vals)
 
     ninsets = len(best_models)
@@ -180,8 +204,9 @@ for run_id, data_id in run_and_data_ids:
             
     dot_y_pos = base_y_offset * 0.5
 
-    fig, ax = plt.subplots(1, 1, figsize=(FIGSIZE))
+    fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
     ax.set_aspect('equal', adjustable='box')
+    print(fig.get_size_inches()/sf)
     plt.tight_layout()
 
     inset_x_positions = np.zeros(len(best_models))
@@ -222,9 +247,11 @@ for run_id, data_id in run_and_data_ids:
         s = f"After {best_idx} epochs,\nValidation loss: {loss:.4g}"
         s += f"\n$r^{{-1}}={rinv:.4g}$"
         s += f"    $2/(r\Delta T)\\approx{2*rinv/dt_save:.3g}$"
-        inset.text(0.02, 0.02, s, transform=inset.transAxes, fontsize='small')
+        inset.text(0.02, 0.02, s, transform=inset.transAxes, fontsize=5)
 
+    print(fig.get_size_inches()/sf)
     plt.box(False)
+    print(fig.get_size_inches()/sf)
     ax.set_xlim(inset_x_positions.min() - BUFFER_L_FACTOR * inset_width, 
                 inset_x_positions.max() + BUFFER_R_FACTOR * inset_width)
     
@@ -241,6 +268,8 @@ for run_id, data_id in run_and_data_ids:
     
     ax.set_xticks(log_r_vals, log_r_vals)
     ax.set_yticks([])
+
+    print(fig.get_size_inches()/sf)
 
     plt.savefig(f"{outsubdir}/{FIGNAME}.pdf", bbox_inches="tight")
     plt.close()
