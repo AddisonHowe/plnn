@@ -122,15 +122,15 @@ def main(args):
     # Only first process should write hyperparameters to base output directory.
     if index is None or index == min_index:
         np.save(f"{outdir}/log_rs.npy", log_rs)
-        np.savetxt(f"{outdir}/sigma", [sigma], '%f')
-        np.savetxt(f"{outdir}/landscape_name", [landscape_name], '%s')
-        np.savetxt(f"{outdir}/nsims", [nsims], '%d')
-        np.savetxt(f"{outdir}/ncells", [ncells], '%d')
-        np.savetxt(f"{outdir}/tfin", [tfin], '%f')
-        np.savetxt(f"{outdir}/dt", [dt], '%f')
-        np.savetxt(f"{outdir}/dt_save", [dt_save], '%f')
-        np.savetxt(f"{outdir}/burnin", [burnin], '%f')
-        np.savetxt(f"{outdir}/seed", [seed], '%d')
+        np.savetxt(f"{outdir}/sigma.txt", [sigma], '%f')
+        np.savetxt(f"{outdir}/landscape_name.txt", [landscape_name], '%s')
+        np.savetxt(f"{outdir}/nsims.txt", [nsims], '%d')
+        np.savetxt(f"{outdir}/ncells.txt", [ncells], '%d')
+        np.savetxt(f"{outdir}/tfin.txt", [tfin], '%f')
+        np.savetxt(f"{outdir}/dt.txt", [dt], '%f')
+        np.savetxt(f"{outdir}/dt_save.txt", [dt_save], '%f')
+        np.savetxt(f"{outdir}/burnin.txt", [burnin], '%f')
+        np.savetxt(f"{outdir}/seed.txt", [seed], '%d')
 
     if index is not None:
         log_rs = [log_rs[index]]
