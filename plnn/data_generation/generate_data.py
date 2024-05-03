@@ -23,7 +23,7 @@ def parse_args(args):
                         help="Signal to use during burnin phase.")
 
     parser.add_argument('--landscape_name', type=str, required=True, 
-                        choices=['phi1', 'phi2'])
+                        choices=['phi1', 'phi2', 'phiq'])
     
     parser.add_argument('--nsignals', type=int, default=2)
     parser.add_argument('--signal_schedule', type=str,
@@ -143,10 +143,26 @@ def main(args):
         from cont.binary_flip import get_binary_flip_curves
         if landscape_name == 'phi1':
             landscape_tex = "Binary Choice"
+            xlims = [-4, 4]
+            ylims = [-4, 4]
+            p0lims = [-2, 2]
+            p1lims = [-2, 2]
             bifcurves, bifcolors = get_binary_choice_curves()
         elif landscape_name == 'phi2':
             landscape_tex = "Binary Flip"
             bifcurves, bifcolors = get_binary_flip_curves()
+            xlims = [-4, 4]
+            ylims = [-4, 4]
+            p0lims = [-2, 2]
+            p1lims = [-2, 2]
+        elif landscape_name == 'phiq':
+            landscape_tex = "Quadratic Potential"
+            bifcurves, bifcolors = None, None
+            xlims = None
+            ylims = None
+            p0lims = None
+            p1lims = None
+        
 
     sim_subseeds = parent_rng.choice(2**32, size=nsims, replace=False)
     streams = parent_rng.spawn(nsims)
@@ -261,10 +277,10 @@ def main(args):
             animator = PhiSimulationAnimator(
                 ts, xs, sigs, ps, 
                 ts_saved, xs_saved, sigs_saved, ps_saved,
-                xlims=[-4, 4], 
-                ylims=[-4, 4],
-                p0lims=[-2, 2],
-                p1lims=[-2, 2],
+                xlims=xlims, 
+                ylims=ylims,
+                p0lims=p0lims,
+                p1lims=p1lims,
                 p0idx=0,
                 p1idx=1,
                 phi_func=get_landscape_func(landscape_name),

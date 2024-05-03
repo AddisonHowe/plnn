@@ -6,9 +6,11 @@ landscape="phi_stitched"
 
 nsims_train=100
 nsims_valid=30
+nsims_test=30
 
 seed_train=24982398
 seed_valid=22935534
+seed_test=2153354503
 
 sigma=0.085
 tfin=72.0
@@ -51,6 +53,22 @@ python plnn/data_generation/gen_stitched_landscape_data.py \
     --noise_schedule $noise_schedule --noise_args ${sigma} \
     --x0 $x0 \
     --seed $seed_valid \
+    --animate \
+    --duration $animation_duration \
+    --animation_dt $animation_dt \
+    --sims_to_animate $sims_to_animate \
+>> logs/${runname}.o 
+
+echo "Generating testing data..."
+
+python plnn/data_generation/gen_stitched_landscape_data.py \
+    -o data/training_data/${runname}/testing \
+    --nsims $nsims_test \
+    --tfin $tfin --dt $dt --dt_save $dt_save --ncells $ncells --burnin $burnin \
+    --landscape_name ${landscape} \
+    --noise_schedule $noise_schedule --noise_args ${sigma} \
+    --x0 $x0 \
+    --seed $seed_test \
     --animate \
     --duration $animation_duration \
     --animation_dt $animation_dt \
