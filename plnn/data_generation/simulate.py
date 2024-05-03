@@ -81,6 +81,8 @@ def get_landscape_func(landscape_name):
         return phi1
     elif landscape_name == 'phi2':
         return phi2
+    elif landscape_name == 'phiq':
+        return phiq
     elif landscape_name == 'phi_stitched':
         return phi_stitched
     else:
@@ -91,6 +93,8 @@ def get_landscape_field_func(landscape_name):
         return phi1_field
     elif landscape_name == 'phi2':
         return phi2_field
+    elif landscape_name == 'phiq':
+        return phiq_field
     elif landscape_name == 'phi_stitched':
         return phi_stitched_field
     else:
@@ -156,6 +160,14 @@ def phi2(t, xy, p):
     y2 = y*y
     return x2*x2 + y2*y2 + x2*x - 2*x*y2 - x2 + p[0]*x + p[1]*y
 
+def phiq(t, xy, p):
+    """Qudaratic Potential with A=1/4, B=1/9."""
+    a = 1/4
+    b = 1/9
+    x = xy[...,0]
+    y = xy[...,1]
+    return a*x*x + b*y*y + p[0]*x + p[1]*y
+
 def phi_stitched(t, xy, p):
     """"""
     x = xy[...,0]
@@ -178,6 +190,15 @@ def phi2_field(t, x, p):
     return -np.array([
         4*x[:,0]**3 + 3*x[:,0]*x[:,0] - 2*x[:,1]*x[:,1] - 2*x[:,0] + p[0],
         4*x[:,1]**3 - 4*x[:,0]*x[:,1] + p[1]
+    ]).T
+
+def phiq_field(t, x, p):
+    """Vector field of Qudaratic Potential with A=1/4, B=1/9."""
+    a = 1/4
+    b = 1/9
+    return -np.array([
+        2.*a*x[:,0] + p[0],
+        2.*b*x[:,1] + p[1]
     ]).T
 
 def phi_stitched_field(t, xy, p):
