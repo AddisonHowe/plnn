@@ -76,6 +76,9 @@ def test_mean_cov_loss(y_sim, y_obs, loss_exp):
     ['loss_test_data/xtest2.npy', 
      'loss_test_data/ytest2.npy',
      0.8700861617889799],
+    ['loss_test_data/xtest3.npy', 
+     'loss_test_data/ytest3.npy',
+     -0.22314355131420965],
 ])
 def test_kl_loss(dtype, atol, xpath, ypath, loss_exp):
     x_sim = jnp.array(np.load(f"{DATDIR}/{xpath}"), dtype=dtype)
