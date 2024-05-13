@@ -162,6 +162,7 @@ class DeepPhiPLNN(PLNN):
         sigma_init=1e-2, 
         solver='euler', 
         dt0=1e-2, 
+        vbt_tol=1e-6,
         confine=False,
         confinement_factor=1.,
         sample_cells=True, 
@@ -190,6 +191,7 @@ class DeepPhiPLNN(PLNN):
             sigma_init
             solver
             dt0
+            vbt_tol
             confine
             confinement_factor
             sample_cells
@@ -221,6 +223,7 @@ class DeepPhiPLNN(PLNN):
             sigma_init=sigma_init,
             solver=solver, 
             dt0=dt0, 
+            vbt_tol=vbt_tol, 
             confine=confine, 
             confinement_factor=confinement_factor, 
             sample_cells=sample_cells,
