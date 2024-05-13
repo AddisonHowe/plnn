@@ -86,6 +86,7 @@ class PLNN(eqx.Module):
     sigma_init: float
     solver: str
     dt0: float
+    vbt_tol: float
     confine: bool
     confinement_factor: float
     sample_cells: bool
@@ -104,6 +105,7 @@ class PLNN(eqx.Module):
         sigma_init,
         solver,
         dt0,
+        vbt_tol,
         confine,
         confinement_factor,
         sample_cells,
@@ -124,6 +126,7 @@ class PLNN(eqx.Module):
         self.sigma_init = sigma_init
         self.solver = solver
         self.dt0 = dt0
+        self.vbt_tol = vbt_tol
         self.confine = confine
         self.confinement_factor = confinement_factor
         self.sample_cells = sample_cells
@@ -225,6 +228,7 @@ class PLNN(eqx.Module):
             'sigma_init' : self.sigma_init,
             'solver' : self.solver,
             'dt0' : self.dt0,
+            'vbt_tol': self.vbt_tol,
             'confine' : self.confine,
             'confinement_factor' : self.confinement_factor,
             'sample_cells' : self.sample_cells,
@@ -312,7 +316,7 @@ class PLNN(eqx.Module):
             Array : Final state. Shape (d,).
         """
         brownian_motion = VirtualBrownianTree(
-            t0, t1, tol=1e-3, 
+            t0, t1, tol=self.vbt_tol, 
             shape=(len(y0),), 
             key=key
         )
@@ -378,7 +382,7 @@ class PLNN(eqx.Module):
             Array : Final state. Shape (?,d).
         """
         brownian_motion = VirtualBrownianTree(
-            t0, t1, tol=1e-3, 
+            t0, t1, tol=self.vbt_tol, 
             shape=(len(y0),), 
             key=key
         )
@@ -432,7 +436,7 @@ class PLNN(eqx.Module):
         drift = lambda t, y, args: self.drift(0., y, sigparams)
         diffusion = lambda t, y, args: self.diffusion(0., y)
         brownian_motion = VirtualBrownianTree(
-            0., tburn, tol=1e-3, 
+            0., tburn, tol=self.vbt_tol, 
             shape=(len(y0),), 
             key=key
         )

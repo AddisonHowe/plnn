@@ -62,6 +62,7 @@ def get_model(
         ncells=ncells, 
         sigma_init=sigma,
         dt0=dt,
+        vbt_tol=1e-6,
         confine=confine,
         confinement_factor=confinement_factor,
         include_phi_bias=False, 

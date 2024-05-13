@@ -90,6 +90,7 @@ class TestTwoStepSimulation:
             sigma_init=0,
             solver='euler',
             dt0=0.1,
+            vbt_tol=1e-6,
             confine=False,
             confinement_factor=1.0,
             sample_cells=False,
