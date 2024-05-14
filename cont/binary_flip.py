@@ -65,6 +65,7 @@ def get_binary_flip_curves(
         xstarts=XSTARTS,
         rng=None,
         seed=None,
+        add_flip_curves=False,
 ):
     if rng is None:
         rng = np.random.default_rng(seed=seed)
@@ -89,6 +90,25 @@ def get_binary_flip_curves(
         max_delta_p=MAX_DELTA_P,
         rho=RHO,
     )
+    
+    # Add the flip bifurcation curve
+    if add_flip_curves:    
+        flipcurve = np.zeros([100, 2])
+        flipcurve[:,0] = np.linspace(-1.5, 0, flipcurve.shape[0])
+        curves_p.append(flipcurve)
+        colors.append('purple')
+        
+        # TODO: Add additional curves here.
+        # flipcurve = np.zeros([100, 2])
+        # flipcurve[:,0] = np.linspace(-1.5, 0, flipcurve.shape[0])
+        # curves_p.append(flipcurve)
+        # colors.append('purple')
+
+        # flipcurve = np.zeros([100, 2])
+        # flipcurve[:,0] = np.linspace(-1.5, 0, flipcurve.shape[0])
+        # curves_p.append(flipcurve)
+        # colors.append('purple')
+
     return curves_p, colors
 
 

@@ -81,6 +81,8 @@ def plot_diagrams(
     plot_critical_ps = argdict['plot_critical_ps']
     plot_vecs = argdict['plot_vecs']
     verbosity = argdict['verbosity']
+    saveas = argdict['saveas']
+    show = argdict['show']
 
     fig1, [ax1, ax2] = plt.subplots(1, 2, figsize=(8,4))
 
@@ -191,8 +193,8 @@ def plot_diagrams(
 
     plt.tight_layout()
 
-    if args.saveas:
-        plt.savefig(args.saveas, bbox_inches='tight')
+    if saveas:
+        plt.savefig(saveas, bbox_inches='tight')
 
-    if args.show:
+    if show:
         plt.show()
