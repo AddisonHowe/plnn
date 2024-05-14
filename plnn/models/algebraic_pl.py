@@ -177,6 +177,7 @@ class AlgebraicPL(PLNN):
         sigma=1e-2, 
         solver='euler', 
         dt0=1e-2, 
+        vbt_tol=1e-6,
         sample_cells=True, 
         tilt_weights=None,
         include_tilt_bias=True,
@@ -199,6 +200,7 @@ class AlgebraicPL(PLNN):
             sigma
             solver
             dt0
+            vbt_tol
             confine
             confinement_factor
             sample_cells
@@ -225,6 +227,7 @@ class AlgebraicPL(PLNN):
             sigma=sigma,
             solver=solver, 
             dt0=dt0, 
+            vbt_tol=vbt_tol,
             sample_cells=sample_cells,
             phi_module=phi_module,
             algebraic_phi_id=algebraic_phi_id,

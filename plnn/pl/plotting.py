@@ -17,7 +17,12 @@ def plot_training_loss_history(
         fig, ax = plt.subplots(1, 1)
     erange = np.arange(startidx, len(loss_hist_train))
     fplot = ax.semilogy if log else ax.plot
-    fplot(1 + erange, loss_hist_train[erange], '.-', color=kwargs.get('color'))
+    fplot(
+        1 + erange, loss_hist_train[erange], 
+        linestyle=kwargs.get('linestyle'),
+        marker=kwargs.get('marker'),
+        color=kwargs.get('color')
+    )
     ax.set_xlabel(f"epoch")
     ax.set_ylabel(f"loss")
     ax.set_title(title)
