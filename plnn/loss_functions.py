@@ -11,23 +11,32 @@ import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-def select_loss_function(key)->callable:
+def select_loss_function(func_id, **kwargs)->callable:
     """Loss function selector method.
     
     Args:
-        key (str) : loss function identifier.
+        func_id (str) : loss function identifier.
+        
+    Keyword Arguments:
+        tol (float, kwarg, default 1e-6) : tolerance if using loss function
+            kl_divergence_loss_v2.
     
     Returns:
         callable : Loss function, taking as inputs simulated and observed data.
     """
-    if key == 'kl':
+    if func_id == 'kl':
         return kl_divergence_loss
-    elif key == 'mcd':
+    if func_id == 'klv2':
+        tol = kwargs.get('tol', 1e-6)
+        def loss_fn(xsim, xobs):
+            kl_divergence_loss_v2(xsim, xobs, tol=tol) 
+        return loss_fn
+    elif func_id == 'mcd':
         return mean_cov_loss
-    elif key == 'md':
+    elif func_id == 'md':
         return mean_diff_loss
     else:
-        msg = f"Unknown loss function identifier {key}."
+        msg = f"Unknown loss function identifier {func_id}."
         raise RuntimeError(msg)
 
 
@@ -56,6 +65,28 @@ def kl_divergence_loss(
         (float) KL estimate of D(P||Q), averaged across batches.
     """
     return jnp.mean(jax.vmap(kl_divergence_est)(p_samps, q_samps))
+
+def kl_divergence_loss_v2(
+        q_samps: Float[Array, "b m d"], 
+        p_samps: Float[Array, "b n d"],
+) -> Float:
+    """Estimate the KL divergence. Returns the average over all batches.
+
+    We make the first argument q, rather than p, since we want our loss 
+    functions to take as first argument the approximation distribution.
+
+    Uses a smooth approximation of the minimum to determine the nearest 
+    neighbor between points in P and points in Q.
+
+    Args:
+        q_samp (array) : Batched samples from estimated (i.e. approximate) 
+            distribution. Shape (b,m,d).
+        p_samp (array) : Batched samples from target (i.e. true) distribution. 
+            Shape (b,n,d).
+    Returns:
+        (float) KL estimate of D(P||Q), averaged across batches.
+    """
+    return jnp.mean(jax.vmap(smooth_kl_est)(p_samps, q_samps))
 
 def mean_cov_loss(y_sim, y_obs) -> float:
     """Loss function based on the difference of first and second moments.
@@ -158,4 +189,37 @@ def kl_divergence_est(
     r = -jax.lax.top_k(-diffs_xx, 2)[0][:,1]
     s = -jax.lax.top_k(-diffs_xy, 1)[0][:,0]
     lossval = jnp.log(m/(n-1.)) - jnp.log(r/s).sum() * d/n
+    return lossval
+
+def smooth_kl_est(p_samp, q_samp, tol=1e-6):
+    """Estimate the KL divergence.
+    
+    Uses the logsumexp to approximate the minimum distance between points in 
+    p_samp and points in q_samp. Uses a tolerance hyperparameter to ensure the
+    estimated minimum is within `tol` of the true minimum. This is important, 
+    since we cannot have a negative estimate due to the log in the loss.
+
+    Args:
+        p_samp (array) : Samples from target (i.e. true) distribution P, and 
+            denoted by X. Shape (n,d).
+        q_samp (array) : Samples from estimated (i.e. approximate) 
+            distribution Q, and denoted by Y. Shape (m,d).
+        tol (float) : Tolerance on the estimation error for the nearest 
+            neighbor distance. Optional, default 1e-6.
+    Returns:
+        (float) KL estimate of D(P||Q).
+    """
+    n, d = p_samp.shape
+    m, _ = q_samp.shape
+
+    t = -jnp.log(m) / tol
+
+    diffs_xx = cdist(p_samp, p_samp)  # diffs_xx[i,j] = d(xi, xj)
+    r_topk = jax.lax.top_k(-diffs_xx, 2)
+    r = -r_topk[0][:,1]
+
+    diffs_xy = cdist(p_samp, q_samp)  # diffs_xy[i,j] = d(xi, yj)
+    s = jax.scipy.special.logsumexp(t * diffs_xy, axis=1) / t
+    
+    lossval = jnp.log(m/(n-1.)) - d/n * jnp.log(r/s).sum()
     return lossval

@@ -142,7 +142,7 @@ def parse_args(args):
 
     # Loss function
     parser.add_argument('--loss', type=str, default="kl", 
-                        choices=['kl', 'mcd'], 
+                        choices=['kl', 'mcd', 'klv2'], 
                         help='kl: KL divergence est; mcd: mean+cov difference.')
     
     # Optimizer
@@ -319,6 +319,15 @@ def main(args):
     log_args(outdir, args)
     log_model(outdir, model)
 
+    # Plotting kwargs
+    plotting_opts = {
+        'equal_axes': True,
+        'plot_radius': 4,
+        'plot_losses': True,
+        'plot_sigma_hist': True,
+        'sigma_true': None,  # TODO: include true value of sigma if given.
+    }
+
     # Train the model
     model = train_model(
         model,
@@ -335,7 +344,7 @@ def main(args):
         outdir=outdir,
         save_all=args.save_all,
         plotting=do_plot,
-        plotting_opts={'equal_axes': True},  # Plotting kwargs
+        plotting_opts=plotting_opts,
         report_every=args.report_every,
         logprint=logprint,
         error_raiser=log_and_raise_runtime_error,

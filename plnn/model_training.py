@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 from plnn.models.plnn import PLNN
 from plnn.models import DeepPhiPLNN
-from plnn.pl.plotting import plot_loss_history
+from plnn.pl.plotting import plot_loss_history, plot_sigma_history
 
 def train_model(
     model, 
@@ -188,9 +188,9 @@ def train_model(
         if plotting and (avg_vloss < best_vloss or save_all):
             make_plots(
                 epoch + 1, model, outdir, plotting_opts,
-                plot_losses=True,
                 loss_hist_train=loss_hist_train,
                 loss_hist_valid=loss_hist_valid,
+                sigma_hist=sigma_hist,
             )
             
         # Track best performance
@@ -488,9 +488,12 @@ def make_plots(epoch, model, outdir, plotting_opts, **kwargs):
     plot_phi_landscape_norm = plotting_opts.get('plot_phi_landscape_norm', False)
     plot_phi_heatmap_lognorm = plotting_opts.get('plot_phi_heatmap_lognorm', True)
     plot_phi_landscape_lognorm = plotting_opts.get('plot_phi_landscape_lognorm', False)
-    plot_losses = kwargs.get('plot_losses', False)
+    plot_losses = plotting_opts.get('plot_losses', False)
     loss_hist_train = kwargs.get('loss_hist_train', None)
     loss_hist_valid = kwargs.get('loss_hist_valid', None)
+    plot_sigma_hist = plotting_opts.get('plot_sigma_hist', False)
+    sigma_true = plotting_opts.get('sigma_true', None)
+    sigma_hist = kwargs.get('sigma_hist', None)
 
     do_plot_loss_hist = plot_losses and (loss_hist_train is not None) \
                                     and (loss_hist_valid is not None)
@@ -506,6 +509,18 @@ def make_plots(epoch, model, outdir, plotting_opts, **kwargs):
             saveas=f"{outdir}/images/loss_history.png",
         )
         plt.close()
+
+    if plot_sigma_hist and (sigma_hist is not None):
+        plot_sigma_history(
+            np.array(sigma_hist),
+            startidx=0, 
+            log=True, 
+            sigma_true=sigma_true,
+            title="$\sigma$ history", 
+            saveas=f"{outdir}/images/sigma_history.png",
+        )
+        plt.close()
+        
     if plot_phi_heatmap: 
         model.plot_phi(
             r=plot_radius, res=plot_res, plot3d=False,
