@@ -513,7 +513,6 @@ def make_plots(epoch, model, outdir, plotting_opts, **kwargs):
     if plot_sigma_hist and (sigma_hist is not None):
         plot_sigma_history(
             np.array(sigma_hist),
-            startidx=0, 
             log=True, 
             sigma_true=sigma_true,
             title="$\sigma$ history", 

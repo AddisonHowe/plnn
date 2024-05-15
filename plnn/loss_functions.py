@@ -29,7 +29,7 @@ def select_loss_function(func_id, **kwargs)->callable:
     if func_id == 'klv2':
         tol = kwargs.get('tol', 1e-6)
         def loss_fn(xsim, xobs):
-            kl_divergence_loss_v2(xsim, xobs, tol=tol) 
+            return kl_divergence_loss_v2(xsim, xobs, tol=tol) 
         return loss_fn
     elif func_id == 'mcd':
         return mean_cov_loss
@@ -69,6 +69,7 @@ def kl_divergence_loss(
 def kl_divergence_loss_v2(
         q_samps: Float[Array, "b m d"], 
         p_samps: Float[Array, "b n d"],
+        tol=1e-6,
 ) -> Float:
     """Estimate the KL divergence. Returns the average over all batches.
 
@@ -83,10 +84,11 @@ def kl_divergence_loss_v2(
             distribution. Shape (b,m,d).
         p_samp (array) : Batched samples from target (i.e. true) distribution. 
             Shape (b,n,d).
+        tol (float) : Optional, default 1e-6.
     Returns:
         (float) KL estimate of D(P||Q), averaged across batches.
     """
-    return jnp.mean(jax.vmap(smooth_kl_est)(p_samps, q_samps))
+    return jnp.mean(jax.vmap(smooth_kl_est, (0,0,None))(p_samps, q_samps, tol))
 
 def mean_cov_loss(y_sim, y_obs) -> float:
     """Loss function based on the difference of first and second moments.
