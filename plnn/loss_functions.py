@@ -35,6 +35,17 @@ def select_loss_function(func_id, **kwargs)->callable:
         return mean_cov_loss
     elif func_id == 'md':
         return mean_diff_loss
+    elif func_id == 'mmd':
+        kernel = kwargs.get('kernel', 'multiscale')
+        bw_range = kwargs.get('bw_range', None)
+        if bw_range is None:
+            if kernel == 'multiscale':
+                bw_range = jnp.array([0.2, 0.5, 0.9, 1.3])
+            elif kernel == 'rbf':
+                bw_range = jnp.array([[10, 15, 20, 50]])
+        def loss_fn(xsim, xobs):
+            return mmd_loss(xsim, xobs, kernel=kernel, bw_range=bw_range) 
+        return loss_fn
     else:
         msg = f"Unknown loss function identifier {func_id}."
         raise RuntimeError(msg)
@@ -123,6 +134,21 @@ def mean_diff_loss(y_sim, y_obs) -> float:
     mu_err = jnp.sum(jnp.square(mu_sim - mu_obs), axis=1)
     return jnp.mean(mu_err)
 
+def mmd_loss(y_sim, y_obs, kernel='multiscale', bw_range=None) -> float:
+    """Loss function based on Maximum Mean Discrepancy.
+
+    Args:
+        y_sim (Array): Batched samples from simulation. Shape (b,m,d).
+        y_obs (Array): Batched samples from observations. Shape (b,n,d).
+
+    Returns:
+        (float): Loss value, averaged across batches.
+    """
+    return jnp.mean(
+        jax.vmap(compute_mmd, (0, 0, None, None))(
+            y_sim, y_obs, kernel, bw_range
+        )
+    )
 
 ########################
 ##  Helper Functions  ##
@@ -225,3 +251,44 @@ def smooth_kl_est(p_samp, q_samp, tol=1e-6):
     
     lossval = jnp.log(m/(n-1.)) - d/n * jnp.log(r/s).sum()
     return lossval
+
+
+def _multiscale_kernel(dxx, dyy, dxy, bw):
+    a = bw * bw
+    xx = a / (a + dxx)
+    yy = a / (a + dyy)
+    xy = a / (a + dxy)
+    return xx, yy, xy
+
+def _rbf_kernel(dxx, dyy, dxy, bw):
+    xx = jnp.exp(-0.5 * dxx / bw)
+    yy = jnp.exp(-0.5 * dyy / bw)
+    xy = jnp.exp(-0.5 * dxy / bw)
+    return xx, yy, xy
+
+def compute_mmd(x, y, kernel='multiscale', bw_range=[0.2, 0.5, 0.9, 1.3]):
+    """
+    """
+    xx, yy, zz = jnp.dot(x, x.T), jnp.dot(y, y.T), jnp.dot(x, y.T)
+    rx = jnp.expand_dims(jnp.diag(xx), 0).repeat(xx.shape[0], axis=0)
+    ry = jnp.expand_dims(jnp.diag(yy), 0).repeat(yy.shape[0], axis=0)
+
+    dxx = rx.T + rx - 2. * xx  # Used for A in (1)
+    dyy = ry.T + ry - 2. * yy  # Used for B in (1)
+    dxy = rx.T + ry - 2. * zz  # Used for C in (1)
+
+    bw_range = jnp.array(bw_range)
+    if kernel == "multiscale":
+        xxs, yys, xys = jax.vmap(_multiscale_kernel, (None, None, None, 0))(
+            dxx, dyy, dxy, bw_range
+        )
+        
+    if kernel == "rbf":
+        xxs, yys, xys = jax.vmap(_rbf_kernel, (None, None, None, 0))(
+            dxx, dyy, dxy, bw_range
+        )
+
+    xxs = jnp.sum(xxs, axis=0)
+    yys = jnp.sum(yys, axis=0)
+    xys = jnp.sum(xys, axis=0)
+    return jnp.mean(xxs + yys - 2. * xys)

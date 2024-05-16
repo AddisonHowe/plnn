@@ -142,7 +142,7 @@ def parse_args(args):
 
     # Loss function
     parser.add_argument('--loss', type=str, default="kl", 
-                        choices=['kl', 'mcd', 'klv2'], 
+                        choices=['kl', 'mcd', 'klv2', 'mmd'], 
                         help='kl: KL divergence est; mcd: mean+cov difference.')
     
     # Optimizer
