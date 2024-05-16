@@ -11,9 +11,16 @@ from jaxtyping import Array, Float
 import diffrax
 from diffrax import diffeqsolve, WeaklyDiagonalControlTerm, MultiTerm, ODETerm
 from diffrax import VirtualBrownianTree, SaveAt, SubSaveAt
+from diffrax import PIDController, ConstantStepSize
 import equinox as eqx
 
 import plnn.pl as pl
+
+MAX_STEPS = 4096*8
+RTOL = 1e-5
+ATOL = 1e-6
+DTMIN = 1e-3
+DTMAX = 1.
 
 _ACTIVATION_KEYS = {
     'none' : None,
@@ -28,6 +35,18 @@ _SOLVER_KEYS = {
     'heun' : diffrax.Heun, 
     'reversible_heun' : diffrax.ReversibleHeun, 
     'ito_milstein' : diffrax.ItoMilstein, 
+    'stratonovich_milstein': diffrax.StratonovichMilstein,
+}
+
+def _nocall(*args, **kwargs):
+    return ConstantStepSize()
+
+_PIDC_KEYS = {
+    'euler' : _nocall, 
+    'heun' : _nocall, 
+    'reversible_heun' : PIDController, 
+    'ito_milstein' : _nocall, 
+    'stratonovich_milstein': _nocall,
 }
 
 def _explicit_initilizer(values):
@@ -316,7 +335,9 @@ class PLNN(eqx.Module):
             Array : Final state. Shape (d,).
         """
         brownian_motion = VirtualBrownianTree(
-            t0, t1, tol=self.vbt_tol, 
+            t0, 
+            t1, 
+            tol=self.vbt_tol, 
             shape=(len(y0),), 
             key=key
         )
@@ -325,6 +346,12 @@ class PLNN(eqx.Module):
             WeaklyDiagonalControlTerm(self.diffusion, brownian_motion)
         )
         solver = _SOLVER_KEYS[self.solver]()
+        pidc = _PIDC_KEYS[self.solver](
+            rtol=RTOL,
+            atol=ATOL,
+            dtmin=DTMIN,
+            dtmax=DTMAX,
+        )
         saveat = SaveAt(t1=True)
         sol = diffeqsolve(
             terms, solver, 
@@ -332,6 +359,8 @@ class PLNN(eqx.Module):
             y0=y0, 
             saveat=saveat,
             args=sigparams,
+            stepsize_controller=pidc,
+            max_steps=MAX_STEPS,
         )
         return sol.ys
 
@@ -382,7 +411,9 @@ class PLNN(eqx.Module):
             Array : Final state. Shape (?,d).
         """
         brownian_motion = VirtualBrownianTree(
-            t0, t1, tol=self.vbt_tol, 
+            t0, 
+            t1, 
+            tol=self.vbt_tol, 
             shape=(len(y0),), 
             key=key
         )
@@ -391,12 +422,20 @@ class PLNN(eqx.Module):
             WeaklyDiagonalControlTerm(self.diffusion, brownian_motion)
         )
         solver = _SOLVER_KEYS[self.solver]()
+        pidc = _PIDC_KEYS[self.solver](
+            rtol=RTOL,
+            atol=ATOL,
+            dtmin=DTMIN,
+            dtmax=DTMAX,
+        )
         sol = diffeqsolve(
             terms, solver, 
             t0, t1, dt0=self.dt0, 
             y0=y0, 
             saveat=saveat,
             args=sigparams,
+            stepsize_controller=pidc, 
+            max_steps=MAX_STEPS,
         )
         return sol.ts, sol.ys
     
@@ -436,7 +475,9 @@ class PLNN(eqx.Module):
         drift = lambda t, y, args: self.drift(0., y, sigparams)
         diffusion = lambda t, y, args: self.diffusion(0., y)
         brownian_motion = VirtualBrownianTree(
-            0., tburn, tol=self.vbt_tol, 
+            0., 
+            tburn, 
+            tol=self.vbt_tol, 
             shape=(len(y0),), 
             key=key
         )
@@ -446,11 +487,19 @@ class PLNN(eqx.Module):
         )
         solver = _SOLVER_KEYS[self.solver]()
         saveat = SaveAt(t1=True)
+        pidc = _PIDC_KEYS[self.solver](
+            rtol=RTOL,
+            atol=ATOL,
+            dtmin=DTMIN,
+            dtmax=DTMAX,
+        )
         sol = diffeqsolve(
             terms, solver, 
             0., tburn, dt0=self.dt0, 
             y0=y0, 
             saveat=saveat,
+            stepsize_controller=pidc, 
+            max_steps=MAX_STEPS,
         )
         return sol.ys
     
@@ -481,7 +530,7 @@ class PLNN(eqx.Module):
 
         subsaves_list = []
         for dt_save_val in dt_save:
-            ts_save = jnp.linspace(0, tfin, 1 + int(tfin // dt_save_val))
+            ts_save = jnp.linspace(0, tfin, 1 + int(tfin / dt_save_val))
             subsaves_list.append(
                 SubSaveAt(ts=ts_save, fn=lambda t, y, args: y)
             )
@@ -494,6 +543,9 @@ class PLNN(eqx.Module):
         ts, ys = self.simulate_ensemble_with_saves(
             0, tfin, x0, sigparams, saveat, subkey2
         )
+        print(len(ys))
+        print(ys[0].shape)
+        print(ys[0])
 
         ts = [tt[0] for tt in ts]
         sigs = [
