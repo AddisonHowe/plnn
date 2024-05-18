@@ -269,13 +269,21 @@ def _rbf_kernel(dxx, dyy, dxy, bw):
 def compute_mmd(x, y, kernel='multiscale', bw_range=[0.2, 0.5, 0.9, 1.3]):
     """
     """
+
+    n, d = x.shape
+    m, _ = y.shape
+
+    cxx = 1. / (n * (n - 1))
+    cyy = 1. / (m * (m - 1))
+    cxy = -1. / (n * m)
+
     xx, yy, zz = jnp.dot(x, x.T), jnp.dot(y, y.T), jnp.dot(x, y.T)
     rx = jnp.expand_dims(jnp.diag(xx), 0).repeat(xx.shape[0], axis=0)
     ry = jnp.expand_dims(jnp.diag(yy), 0).repeat(yy.shape[0], axis=0)
 
-    dxx = rx.T + rx - 2. * xx  # Used for A in (1)
-    dyy = ry.T + ry - 2. * yy  # Used for B in (1)
-    dxy = rx.T + ry - 2. * zz  # Used for C in (1)
+    dxx = rx.T + rx - 2. * xx  # squared distances between x and x
+    dyy = ry.T + ry - 2. * yy  # squared distances between y and y
+    dxy = rx.T + ry - 2. * zz  # squared distances between x and y
 
     bw_range = jnp.array(bw_range)
     if kernel == "multiscale":
@@ -291,4 +299,6 @@ def compute_mmd(x, y, kernel='multiscale', bw_range=[0.2, 0.5, 0.9, 1.3]):
     xxs = jnp.sum(xxs, axis=0)
     yys = jnp.sum(yys, axis=0)
     xys = jnp.sum(xys, axis=0)
-    return jnp.mean(xxs + yys - 2. * xys)
+    return cxy * xys.sum() \
+        + cxx * (xxs.sum() - jnp.trace(xxs)) \
+        + cyy * (yys.sum() - jnp.trace(yys))
