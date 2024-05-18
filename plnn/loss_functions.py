@@ -278,12 +278,14 @@ def compute_mmd(x, y, kernel='multiscale', bw_range=[0.2, 0.5, 0.9, 1.3]):
     cxy = -1. / (n * m)
 
     xx, yy, zz = jnp.dot(x, x.T), jnp.dot(y, y.T), jnp.dot(x, y.T)
-    rx = jnp.expand_dims(jnp.diag(xx), 0).repeat(xx.shape[0], axis=0)
-    ry = jnp.expand_dims(jnp.diag(yy), 0).repeat(yy.shape[0], axis=0)
-
-    dxx = rx.T + rx - 2. * xx  # squared distances between x and x
-    dyy = ry.T + ry - 2. * yy  # squared distances between y and y
-    dxy = rx.T + ry - 2. * zz  # squared distances between x and y
+    diagx = jnp.diag(xx)
+    diagy = jnp.diag(yy)
+    rx = jnp.expand_dims(diagx, 0).repeat(xx.shape[0], axis=0)
+    ry = jnp.expand_dims(diagy, 0).repeat(yy.shape[0], axis=0)
+    
+    dxx = rx.T + rx - 2. * xx
+    dyy = ry.T + ry - 2. * yy
+    dxy = diagx[...,None] + diagy[None,:] - 2. * zz
 
     bw_range = jnp.array(bw_range)
     if kernel == "multiscale":
