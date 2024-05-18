@@ -44,7 +44,7 @@ def _nocall(*args, **kwargs):
 _PIDC_KEYS = {
     'euler' : _nocall, 
     'heun' : _nocall, 
-    'reversible_heun' : PIDController, 
+    'reversible_heun' : _nocall,  # PIDController, # TODO: eventually try PID
     'ito_milstein' : _nocall, 
     'stratonovich_milstein': _nocall,
 }
