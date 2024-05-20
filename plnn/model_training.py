@@ -185,7 +185,7 @@ def train_model(
             model.save(model_path, hyperparams)
 
         # Plotting, if specified
-        if plotting and (avg_vloss < best_vloss or save_all):
+        if plotting and (avg_vloss < best_vloss or save_all or (epoch % 100 == 0)):
             make_plots(
                 epoch + 1, model, outdir, plotting_opts,
                 loss_hist_train=loss_hist_train,
