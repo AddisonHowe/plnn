@@ -275,7 +275,7 @@ def compute_mmd(x, y, kernel='multiscale', bw_range=[0.2, 0.5, 0.9, 1.3]):
 
     cxx = 1. / (n * (n - 1))
     cyy = 1. / (m * (m - 1))
-    cxy = -1. / (n * m)
+    cxy = -2. / (n * m)
 
     xx, yy, zz = jnp.dot(x, x.T), jnp.dot(y, y.T), jnp.dot(x, y.T)
     diagx = jnp.diag(xx)

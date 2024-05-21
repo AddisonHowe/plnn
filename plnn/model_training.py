@@ -51,6 +51,7 @@ def train_model(
     model_name = kwargs.get('model_name', 'model')
     outdir = kwargs.get('outdir', 'out')
     save_all = kwargs.get('save_all', False)
+    save_every = kwargs.get('save_every', 100)
     plotting = kwargs.get('plotting', False)
     plotting_opts = kwargs.get('plotting_opts', {})
     report_every = kwargs.get('report_every', 10)
@@ -185,7 +186,8 @@ def train_model(
             model.save(model_path, hyperparams)
 
         # Plotting, if specified
-        if plotting and (avg_vloss < best_vloss or save_all or (epoch % 100 == 0)):
+        if plotting and (avg_vloss < best_vloss or save_all or \
+                         ((epoch + 1) % save_every == 0)):
             make_plots(
                 epoch + 1, model, outdir, plotting_opts,
                 loss_hist_train=loss_hist_train,
