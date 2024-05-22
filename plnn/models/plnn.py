@@ -543,9 +543,6 @@ class PLNN(eqx.Module):
         ts, ys = self.simulate_ensemble_with_saves(
             0, tfin, x0, sigparams, saveat, subkey2
         )
-        print(len(ys))
-        print(ys[0].shape)
-        print(ys[0])
 
         ts = [tt[0] for tt in ts]
         sigs = [
