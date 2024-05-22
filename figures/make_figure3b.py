@@ -51,17 +51,20 @@ ax = plot_landscape(
     func_phi2_star, r=r, res=res, params=[0, 0], 
     lognormalize=lognormalize,
     clip=clip,
-    title=None,
-    title_fontsize=8,
+    title="True landscape",
     ncontours=10,
     contour_linewidth=0.5,
     include_cbar=True,
     cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
     equal_axes=True,
-    saveas=f"{OUTDIR}/{FIGNAME}" if SAVEPLOTS else None,
+    saveas=None,
+    show=True,
     figsize=FIGSIZE,
 )
 
+plt.tight_layout()
+plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight', transparent=True)
+plt.close()
 
 #################################  Bifurcation diagram of true landscape
 FIGNAME = "phi2_bifs"
@@ -69,12 +72,10 @@ FIGSIZE = (5*sf, 5*sf)
 
 fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
 
-bifcurves_true, bifcolors_true = get_binary_flip_curves(rng=rng)
-# Add the flip bifurcation curve
-flipcurve = np.zeros([100, 2])
-flipcurve[:,0] = np.linspace(-1.5, 0, flipcurve.shape[0])
-bifcurves_true.append(flipcurve)
-bifcolors_true.append('purple')
+bifcurves_true, bifcolors_true = get_binary_flip_curves(
+    rng=rng, 
+    add_flip_curves=True,
+)
 
 for curve, color in zip(bifcurves_true, bifcolors_true):
     linestyle = ':' if color == 'purple' else '-'
@@ -109,7 +110,7 @@ plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
 
 #################################  Load the inferred landscape
 
-MODELDIR = "data/trained_models/model_phi2_1a_v1_20240410_134646"
+MODELDIR = "data/trained_models/model_phi2_1a_v_mmd1_20240520_124708"
 
 model, hps, idx, name, fpath = load_model_from_directory(MODELDIR)
 logged_args, training_info = load_model_training_metadata(MODELDIR)
@@ -149,8 +150,7 @@ ax = plot_phi(
     r=r, res=res,
     lognormalize=lognormalize,
     clip=clip,
-    title=None,
-    title_fontsize=8,
+    title="Inferred",
     ncontours=10,
     contour_linewidth=0.5,
     include_cbar=True,
@@ -170,7 +170,15 @@ FIGSIZE = (5*sf, 5*sf)
 fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
 
 bifcurves_inferred, bifcolors_inferred = get_plnn_bifurcation_curves(
-    model, num_starts=100, rng=rng
+    model, 
+    num_starts=100, 
+    maxiter=1000,
+    ds=1e-3,
+    min_ds=1e-8,
+    max_ds=1e-2,
+    max_delta_p=1e-1,
+    rho=1e-2,
+    rng=rng
 )
 for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
     ax.plot(curve[:,0], curve[:,1], '-', color=color)
@@ -209,13 +217,20 @@ FIGSIZE = (5*sf, 5*sf)
 
 fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
 
-for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
-    if len(curve) > 1:
-        ax.plot(curve[:,0], curve[:,1], '-', color=color)
-
 for curve, color in zip(bifcurves_true, bifcolors_true):
     if len(curve) > 1:
-        ax.plot(curve[:,0], curve[:,1], '--', color=color)
+        true_line, = ax.plot(curve[:,0], curve[:,1], '--', color=color)
+
+for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
+    if len(curve) > 1:
+        inf_line, = ax.plot(curve[:,0], curve[:,1], '-', 
+                            color=color, alpha=0.7)
+
+ax.legend(
+    [true_line, inf_line], ['true', 'inferred'], 
+    # bbox_to_anchor=(1.05, 1), loc='upper left',
+    fontsize='small'
+)
 
 ax.set_xlabel("$\\tau_1$")
 ax.set_ylabel("$\\tau_2$")
@@ -223,7 +238,9 @@ ax.set_ylabel("$\\tau_2$")
 ax.set_xlim([-2, 2])
 ax.set_ylim([-2, 2])
 
-plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
+ax.set_title("Bifurcations (tilt space)")
+
+plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight', transparent=True)
 
 
 #################################  Combined bif diagram in signals
@@ -232,14 +249,21 @@ FIGSIZE = (5*sf, 5*sf)
 
 fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
 
+for curve, color in zip(bifcurves_true, bifcolors_true):
+    if len(curve) > 1:
+        true_line, = ax.plot(curve[:,0], curve[:,1], '--', color=color)
+
 for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
     if len(curve) > 1:
         curve_signal = tilts_to_signals(curve.T).T
-        ax.plot(curve_signal[:,0], curve_signal[:,1], '-', color=color)
+        inf_line, = ax.plot(curve_signal[:,0], curve_signal[:,1], '-', 
+                            color=color, alpha=0.7)
 
-for curve, color in zip(bifcurves_true, bifcolors_true):
-    if len(curve) > 1:
-        ax.plot(curve[:,0], curve[:,1], '--', color=color)
+ax.legend(
+    [true_line, inf_line], ['true', 'inferred'], 
+    # bbox_to_anchor=(1.05, 1), loc='upper left',        
+    fontsize='small'
+)
 
 ax.set_xlabel("$s_1$")
 ax.set_ylabel("$s_2$")
@@ -247,7 +271,9 @@ ax.set_ylabel("$s_2$")
 ax.set_xlim([-4, 4])
 ax.set_ylim([-4, 4])
 
-plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
+ax.set_title("Bifurcations (signal space)")
+
+plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight', transparent=True)
 
 
 ##############################################################################

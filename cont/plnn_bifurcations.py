@@ -64,7 +64,7 @@ def get_functions_from_model(model):
 
 def get_xstarts(
         xstarts0, num_starts, F, p_func, 
-        xlims=[[-2,2],[-2,2]], grad_tol=1e-4, color='k', 
+        xlims=[[-2,2],[-2,2]], grad_tol=1e-2, color='k', 
         rng=None, seed=None,
 ):
     if rng is None:

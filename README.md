@@ -1,25 +1,12 @@
 # plnn: A Machine Learning approach to Parameterized Landscapes
 
 ## TODO
-* When nan encountered, reduce model constraint perameter instead of decreasing dt?
-* Also save that model and training data for debugging purposes.
-* Implement an *algebraic* PLNN
 * Implement heteroclinic orbit algorithm minimizing orthogonal component of path connecting saddles.
 
 ## Ideas
-
-* How to handle noise.
-* Infer noise parameter. (Completed-ish)
-* Incorporate the number of desired fixed points
 * Precompute summary stat for $x_1$ data
 * Adjoint method.
-* Symmetry in the order of the cells within the population: $\boldsymbol{x}_i$ (Completed?)
-* Parallelize batches. (Completed).
-* Parallelize individual simulations. (Completed)
-* Customizable layer architecture
 * batch normalization and dropout
-* Autocorrelation time of individual cells to determine transitioning flag. 
-* Softmax activation prevents super-linear growth in the potential function?
 * Normalize data beforehand?
 
 # Installation
