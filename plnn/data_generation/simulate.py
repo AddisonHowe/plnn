@@ -150,7 +150,7 @@ def phi1(t, xy, p):
     y = xy[...,1]
     x2 = x*x
     y2 = y*y
-    return x2*x2 + y2*y2 + y2*y - 4*x2*y + y2 - p[0]*x + p[1]*y
+    return x2*x2 + y2*y2 + y2*y - 4*x2*y + y2 + p[0]*x + p[1]*y
 
 def phi2(t, xy, p):
     """"""
@@ -181,7 +181,7 @@ def phi_stitched(t, xy, p):
 def phi1_field(t, x, p):
     """Vector field of first potential function in Saez et al."""
     return -np.array([
-        4*x[:,0]**3 - 8*x[:,0]*x[:,1] - p[0],
+        4*x[:,0]**3 - 8*x[:,0]*x[:,1] + p[0],
         4*x[:,1]**3 + 3*x[:,1]*x[:,1] - 4*x[:,0]*x[:,0] + 2*x[:,1] + p[1]
     ]).T
 
