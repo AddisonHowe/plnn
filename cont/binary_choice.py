@@ -10,7 +10,7 @@ from cont.fold_curves import get_fold_curves, get_argparser, plot_diagrams
 
 
 F = lambda x, p: -np.array([
-        4*x[0]**3 - 8*x[0]*x[1] - p[0], 
+        4*x[0]**3 - 8*x[0]*x[1] + p[0], 
         4*x[1]**3 + 3*x[1]*x[1] - 4*x[0]*x[0] + 2*x[1] + p[1],
     ])
 
@@ -31,7 +31,7 @@ dxFxPhi = lambda x, phi: np.array([
         [8*phi[0],                      -(24*x[1] + 6)*phi[1]],
     ])
 
-Fp = lambda x, p : np.array([[1, 0], [0, -1]])
+Fp = lambda x, p : np.array([[-1, 0], [0, -1]])
 
 
 XSTARTS = [

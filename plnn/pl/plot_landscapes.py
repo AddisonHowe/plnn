@@ -10,7 +10,7 @@ import numpy as np
 from .config import DEFAULT_CMAP
 
 def func_phi1(x, y, p1=0, p2=0):
-    return x**4 + y**4 + y**3 - 4*x*x*y + y*y - p1*x + p2*y
+    return x**4 + y**4 + y**3 - 4*x*x*y + y*y + p1*x + p2*y
 
 def func_phi2(x, y, p1=0, p2=0):
     return x**4 + y**4 + x**3 - 2*x*y*y - x*x + p1*x + p2*y
