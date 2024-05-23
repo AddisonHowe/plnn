@@ -183,16 +183,19 @@ def train_model(
         np.save(f"{outdir}/tilt_bias_history.npy", tilt_bias)
 
         model_improved = avg_vloss < best_vloss
+        exceeded_patience = epoch - best_epoch + 1 > patience
 
         # Save the model's state
-        if model_improved or save_all:
+        if model_improved or save_all or exceeded_patience:
             model_path = f"{outdir}/states/{model_name}_{epoch + 1}.pth"
             if verbosity: logprint(f"\tSaving model to: {model_path}")
             model.save(model_path, hyperparams)
 
         # Plotting, if specified
-        if plotting and (model_improved or save_all or \
-                         ((epoch + 1) % save_every == 0)):
+        if plotting and (
+            model_improved or save_all or ((epoch + 1) % save_every == 0) \
+                or exceeded_patience
+        ):
             make_plots(
                 epoch + 1, model, outdir, plotting_opts,
                 loss_hist_train=loss_hist_train,
@@ -207,7 +210,7 @@ def train_model(
             if verbosity: logprint(f"\tModel improved!!!")
         
         # Early stopping
-        if epoch - best_epoch + 1 > patience:
+        if exceeded_patience:
             time1 = time.time()
             msg = f"Halted early. No improvement in validation loss " + \
                 f"for {patience} epochs.\n" + \
@@ -533,7 +536,7 @@ def make_plots(epoch, model, outdir, plotting_opts, **kwargs):
             np.array(sigma_hist),
             log=True, 
             sigma_true=sigma_true,
-            title="$\sigma$ history", 
+            title="$\\sigma$ history", 
             saveas=f"{outdir}/images/sigma_history.png",
         )
         plt.close()
