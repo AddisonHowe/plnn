@@ -43,6 +43,12 @@ class PLNNSimulationAnimator:
     _bifcurvecolor = 'r'
     _linewidth = 2
     _surface_alpha = 1.0
+    _gradient_field_cmap = 'RdBu_r'
+    _scatter_fixed_point_markers = {
+        'saddle': 'x',
+        'minimum': '*',
+        'maximum': 'o',
+    }
     
     _font_scale_factor = 1
     _suptitlesize    = 8 * _font_scale_factor
@@ -75,6 +81,7 @@ class PLNNSimulationAnimator:
             p0idx=0,
             p1idx=1,
             minima=None,
+            fixed_point_info=None,
             bifcurves=None,
             bifcolors=None,
             grads=None,
@@ -117,6 +124,7 @@ class PLNNSimulationAnimator:
         self.p1idx = p1idx
         self.phi_func = model.tilted_phi
         self.minima = minima
+        self.fixed_point_info = fixed_point_info
         self.bifcurves = bifcurves
         self.bifcolors = bifcolors
         self.note_string = note_string
@@ -299,7 +307,8 @@ class PLNNSimulationAnimator:
         self._setup_bmisc()
         return (
             self.scat_main, self.scat_clst1, *self._signal_markers,
-            *self._param_markers, self._bif_marker, self.heatmap
+            *self._param_markers, self._bif_marker, self.heatmap, 
+            self.gradient_field,
         )
         
     def update(self, i):
@@ -314,7 +323,8 @@ class PLNNSimulationAnimator:
         self._update_bmisc(i)
         return (
             self.scat_main, self.scat_clst1, *self._signal_markers,
-            *self._param_markers, self._bif_marker, self.heatmap
+            *self._param_markers, self._bif_marker, self.heatmap, 
+            self.gradient_field,
         )
 
     #####################
@@ -335,15 +345,34 @@ class PLNNSimulationAnimator:
             animated=True
         )
         # Setup minima scatterplot
-        self.scatter_mins, = ax.plot(
-            [], [], 
-            marker='*', 
-            markersize=self._mins_scatter_size, 
-            color=self._mins_scatter_color, 
-            alpha=self._mins_scatter_alpha, 
-            linestyle='None', 
-            animated=True
-        )
+        if self.minima is not None:
+            self.scatter_mins, = ax.plot(
+                [], [], 
+                marker='*', 
+                markersize=self._mins_scatter_size, 
+                color=self._mins_scatter_color, 
+                alpha=self._mins_scatter_alpha, 
+                linestyle='None', 
+                animated=True
+            )
+        elif self.fixed_point_info is not None:
+            _, types, fpcolors = self.fixed_point_info
+            self.fixed_point_styles = []
+            self.scatter_mins = []
+            for typeset, colorset in zip(types, fpcolors):
+                for t, c in zip(typeset, colorset):
+                    if (t, c) not in self.fixed_point_styles:
+                        self.fixed_point_styles.append((t, c))
+                        new_scatter, = ax.plot(
+                            [], [], 
+                            marker=self._scatter_fixed_point_markers[t], 
+                            markersize=self._mins_scatter_size, 
+                            color=c, 
+                            alpha=self._mins_scatter_alpha, 
+                            linestyle='None', 
+                            animated=True
+                        )
+                        self.scatter_mins.append(new_scatter)
 
         # Format
         ax.axis([*self.xlims, *self.ylims])
@@ -357,20 +386,8 @@ class PLNNSimulationAnimator:
         pos = [self.xlims[0] + (self.xlims[1]-self.xlims[0])*.5, 
                self.ylims[0] + (self.ylims[1]-self.ylims[0])*.95]
         self.maintext = ax.text(*pos, "", fontsize='small')
-        
-        # Mesh for gradient
-        self.meshx, self.meshy = np.meshgrid(np.linspace(*self.xlims, 20),
-                                             np.linspace(*self.ylims, 20))
-        self.mesh_gradient = ax.quiver(
-            self.meshx, 
-            self.meshy, 
-            np.zeros(self.meshx.shape), 
-            np.zeros(self.meshy.shape),
-            color=self._main_scatter_color, 
-            alpha=0.5, 
-            animated=True
-        )
 
+        # Heatmap
         self.heatmap = ax.pcolormesh(
             self.heatmeshx, 
             self.heatmeshy, 
@@ -380,6 +397,19 @@ class PLNNSimulationAnimator:
             cmap=DEFAULT_CMAP, 
             animated=True,
             shading='gouraud',
+        )
+        
+        # Gradient field
+        self.meshx, self.meshy = np.meshgrid(np.linspace(*self.xlims, 20),
+                                             np.linspace(*self.ylims, 20))
+        self.gradient_field = ax.quiver(
+            self.meshx, 
+            self.meshy, 
+            np.zeros(self.meshx.shape), 
+            np.zeros(self.meshy.shape),
+            color=self._main_scatter_color, 
+            alpha=0.5, 
+            animated=True
         )
 
     def _setup_surf(self):
@@ -521,7 +551,6 @@ class PLNNSimulationAnimator:
                 ax, 
                 linestyle='-',
                 linewidth=self._linewidth,
-                color=self._bifcurvecolor,
             )
         # Plot trace of tilt values
         traj = ax.plot(
@@ -606,7 +635,20 @@ class PLNNSimulationAnimator:
         xy = self.get_xy(i)
         self.scat_main.set_data(xy)
         # Update minima
-        if self.minima is not None:
+        if self.fixed_point_info is not None:
+            fps, types, fpcolors = self.get_fixed_point_info(i)
+            style_to_fps = {sty: [] for sty in self.fixed_point_styles}
+            for i, fp in enumerate(fps):
+                style_to_fps[(types[i], fpcolors[i])].append(fp)
+            
+            for scatter, sty in zip(self.scatter_mins, self.fixed_point_styles):
+                matching_fps = np.array(style_to_fps[sty])
+                if len(matching_fps) > 0:
+                    scatter.set_data(matching_fps.T)
+                else:
+                    scatter.set_data([], [])
+
+        elif self.minima is not None:
             mins = self.get_minima(i)
             self.scatter_mins.set_data(mins)
         # Update gradient vector field
@@ -616,10 +658,10 @@ class PLNNSimulationAnimator:
             norms = np.sqrt(u*u + v*v)
             u = u/norms
             v = v/norms
-            self.mesh_gradient.set_UVC(u, v)
-            pcm = plt.get_cmap('RdBu_r')
+            self.gradient_field.set_UVC(u, v)
+            pcm = plt.get_cmap(self._gradient_field_cmap)
             cnorm = colors.Normalize(vmin=0, vmax=np.max(norms))
-            self.mesh_gradient.set_color(pcm(cnorm(norms).flatten()))
+            self.gradient_field.set_color(pcm(cnorm(norms).flatten()))
 
     def _update_surf(self, i):
         ax = self.ax_surf
@@ -711,6 +753,9 @@ class PLNNSimulationAnimator:
     def get_minima(self, i):
         return self.minima[i].T
     
+    def get_fixed_point_info(self, i):
+        return (self.fixed_point_info[k][i] for k in range(3))
+    
     def get_rtext(self, i):
         return "" if i >= len(self._rtext_list) else self._rtext_list[i]
     
@@ -740,11 +785,13 @@ class PLNNSimulationAnimator:
     def _plot_bifcurves(self, ax, linestyle='-', linewidth=1, color=None):
         ncurves = len(self.bifcurves)
         for i in range(ncurves):
-            if color is None:
+            curve = self.bifcurves[i]
+            if color is not None:
+                c = color
+            elif self.bifcolors is not None:
                 c = self.bifcolors[i]
             else:
-                c = color
-            curve = self.bifcurves[i]
+                c = self._bifcurvecolor
             ax.plot(
                 curve[:,0], curve[:,1], 
                 linewidth=linewidth,
