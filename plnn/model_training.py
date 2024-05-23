@@ -21,9 +21,10 @@ def train_model(
     optimizer,
     train_dataloader, 
     validation_dataloader,
-    key,
+    key, *, 
     num_epochs=50,
     batch_size=1,
+    patience=100,
     fix_noise=False,
     hyperparams={},
     reduce_dt_on_nan=False, 
@@ -44,6 +45,7 @@ def train_model(
         key (PRNGKey): Random number generator key.
         num_epochs (int, optional): Number of training epochs. Defaults to 50.
         batch_size (int, optional): Batch size. Defaults to 1.
+        patience (int, optional): Patience. Defaults to 100.
         fix_noise (boolean, optional): Whether to fix the noise parameter.
         hyperparams (dict, optional): Hyperparameters. Defaults to {}.
     """
@@ -74,6 +76,8 @@ def train_model(
     time0 = time.time()
 
     best_vloss = 1_000_000
+    best_epoch = 0
+
     loss_hist_train = []
     loss_hist_valid = []
     learn_rate_hist = []
@@ -148,7 +152,6 @@ def train_model(
         )
 
         if np.isnan(avg_vloss):
-            pass
             msg = f"nan encountered in epoch {epoch} (validation loss)."
             logprint(msg)
         
@@ -179,14 +182,16 @@ def train_model(
         tilt_bias.append(model.get_parameters()['tilt.b'])
         np.save(f"{outdir}/tilt_bias_history.npy", tilt_bias)
 
+        model_improved = avg_vloss < best_vloss
+
         # Save the model's state
-        if avg_vloss < best_vloss or save_all:
+        if model_improved or save_all:
             model_path = f"{outdir}/states/{model_name}_{epoch + 1}.pth"
             if verbosity: logprint(f"\tSaving model to: {model_path}")
             model.save(model_path, hyperparams)
 
         # Plotting, if specified
-        if plotting and (avg_vloss < best_vloss or save_all or \
+        if plotting and (model_improved or save_all or \
                          ((epoch + 1) % save_every == 0)):
             make_plots(
                 epoch + 1, model, outdir, plotting_opts,
@@ -196,9 +201,20 @@ def train_model(
             )
             
         # Track best performance
-        if avg_vloss < best_vloss:
+        if model_improved:
             best_vloss = avg_vloss
+            best_epoch = epoch + 1
             if verbosity: logprint(f"\tModel improved!!!")
+        
+        # Early stopping
+        if epoch - best_epoch + 1 > patience:
+            time1 = time.time()
+            msg = f"Halted early. No improvement in validation loss " + \
+                f"for {patience} epochs.\n" + \
+                f"Finished training in {time1-time0:.3f} seconds."
+            if verbosity: 
+                logprint(msg)
+            return model
         
         
     time1 = time.time()
