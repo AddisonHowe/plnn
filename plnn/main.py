@@ -37,6 +37,7 @@ def parse_args(args):
     parser.add_argument('-nv', '--nsims_validation', type=int, default=None)
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
     parser.add_argument('-b', '--batch_size', type=int, default=25)
+    parser.add_argument('--patience', type=int, default=100)
     parser.add_argument('--report_every', type=int, default=10)
     parser.add_argument('--reduce_dt_on_nan', action="store_true")
     parser.add_argument('--dt_reduction_factor', type=float, default=0.5)
@@ -207,6 +208,7 @@ def main(args):
     ndims = args.ndims
     fix_noise = args.fix_noise
     batch_size = args.batch_size
+    patience = args.patience
     num_epochs = args.num_epochs
     reduce_dt_on_nan = args.reduce_dt_on_nan
     dt_reduction_factor = args.dt_reduction_factor
@@ -338,6 +340,7 @@ def main(args):
         key=trainkey,
         num_epochs=num_epochs,
         batch_size=batch_size,
+        patience=patience,
         fix_noise=fix_noise,
         model_name=model_name,
         hyperparams=hyperparams,
