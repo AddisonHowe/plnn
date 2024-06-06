@@ -152,24 +152,24 @@ class LandscapeSimulationDataset(Dataset):
     def _load_data(self, datdir, nsims, simprefix='sim'):
         ts_all = []
         xs_all = []
-        ps_all = []
+        # ps_all = []
         dataset = []
         for i in range(nsims):
             dirpath = f"{datdir}/{simprefix}{i}"
             assert os.path.isdir(dirpath), f"Not a directory: {dirpath}"
-            ts = np.load(f"{dirpath}/ts.npy")
-            xs = np.load(f"{dirpath}/xs.npy")
-            ps = np.load(f"{dirpath}/ps.npy")
+            ts = np.load(f"{dirpath}/ts.npy", allow_pickle=True)
+            xs = np.load(f"{dirpath}/xs.npy", allow_pickle=True)
+            # ps = np.load(f"{dirpath}/ps.npy", allow_pickle=True)
             sigparams = np.load(f"{dirpath}/sigparams.npy")
             ts_all.append(ts)
             xs_all.append(xs)
-            ps_all.append(ps)
-            self._add_sim_data_to_dataset(dataset, ts=ts, xs=xs, ps=ps, 
+            # ps_all.append(ps)
+            self._add_sim_data_to_dataset(dataset, ts=ts, xs=xs, ps=None, #ps=ps, 
                                           sigparams=sigparams)
         self.dataset = np.array(dataset, dtype=object)
         self.ts_all = ts_all
         self.xs_all = xs_all
-        self.ps_all = ps_all
+        # self.ps_all = ps_all
 
     def _add_sim_data_to_dataset(self, dataset, ts, xs, ps, sigparams):
         ntimes = len(ts)
@@ -202,6 +202,19 @@ class LandscapeSimulationDataset(Dataset):
 ##  Custom DataLoader Class  ##
 ###############################
 
+def custom_collate(batch):
+    xs = [dp[0][1] for dp in batch] + [dp[1] for dp in batch]
+    same_dims = np.all(np.array([x.shape for x in xs]) == xs[0].shape)
+    if same_dims:  # Fall back to `default_collate`
+        return default_collate(batch)
+    else:  # Some custom condition
+        return [
+            (
+                (dp[0][0], np.array(dp[0][1]), dp[0][2], np.array(dp[0][3])), 
+                dp[1]
+            ) for dp in batch
+        ]
+
 class NumpyLoader(DataLoader):
     """Custom DataLoader to return numpy arrays instead of torch tensors.
     """
@@ -218,7 +231,7 @@ class NumpyLoader(DataLoader):
             sampler=sampler,
             batch_sampler=batch_sampler,
             num_workers=num_workers,
-            collate_fn=lambda b: tree_map(jnp.asarray, default_collate(b)),
+            collate_fn=lambda b: tree_map(jnp.asarray, custom_collate(b)),
             pin_memory=pin_memory,
             drop_last=drop_last,
             timeout=timeout,
