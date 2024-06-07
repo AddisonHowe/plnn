@@ -424,6 +424,43 @@ def validation_step(model, x, y, loss_fn, key):
     return vloss
 
 
+def _sample_y(y, ncells, key):
+        nbatches, _, dim = y.shape
+        y_samp = jnp.empty([nbatches, ncells, dim])
+        if y.shape[1] < ncells:
+            # Sample with replacement
+            for bidx in range(y.shape[0]):
+                key, subkey = jrandom.split(key, 2)
+                samp_idxs = jnp.array(
+                    jrandom.choice(subkey, y.shape[1], (ncells,), True),
+                    dtype=int,
+                )
+                y_samp = y_samp.at[bidx,:].set(y[bidx,samp_idxs])
+        else:
+            # Sample without replacement
+            for bidx in range(y.shape[0]):
+                key, subkey = jrandom.split(key, 2)
+                samp_idxs = jnp.array(
+                    jrandom.choice(subkey, y.shape[1], (ncells,), False),
+                    dtype=int,
+                )
+                y_samp = y_samp.at[bidx,:].set(y[bidx,samp_idxs])
+        return y_samp
+
+
+def get_subsample(batched_inputs, batched_y1s, ncells, key):
+    batched_t0s = batched_inputs[0]
+    batched_y0s = batched_inputs[1]
+    batched_t1s = batched_inputs[2]
+    batched_sigparams = batched_inputs[3]
+    key, subkey1, subkey2 = jrandom.split(key, 3)
+    y0_samps = _sample_y(batched_y0s, ncells, subkey1)
+    y1_samps = _sample_y(batched_y1s, ncells, subkey2)
+    inputs = (batched_t0s, y0_samps, batched_t1s, batched_sigparams)
+    outputs = y1_samps
+    return inputs, outputs
+
+
 def handle_nan_loss(
         attempts,
         model, 

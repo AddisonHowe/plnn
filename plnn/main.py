@@ -288,6 +288,8 @@ def main(args):
         datdir_train, datdir_valid, nsims_train, nsims_valid, 
         batch_size_train=batch_size, batch_size_valid=batch_size, 
         ndims=ndims, dtype=dtype, return_datasets=True,
+        ncells_sample=args.ncells,
+        seed=rng.integers(2**32)
     )
 
     # Get signal specification
