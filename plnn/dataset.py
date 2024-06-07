@@ -34,17 +34,26 @@ class LandscapeSimulationDataset(Dataset):
             transform=None, 
             target_transform=None, 
             data=None,  # List containing datapoints for each simulation.
+            ncells_sample=None,
             dtype=torch.float32,
+            rng=None,
+            seed=None,
             **kwargs
     ):
         #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
         simprefix = kwargs.get('simprefix', 'sim')
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+        if rng is None:
+            self.rng = np.random.default_rng(seed=seed)
+        else:
+            self.rng = rng
         self.dtype = dtype
         self.nsims = nsims
         self.ndims = ndims
         self.transform = transform
         self.target_transform = target_transform
+        self.ncells_sample = ncells_sample
+        self._constant_ncells = None
         if data is None:
             # Load from given directory
             self._load_data(datdir, nsims, simprefix=simprefix)
@@ -59,6 +68,12 @@ class LandscapeSimulationDataset(Dataset):
     def __getitem__(self, idx):
         data = self.dataset[idx]
         t0, x0, t1, x1, sigparams = data
+
+        if self.constant_ncells():
+            pass
+        else:
+            x0 = self.get_subsample(x0, self.ncells_sample)
+            x1 = self.get_subsample(x1, self.ncells_sample)
         
         # Transform input x
         if self.transform == 'tensor':
@@ -197,23 +212,59 @@ class LandscapeSimulationDataset(Dataset):
         self.xs_all = None
         self.ps_all = None
 
+    def constant_ncells(self):
+        if self._constant_ncells is not None:
+            return self._constant_ncells
+        else:
+            nc_x0s = [len(self.dataset[i][1]) for i in range(len(self))]
+            nc_x1s = [len(self.dataset[i][3]) for i in range(len(self))]
+            all_same = np.all(np.array(nc_x0s + nc_x1s) == nc_x0s[0])
+            self._constant_ncells = all_same
+            return all_same
+        
+    def get_subsample(self, x, ncells):
+        ncells_input, dim = x.shape
+        x_samp = np.nan * np.ones([ncells, dim], dtype=self.dtype)
+        if ncells_input < ncells:
+            # Sample with replacement
+            samp_idxs = jnp.array(
+                self.rng.choice(ncells_input, ncells, True),
+                dtype=int,
+            )
+            x_samp[:] = x[samp_idxs]
+        else:
+            # Sample without replacement
+            samp_idxs = jnp.array(
+                self.rng.choice(ncells_input, ncells, False),
+                dtype=int,
+            )
+            x_samp[:] = x[samp_idxs]
+        return x_samp
+        
 
 ###############################
 ##  Custom DataLoader Class  ##
 ###############################
 
-def custom_collate(batch):
-    xs = [dp[0][1] for dp in batch] + [dp[1] for dp in batch]
-    same_dims = np.all(np.array([x.shape for x in xs]) == xs[0].shape)
-    if same_dims:  # Fall back to `default_collate`
-        return default_collate(batch)
-    else:  # Some custom condition
-        return [
-            (
-                (dp[0][0], np.array(dp[0][1]), dp[0][2], np.array(dp[0][3])), 
-                dp[1]
-            ) for dp in batch
-        ]
+# def custom_collate(batch):
+#     xs = [dp[0][1] for dp in batch] + [dp[1] for dp in batch]
+#     same_dims = np.all(np.array([x.shape for x in xs]) == xs[0].shape)
+#     if same_dims:  # Fall back to `default_collate`
+#         return default_collate(batch)
+#     else:  # Some custom condition
+#         t0s = [dp[0][0] for dp in batch]
+#         x0s = [dp[0][1] for dp in batch]
+#         t1s = [dp[0][2] for dp in batch]
+#         sigparams = [dp[0][3] for dp in batch]
+#         x1s = [dp[1] for dp in batch]
+#         inputs = (
+#             t0s, 
+#             x0s, 
+#             t1s, 
+#             sigparams
+#         )
+#         outputs = x1s
+#         return inputs, outputs
 
 class NumpyLoader(DataLoader):
     """Custom DataLoader to return numpy arrays instead of torch tensors.
@@ -231,7 +282,7 @@ class NumpyLoader(DataLoader):
             sampler=sampler,
             batch_sampler=batch_sampler,
             num_workers=num_workers,
-            collate_fn=lambda b: tree_map(jnp.asarray, custom_collate(b)),
+            collate_fn=lambda b: tree_map(jnp.asarray, default_collate(b)),
             pin_memory=pin_memory,
             drop_last=drop_last,
             timeout=timeout,
@@ -255,6 +306,9 @@ def get_dataloaders(
         include_test_data=False,
         datdir_test="",
         nsims_test=None,
+        ncells_sample=None,
+        rng=None,
+        seed=None,
     ):
     """TODO
 
@@ -272,11 +326,16 @@ def get_dataloaders(
     Returns:
         _type_: _description_
     """
+    if rng is None:
+        rng = np.random.default_rng(seed=seed)
+
     train_dataset = LandscapeSimulationDataset(
         datdir_train, nsims_train, ndims, 
         transform=None, 
         target_transform=None,
         dtype=dtype,
+        ncells_sample=ncells_sample,
+        seed=rng.integers(2**32)
     )
 
     valid_dataset = LandscapeSimulationDataset(
@@ -284,6 +343,8 @@ def get_dataloaders(
         transform=None, 
         target_transform=None,
         dtype=dtype,
+        ncells_sample=ncells_sample,
+        seed=rng.integers(2**32),
     )
 
     train_dataloader = NumpyLoader(
@@ -307,6 +368,8 @@ def get_dataloaders(
             transform=None, 
             target_transform=None,
             dtype=dtype,
+            ncells_sample=ncells_sample,
+            seed=rng.integers(2**32)
         )
         test_dataloader = NumpyLoader(
             test_dataset, 
