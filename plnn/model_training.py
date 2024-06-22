@@ -140,7 +140,7 @@ def train_model(
         )
 
         if np.isnan(avg_tloss):
-            msg = f"nan encountered in epoch {epoch} (training loss)."
+            msg = f"nan encountered in epoch {epoch + 1} (training loss)."
             log_and_raise_runtime_error(msg)
 
         # Validation pass
@@ -152,7 +152,7 @@ def train_model(
         )
 
         if np.isnan(avg_vloss):
-            msg = f"nan encountered in epoch {epoch} (validation loss)."
+            msg = f"nan encountered in epoch {epoch + 1} (validation loss)."
             logprint(msg)
         
         if hasattr(opt_state[1], 'hyperparams'):
