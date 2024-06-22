@@ -46,7 +46,9 @@ def load_model_from_directory(
 
     if idx == -1 or idx == 'best':
         loss_hist_valid = np.load(f"{modeldir}/validation_loss_history.npy")
-        idx = 1 + np.argmin(loss_hist_valid[~np.isnan(loss_hist_valid)])
+        idx = 1 + np.argmin(
+            np.where(np.isnan(loss_hist_valid), np.inf, loss_hist_valid)
+        )
 
     file_list = os.listdir(f"{modeldir}/{subdir}")
     fname_components = file_list[0].removesuffix(file_suffix).split("_")
@@ -127,4 +129,3 @@ def _load_args_from_log(logfilepath, args_to_load=_ARGS_TO_LOAD) -> dict:
                 if key in args_to_load:
                     args[key] = eval(val)
     return args
-
