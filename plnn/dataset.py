@@ -103,6 +103,7 @@ class LandscapeSimulationDataset(Dataset):
         xlims = kwargs.get('xlims', None)
         ylims = kwargs.get('ylims', None)
         show = kwargs.get('show', True)
+        title = kwargs.get('title', f"datapoint {idx}/{len(self)}")
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
         data = self.dataset[idx]
         t0, x0, t1, x1, sigparams = data
@@ -115,7 +116,7 @@ class LandscapeSimulationDataset(Dataset):
         if ylims is not None: ax.set_ylim(*ylims)
         ax.set_xlabel(f"$x$")
         ax.set_ylabel(f"$y$")
-        ax.set_title(f"datapoint {idx}/{len(self)}")
+        ax.set_title(title)
         # s = f"$t:{t0:.4g}\\to{t1:.4g}$\
         #     \n$t^*={sigparams[0]:.3g}$\
         #     \n$p_0=[{sigparams[1]:.3g}, {sigparams[2]:.3g}]$\
@@ -127,7 +128,7 @@ class LandscapeSimulationDataset(Dataset):
         if show: plt.show()
         return ax
 
-    def animate(self, simidx, interval=50, **kwargs):
+    def animate(self, simidx, interval=50, saveas=False, fps=1, **kwargs):
         """Animate a given simulation"""
         idx0 = int(simidx * len(self) // self.nsims)
         idx1 = idx0 + int(len(self) // self.nsims)
@@ -158,6 +159,8 @@ class LandscapeSimulationDataset(Dataset):
             frames=video.shape[0],
             interval=interval,
         )
+        if saveas:
+            anim.save(saveas, fps=fps)
         return anim.to_html5_video()
 
     ######################
@@ -213,14 +216,15 @@ class LandscapeSimulationDataset(Dataset):
         self.ps_all = None
 
     def constant_ncells(self):
-        if self._constant_ncells is not None:
-            return self._constant_ncells
-        else:
+        if self._constant_ncells is None:
             nc_x0s = [len(self.dataset[i][1]) for i in range(len(self))]
             nc_x1s = [len(self.dataset[i][3]) for i in range(len(self))]
             all_same = np.all(np.array(nc_x0s + nc_x1s) == nc_x0s[0])
+            if (not all_same) and self.ncells_sample is None:
+                msg = "Dataset has uneven sample sizes. Need to set `ncells_sample`."
+                raise RuntimeError(msg)
             self._constant_ncells = all_same
-            return all_same
+        return self._constant_ncells
         
     def get_subsample(self, x, ncells):
         ncells_input, dim = x.shape
