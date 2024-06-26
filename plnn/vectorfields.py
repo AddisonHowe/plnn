@@ -94,7 +94,7 @@ def find_minima_along_tilt_trajectory(
         rng=None, 
         seed=None,
 ):
-    """Compute minima model's potential along a trajectory of tilt values.
+    """Compute minima of model's potential along a trajectory of tilt values.
 
     Args:
         model (_type_): _description_
@@ -124,6 +124,7 @@ def find_minima_along_tilt_trajectory(
         tilt_trajectory, 
         npoints=ndivisions, 
     )
+    ndivisions = len(div_points)
 
     # Estimate minima at each of the division points.
     div_minima_list = []
@@ -181,7 +182,8 @@ def divide_trajectory(traj, npoints):
     # Divide the trajectory into approximately equal segments wrt arclength
     s_samps = np.linspace(0, 1, npoints, endpoint=True)
     distances = np.abs(s_samps[:,None] - s_cumulative[None,:])
-    samp_idxs = np.argmin(distances, axis=1)
+    samp_idxs = list(np.argmin(distances, axis=1)) + [len(traj)-1]
+    samp_idxs = np.unique(samp_idxs)
     return traj[samp_idxs,:], samp_idxs
 
 
