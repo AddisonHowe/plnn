@@ -2,8 +2,7 @@
 
 """
 
-
-DEFAULT_CMAP = "plasma"
+DEFAULT_CMAP = "pastel_plasma"  # defined in module custom_colors
 
 PHI1_C_ATTRACTOR_COLOR = 'blue'
 PHI1_L_ATTRACTOR_COLOR = 'green'

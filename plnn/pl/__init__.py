@@ -1,3 +1,5 @@
+from .config import DEFAULT_CMAP
+
 from .plotting import plot_training_loss_history
 from .plotting import plot_validation_loss_history
 from .plotting import plot_loss_history
@@ -10,4 +12,4 @@ from .plot_landscapes import plot_landscape
 
 from .plot_plnn import plot_phi, plot_f
 
-from .config import DEFAULT_CMAP
+from .custom_colors import CHIR_COLOR, FGF_COLOR

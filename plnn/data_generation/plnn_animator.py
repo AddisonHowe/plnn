@@ -14,7 +14,7 @@ import matplotlib.animation as animation
 
 
 from plnn.models.plnn import PLNN
-from plnn.pl import DEFAULT_CMAP
+from plnn.pl import DEFAULT_CMAP, CHIR_COLOR, FGF_COLOR
 
 import warnings
 warnings.filterwarnings("ignore", module="matplotlib\..*")
@@ -36,7 +36,7 @@ class PLNNSimulationAnimator:
     _clst_scatter_color2 = 'k'
     _surf_scatter_size = 5
     _surf_scatter_color = 'k'
-    _siglinecmap = 'tab10'
+    _siglinecmap = 'signal_cmap'
     _paramlinecmap = 'Accent'
     _biflinecmap = 'tab10'
     _axlimbuffer = 0.05  # percent buffer on axis lims
@@ -137,6 +137,9 @@ class PLNNSimulationAnimator:
             self.param_names = [f'$\\tau_{i}$' for i in range(self.nparams)] 
         else:
             self.param_names = param_names
+        if self.nsigs == 2:
+            # self._siglinecmap = [CHIR_COLOR, FGF_COLOR]
+            pass
 
         self.ts_saved = ts_saved
         self.xys_saved = xys_saved
@@ -815,9 +818,9 @@ class PLNNSimulationAnimator:
         """Right miscellaneous box text."""
         t = self.get_t(i)
         sig = self.get_sigs(i)
-        sig_str = ", ".join([f"{x:.3g}" for x in sig])
+        sig_str = ", ".join([f"{x:.4f}" for x in sig])
         tau = self.get_ps(i)
-        tau_str = ", ".join([f"{x:.3g}" for x in tau])
+        tau_str = ", ".join([f"{x:.4f}" for x in tau])
         s = f"$t={t:.3f}$" 
         s += f"\n$\\boldsymbol{{s}}=({sig_str})^T$"
         s += f"\n$\\boldsymbol{{\\tau}}=({tau_str})^T$"
