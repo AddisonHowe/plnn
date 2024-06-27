@@ -1,7 +1,7 @@
 #ARGUMENT					#VALUE
 ##############################################################  I/O
-name						model_phi1_1a_v_mmd2
-outdir						out/model_training/model_phi1_1a_v_mmd2
+name						model_phi1_1a_v_mmd1_presample
+outdir						out/model_training/model_phi1_1a_v_mmd1_presample
 training_data				data/training_data/data_phi1_1a/training
 validation_data				data/training_data/data_phi1_1a/validation
 ##############################################################  Training
@@ -9,8 +9,8 @@ num_epochs					2000
 batch_size					250
 patience					100
 ncells						200
-ncells_sample				0
-model_do_sample				True
+ncells_sample				200
+model_do_sample				False
 solver						heun
 dt							1e-1
 fix_noise					False
@@ -52,11 +52,11 @@ loss						mmd
 optimizer					rms
 momentum					0.5
 weight_decay				0.9
-clip						10.0
+clip						1.0
 ##############################################################  LR Shedule
 lr_schedule					exponential_decay
 learning_rate				1e-2
-final_learning_rate			1e-4
+final_learning_rate			1e-5
 nepochs_warmup				50
 nepochs_decay				-1
 ##############################################################  Misc
