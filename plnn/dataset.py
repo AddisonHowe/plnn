@@ -43,6 +43,7 @@ class LandscapeSimulationDataset(Dataset):
             transform=None, 
             data=None,  # List containing datapoints for each simulation.
             ncells_sample=0,
+            length_multiplier=1,
             rng=None,
             seed=None,
             simprefix='sim',
@@ -56,6 +57,7 @@ class LandscapeSimulationDataset(Dataset):
         self.ndims = ndims
         self.transform = transform
         self.ncells_sample = ncells_sample
+        self.length_multiplier = length_multiplier
         assert isinstance(ncells_sample, int), \
             f"Got ncells_sample={ncells_sample}"
         
@@ -86,9 +88,15 @@ class LandscapeSimulationDataset(Dataset):
                 raise RuntimeError(msg)
 
     def __len__(self):
-        return len(self.dataset)
+        return len(self.dataset) * self.length_multiplier
     
     def __getitem__(self, idx):
+        if idx >= len(self):
+            msg = f"Index {idx} out of bound for {type(self)}."
+            msg += f" Dataset has length {len(self.dataset)} "
+            msg += f" with multiplier {self.length_multiplier}."
+            raise IndexError(msg)
+        idx = idx % len(self.dataset)
         data = self.dataset[idx]
         t0, x0, t1, x1, sigparams = data
         # Sample if needed
@@ -116,7 +124,7 @@ class LandscapeSimulationDataset(Dataset):
         xlims = kwargs.get('xlims', None)
         ylims = kwargs.get('ylims', None)
         show = kwargs.get('show', True)
-        title = kwargs.get('title', f"datapoint {idx}/{len(self)}")
+        title = kwargs.get('title', f"datapoint {idx}/{len(self.dataset)}")
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
         data = self.dataset[idx]
         t0, x0, t1, x1, sigparams = data
@@ -143,8 +151,8 @@ class LandscapeSimulationDataset(Dataset):
 
     def animate(self, simidx, interval=50, saveas=False, fps=1, **kwargs):
         """Animate a given simulation"""
-        idx0 = int(simidx * len(self) // self.nsims)
-        idx1 = idx0 + int(len(self) // self.nsims)
+        idx0 = int(simidx * len(self.dataset) // self.nsims)
+        idx1 = idx0 + int(len(self.dataset) // self.nsims)
         video = []
         for idx in range(idx0, idx1):
             ax = self.preview(idx, **kwargs)
@@ -229,8 +237,8 @@ class LandscapeSimulationDataset(Dataset):
         self.ps_all = None
 
     def _check_homogeneous(self):
-        nc_x0s = [len(self.dataset[i][1]) for i in range(len(self))]
-        nc_x1s = [len(self.dataset[i][3]) for i in range(len(self))]
+        nc_x0s = [len(self.dataset[i][1]) for i in range(len(self.dataset))]
+        nc_x1s = [len(self.dataset[i][3]) for i in range(len(self.dataset))]
         all_same = np.all(np.array(nc_x0s + nc_x1s) == nc_x0s[0])
         return all_same
 
@@ -327,6 +335,7 @@ def get_dataloaders(
         datdir_test="",
         nsims_test=None,
         ncells_sample=0,
+        length_multiplier=1,
         rng=None,
         seed=None,
     ):
@@ -354,6 +363,7 @@ def get_dataloaders(
         datdir_train, nsims_train, ndims, 
         transform=transform, 
         ncells_sample=ncells_sample,
+        length_multiplier=length_multiplier,
         seed=rng.integers(2**32)
     )
 
@@ -361,6 +371,7 @@ def get_dataloaders(
         datdir_valid, nsims_valid, ndims, 
         transform=transform, 
         ncells_sample=ncells_sample,
+        length_multiplier=length_multiplier,
         seed=rng.integers(2**32),
     )
 
@@ -384,6 +395,7 @@ def get_dataloaders(
             datdir_test, nsims_test, ndims, 
             transform=transform, 
             ncells_sample=ncells_sample,
+            length_multiplier=length_multiplier,
             seed=rng.integers(2**32)
         )
         test_dataloader = NumpyLoader(

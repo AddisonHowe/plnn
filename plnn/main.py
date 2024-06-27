@@ -36,6 +36,7 @@ def parse_args(args):
     parser.add_argument('-nt', '--nsims_training', type=int, default=None)
     parser.add_argument('-nv', '--nsims_validation', type=int, default=None)
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
+    parser.add_argument('--passes_per_epoch', type=int, default=1)
     parser.add_argument('-b', '--batch_size', type=int, default=25)
     parser.add_argument('--patience', type=int, default=100)
     parser.add_argument('--report_every', type=int, default=10)
@@ -291,6 +292,7 @@ def main(args):
         batch_size_train=batch_size, batch_size_valid=batch_size, 
         ndims=ndims, return_datasets=True,
         ncells_sample=args.ncells_sample,
+        length_multiplier=args.passes_per_epoch,
         seed=rng.integers(2**32)
     )
 
