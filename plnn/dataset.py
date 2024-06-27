@@ -2,6 +2,7 @@
 """
 
 import os
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -16,15 +17,23 @@ from jax.tree_util import tree_map
 ############################
 
 class LandscapeSimulationDataset(Dataset):
-    """A collection of data generated via landscape simulations.
+    """A collection of data representing consecutive snapshots of a system.
     
-    Each simulation consists of generating a number of paths between time
-    t0=0 and t1, sampling the state of each path at a set of time intervals t_i,
-    and thus capturing a pair (t_i, X_i), where X_i is an N by d state matrix.
-    The data then consists of tuples (t_{i}, X_{i}, t_{i+1}, X_{i+1}), which 
-    represent the evolution in state between consecutive sampling times.
+    The data consists of tuples (t_i, X_i, t_j, X_j, <args>), where t_i and t_j
+    are scalar floats, and X_i and X_j are matrices of size [?, d]. Thus, the
+    state dimension is fixed, but the number of cells at the two timepoints may
+    differ. If the number of cells is the same across the entire dataset, then 
+    the dataset is "homogeneous."
 
+    Samples may be drawn from a dataset by directly sampling the datapoint 
+    tuples. Alternatively, an additional step of subsampling can be performed.
+    In that case, a specified number of cells are sampled from the X_i and X_j
+    matrices whenever an item is queried via __getitem__.
     """
+
+    nonhomogeneous_warning = "Dataset is not homogeneous."
+    no_sample_with_ncells_warning = \
+        "Must set transform='sample' if ncells_sample > 0."
     
     def __init__(
             self, 
@@ -32,35 +41,49 @@ class LandscapeSimulationDataset(Dataset):
             nsims=None, 
             ndims=2, 
             transform=None, 
-            target_transform=None, 
             data=None,  # List containing datapoints for each simulation.
-            ncells_sample=None,
-            dtype=torch.float32,
+            ncells_sample=0,
             rng=None,
             seed=None,
-            **kwargs
+            simprefix='sim',
+            suppress_warnings=False,
     ):
-        #~~~~~~~~~~~~  process kwargs  ~~~~~~~~~~~~#
-        simprefix = kwargs.get('simprefix', 'sim')
-        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
         if rng is None:
             self.rng = np.random.default_rng(seed=seed)
         else:
             self.rng = rng
-        self.dtype = dtype
         self.nsims = nsims
         self.ndims = ndims
         self.transform = transform
-        self.target_transform = target_transform
         self.ncells_sample = ncells_sample
-        self._constant_ncells = None
-        if data is None:
-            # Load from given directory
+        assert isinstance(ncells_sample, int), \
+            f"Got ncells_sample={ncells_sample}"
+        
+        # Load data directly or from given directory
+        if data is None:  
             self._load_data(datdir, nsims, simprefix=simprefix)
         else:
-            # Load given data directly
             self.nsims = nsims if nsims else len(data)
             self._load_data_direct(data, nsims)
+        
+        # Check if each datapoint has the same number of cells.
+        self._is_loadable = True
+        self.is_homogeneous = self._check_homogeneous()
+        if ncells_sample > 0 and self.transform != 'sample':
+            msg = self.no_sample_with_ncells_warning
+            raise RuntimeError(msg)
+        if not self.is_homogeneous:
+            msg = self.nonhomogeneous_warning
+            if self.transform != "sample":
+                self._is_loadable = False
+                msg += " Need to set transform='sample' and" 
+                msg += " ncells_sample=<int> to use NumpyLoader."
+                msg += " Set suppress_warnings=False to suppress this message."
+                if not suppress_warnings:
+                    warnings.warn(RuntimeWarning(msg))
+            elif self.ncells_sample == 0:
+                msg += " Need to set ncells_sample > 0."
+                raise RuntimeError(msg)
 
     def __len__(self):
         return len(self.dataset)
@@ -68,30 +91,20 @@ class LandscapeSimulationDataset(Dataset):
     def __getitem__(self, idx):
         data = self.dataset[idx]
         t0, x0, t1, x1, sigparams = data
-
-        if self.constant_ncells():
-            pass
-        else:
+        # Sample if needed
+        if self.transform == 'sample':
+            # TODO: different ncells_sample for x0 and x1?
             x0 = self.get_subsample(x0, self.ncells_sample)
             x1 = self.get_subsample(x1, self.ncells_sample)
-        
-        # Transform input x
-        if self.transform == 'tensor':
-            x = np.concatenate([[t0], [t1], x0.flatten(), sigparams.flatten()])
-            x = torch.tensor(x, dtype=self.dtype)
-        elif self.transform:
-            x = self.transform(*data)
-        else:
-            x = t0, x0, t1, sigparams
-        
-        # Transform target y, the final distribution
-        if self.target_transform == 'tensor':
-            y = torch.tensor(x1, dtype=self.dtype)
-        elif self.target_transform:
-            y = self.target_transform(*data)
-        else:
-            y = x1
-        return x, y
+        inputs = t0, x0, t1, sigparams
+        outputs = x1
+        return inputs, outputs
+    
+    def is_loadable(self):
+        return self._is_loadable
+
+    def is_not_loadable(self):
+        return not self._is_loadable
     
     def preview(self, idx, **kwargs):
         """Plot a data item."""
@@ -215,20 +228,15 @@ class LandscapeSimulationDataset(Dataset):
         self.xs_all = None
         self.ps_all = None
 
-    def constant_ncells(self):
-        if self._constant_ncells is None:
-            nc_x0s = [len(self.dataset[i][1]) for i in range(len(self))]
-            nc_x1s = [len(self.dataset[i][3]) for i in range(len(self))]
-            all_same = np.all(np.array(nc_x0s + nc_x1s) == nc_x0s[0])
-            if (not all_same) and self.ncells_sample is None:
-                msg = "Dataset has uneven sample sizes. Need to set `ncells_sample`."
-                raise RuntimeError(msg)
-            self._constant_ncells = all_same
-        return self._constant_ncells
-        
+    def _check_homogeneous(self):
+        nc_x0s = [len(self.dataset[i][1]) for i in range(len(self))]
+        nc_x1s = [len(self.dataset[i][3]) for i in range(len(self))]
+        all_same = np.all(np.array(nc_x0s + nc_x1s) == nc_x0s[0])
+        return all_same
+
     def get_subsample(self, x, ncells):
         ncells_input, dim = x.shape
-        x_samp = np.nan * np.ones([ncells, dim], dtype=self.dtype)
+        x_samp = np.nan * np.ones([ncells, dim], dtype=float)
         if ncells_input < ncells:
             # Sample with replacement
             samp_idxs = jnp.array(
@@ -274,11 +282,16 @@ class NumpyLoader(DataLoader):
     """Custom DataLoader to return numpy arrays instead of torch tensors.
     """
 
-    def __init__(self, dataset, batch_size=1,
-                 shuffle=False, sampler=None,
-                 batch_sampler=None, num_workers=0,
-                 pin_memory=False, drop_last=False,
-                 timeout=0, worker_init_fn=None):
+    nonloadable_error_message = "NumpyLoader given nonloadable dataset."
+
+    def __init__(
+            self, 
+            dataset: LandscapeSimulationDataset, 
+            batch_size=1,
+            shuffle=False, sampler=None,
+            batch_sampler=None, num_workers=0,
+            pin_memory=False, drop_last=False,
+            timeout=0, worker_init_fn=None):
         super(self.__class__, self).__init__(
             dataset,
             batch_size=batch_size,
@@ -292,6 +305,10 @@ class NumpyLoader(DataLoader):
             timeout=timeout,
             worker_init_fn=worker_init_fn
         )
+        if dataset.is_not_loadable():
+            msg = self.nonloadable_error_message
+            raise RuntimeError(msg)
+
 
 def get_dataloaders(
         datdir_train,
@@ -302,7 +319,6 @@ def get_dataloaders(
         batch_size_valid=1,
         batch_size_test=1,
         ndims=2,
-        dtype=np.float64,
         shuffle_train=True,
         shuffle_valid=False,
         shuffle_test=False,
@@ -310,7 +326,7 @@ def get_dataloaders(
         include_test_data=False,
         datdir_test="",
         nsims_test=None,
-        ncells_sample=None,
+        ncells_sample=0,
         rng=None,
         seed=None,
     ):
@@ -333,20 +349,17 @@ def get_dataloaders(
     if rng is None:
         rng = np.random.default_rng(seed=seed)
 
+    transform = "sample" if ncells_sample else None
     train_dataset = LandscapeSimulationDataset(
         datdir_train, nsims_train, ndims, 
-        transform=None, 
-        target_transform=None,
-        dtype=dtype,
+        transform=transform, 
         ncells_sample=ncells_sample,
         seed=rng.integers(2**32)
     )
 
     valid_dataset = LandscapeSimulationDataset(
         datdir_valid, nsims_valid, ndims, 
-        transform=None, 
-        target_transform=None,
-        dtype=dtype,
+        transform=transform, 
         ncells_sample=ncells_sample,
         seed=rng.integers(2**32),
     )
@@ -369,9 +382,7 @@ def get_dataloaders(
     if include_test_data:
         test_dataset = LandscapeSimulationDataset(
             datdir_test, nsims_test, ndims, 
-            transform=None, 
-            target_transform=None,
-            dtype=dtype,
+            transform=transform, 
             ncells_sample=ncells_sample,
             seed=rng.integers(2**32)
         )

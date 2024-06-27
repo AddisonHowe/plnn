@@ -74,7 +74,6 @@ class TestTwoStepSimulation:
             shuffle_train=False,
             shuffle_valid=False,
             ndims=2,
-            dtype=dtype,
             return_datasets=True,
         )
 

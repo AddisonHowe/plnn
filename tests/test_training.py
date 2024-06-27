@@ -121,7 +121,7 @@ def test_fixed_sigma_training(dtype, datdir_train, datdir_valid,
     train_dataloader, valid_dataloader, train_dset, _ = get_dataloaders(
         datdir_train, datdir_valid, 4, 4, 
         batch_size_train=1, batch_size_valid=1, 
-        ndims=2, dtype=dtype, return_datasets=True,
+        ndims=2, return_datasets=True,
     )
 
     model = get_model([W1, W2, W3], [WT1], dtype, sigma=sigma, ncells=10)

@@ -59,6 +59,8 @@ def parse_args(args):
                          help="Number of signals in the system.")
     grp_sim.add_argument('-nc', '--ncells', type=int, default=100, 
                          help="Number of cells to evolve internally.")
+    grp_sim.add_argument('--ncells_sample', type=int, default=0)
+    grp_sim.add_argument('--model_do_sample', action="store_true")
     grp_sim.add_argument('-dt', '--dt', type=float, default=1e-3,
                          help="Euler timestep to use internally.")
     grp_sim.add_argument('--signal_function', type=str, default='jump',
@@ -287,8 +289,8 @@ def main(args):
     train_dataloader, valid_dataloader, train_dset, _ = get_dataloaders(
         datdir_train, datdir_valid, nsims_train, nsims_valid, 
         batch_size_train=batch_size, batch_size_valid=batch_size, 
-        ndims=ndims, dtype=dtype, return_datasets=True,
-        ncells_sample=args.ncells,
+        ndims=ndims, return_datasets=True,
+        ncells_sample=args.ncells_sample,
         seed=rng.integers(2**32)
     )
 
@@ -412,7 +414,7 @@ def get_model_args(model_name, args):
         'tilt_layer_normalize' : args.tilt_layer_normalize,
         'dt0' : args.dt,
         'solver' : args.solver,
-        'sample_cells' : True,
+        'sample_cells' : args.model_do_sample,
     }
     args_init = {
         'init_tilt_weights_method' : args.init_tilt_weights_method,
