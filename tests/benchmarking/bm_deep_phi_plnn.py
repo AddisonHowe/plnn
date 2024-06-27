@@ -118,7 +118,6 @@ class TestBenchmarkCoreLandscapeMethods:
             TRAINDIR, VALIDDIR, NSIMS_TRAIN, NSIMS_VALID,
             batch_size_train=batch_size,
             batch_size_valid=batch_size,
-            dtype=dtype,
             shuffle_train=False,
             shuffle_valid=False,
             return_datasets=False
