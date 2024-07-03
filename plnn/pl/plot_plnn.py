@@ -18,6 +18,8 @@ def plot_phi(
         sigparams=None,
         eval_time=None,
         r=4, 
+        xrange=None,
+        yrange=None,
         res=50, 
         plot3d=False, 
         lognormalize=True, 
@@ -68,12 +70,17 @@ def plot_phi(
     if equal_axes:
         ax.set_aspect('equal')
 
+    if xrange is None:
+        xrange = [-r, r]
+    if yrange is None:
+        yrange = [-r, r]
+
     # Get grid
-    x = np.linspace(-r, r, res)
-    y = np.linspace(-r, r, res)
+    x = np.linspace(*xrange, res)
+    y = np.linspace(*yrange, res)
     xs, ys = np.meshgrid(x, y)
     z = np.array([xs.flatten(), ys.flatten()]).T
-    z = jnp.array(z, dtype=jnp.float32)
+    z = jnp.array(z, dtype=jnp.float64)
 
     # Determine tilt based on given information
     if tilt is not None:
@@ -208,6 +215,8 @@ def plot_f(
         sigparams=None,
         eval_time=None,
         r=4, 
+        xrange=None,
+        yrange=None,
         res=50, 
         xlims=None, 
         ylims=None, 
@@ -240,12 +249,17 @@ def plot_f(
     if equal_axes:
         ax.set_aspect('equal')
 
+    if xrange is None:
+        xrange = [-r, r]
+    if yrange is None:
+        yrange = [-r, r]
+
     # Get grid
-    x = np.linspace(-r, r, res)
-    y = np.linspace(-r, r, res)
+    x = np.linspace(*xrange, res)
+    y = np.linspace(*yrange, res)
     xs, ys = np.meshgrid(x, y)
     z = np.array([xs.flatten(), ys.flatten()]).T
-    z = jnp.array(z, dtype=jnp.float32)
+    z = jnp.array(z, dtype=jnp.float64)
     
     # Determine tilt based on given information
     if tilt is not None:
