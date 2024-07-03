@@ -16,6 +16,7 @@ import equinox as eqx
 
 from plnn.dataset import get_dataloaders
 from plnn.models import DeepPhiPLNN, GMMPhiPLNN, NEDeepPhiPLNN, NEGMMPhiPLNN
+from plnn.models import AlgebraicPL
 from plnn.loss_functions import select_loss_function
 from plnn.optimizers import get_optimizer_args, select_optimizer
 from plnn.model_training import train_model
@@ -32,7 +33,7 @@ def parse_args(args):
     parser.add_argument('-v', '--validation_data', type=str, required=True)
     parser.add_argument('--model_type', type=str, default="deep_phi",
                         choices=['deep_phi', 'gmm_phi', 
-                                 'ne_deep_phi', 'ne_gmm_phi'])
+                                 'binary_choice', 'binary_flip'])
     parser.add_argument('-nt', '--nsims_training', type=int, default=None)
     parser.add_argument('-nv', '--nsims_validation', type=int, default=None)
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
@@ -181,6 +182,13 @@ def parse_args(args):
                         default=1.0,
                         help="Exponent in the warmup cosine decay schedule")
     
+    # Plotting options
+    grp_plot = parser.add_argument_group(
+        title="plotting args",
+        description="Plotting arguments."
+    )
+    grp_plot.add_argument('--plot_radius', type=float, default=4)
+
     # Misc. options
     grp_misc = parser.add_argument_group(
         title="misc. args",
@@ -271,8 +279,10 @@ def main(args):
         model_class = NEDeepPhiPLNN
     elif model_type == 'ne_gmm_phi':
         model_class = NEGMMPhiPLNN
+    elif model_type == 'binary_choice' or model_type == 'binary_flip':
+        model_class = AlgebraicPL
     else:
-        msg = f"Unknown model class {model_type}."
+        msg = f"Unknown model type specification: {model_type}."
         log_and_raise_runtime_error(msg)
         
     # Handle random number generators and seeds
@@ -304,7 +314,7 @@ def main(args):
         model, hyperparams = model_class.load(cont_path, dtype=dtype)
     else:
         # Construct and initialize the model
-        args_make, args_init = get_model_args(model_name, args)
+        args_make, args_init = get_model_args(model_type, args)
         model, hyperparams = model_class.make_model(
             key=modelkey, dtype=dtype, 
             signal_type=signal_type, nsigparams=nsigparams,
@@ -330,7 +340,7 @@ def main(args):
     # Plotting kwargs
     plotting_opts = {
         'equal_axes': True,
-        'plot_radius': 4,
+        'plot_radius': args.plot_radius,
         'plot_losses': True,
         'plot_sigma_hist': True,
         'sigma_true': None,  # TODO: include true value of sigma if given.
@@ -400,7 +410,7 @@ def read_nsims(datdir):
     return np.genfromtxt(f"{datdir}/nsims.txt", dtype=int)
 
 
-def get_model_args(model_name, args):
+def get_model_args(model_type, args):
     args_make = {
         'ndims' : args.ndims, 
         'nparams' : args.nparams, 
@@ -426,9 +436,9 @@ def get_model_args(model_name, args):
     }
 
     # Add extra args based on Deep or GMM PLNN
-    if model_name == 'deep_phi' or model_name == 'ne_deep_phi':
+    if model_type == 'deep_phi' or model_type == 'ne_deep_phi':
         args_make.update({
-            'include_phi_bias' : True,
+            'include_phi_bias' : False,
             'phi_hidden_dims' : args.phi_hidden_dims,
             'phi_hidden_acts' : args.phi_hidden_acts,
             'phi_final_act' : args.phi_final_act,
@@ -440,13 +450,34 @@ def get_model_args(model_name, args):
             'init_phi_bias_method' : args.init_phi_bias_method,
             'init_phi_bias_args' : args.init_phi_bias_args,
         })
-    elif model_name == 'gmm_phi' or model_name == 'ne_gmm_phi':
+    elif model_type == 'gmm_phi' or model_type == 'ne_gmm_phi':
         args_make.update({})
         args_init.update({})
         raise NotImplementedError()
+
+    # Add extra args for AlgebraicPL models
+    if model_type == 'binary_choice':
+        args_make.update({
+            'algebraic_phi_id' : "binary choice"
+        })
+        args_init.update({})
+
+    if model_type == 'binary_flip':
+        args_make.update({
+            'algebraic_phi_id' : "binary flip"
+        })
+        args_init.update({})
+
+    if model_type == 'stitched':
+        raise NotImplementedError()
+    
+    if model_type == 'quadratic':
+        # NOTE: Needs to handle `phi_args` parameter.
+        raise NotImplementedError()
+    
     
     # Add extra args for non euclidean PLNN
-    if model_name == 'ne_deep_phi' or model_name == 'ne_gmm_phi':
+    if model_type == 'ne_deep_phi' or model_type == 'ne_gmm_phi':
         args_make.update({
             'metric_hidden_dims' : args.metric_hidden_dims,
             'metric_hidden_acts' : args.metric_hidden_acts,

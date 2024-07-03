@@ -124,8 +124,9 @@ def trace_curve(
         tol=newton_tol
     )
     if not converged:
-        msg = f"Initial step with x0={x0}, p0={p0} did not converge."
-        warnings.warn(msg)
+        if verbosity > 0:
+            msg = f"Initial step with x0={x0}, p0={p0} did not converge."
+            warnings.warn(msg)
         return [], [], [], info
     
     w_init = update_w(w, x0, x1, p0, p1, dimx, dimp)

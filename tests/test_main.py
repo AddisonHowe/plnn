@@ -29,12 +29,12 @@ def get_args(fpath):
 ###############################   BEGIN TESTS   ###############################
 ###############################################################################
 
-@pytest.mark.skip()
 @pytest.mark.parametrize('argstring_fpath', [
     f"{DATDIR}/test_main_args/argstring1.txt",
     f"{DATDIR}/test_main_args/argstring2.txt",
     f"{DATDIR}/test_main_args/argstring3.txt",
     f"{DATDIR}/test_main_args/argstring4.txt",
+    f"{DATDIR}/test_main_args/argstring_algphi1.txt",
 ])
 def test_main(argstring_fpath):
     argstring = get_args(argstring_fpath)
@@ -75,7 +75,6 @@ def test_main_nonhomogeneous(
     remove_dir(args.outdir)
 
 
-@pytest.mark.skip()
 @pytest.mark.parametrize('argstring_fpath, modelname, dtype', [
     [f"{DATDIR}/test_main_args/argstring1.txt", "model1", jnp.float32],
     [f"{DATDIR}/test_main_args/argstring2.txt", "model2", jnp.float32],
