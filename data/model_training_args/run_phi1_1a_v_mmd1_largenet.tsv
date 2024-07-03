@@ -1,9 +1,9 @@
 #ARGUMENT					#VALUE
 ##############################################################  I/O
-name						model_phi_stitched_1a_v1
-outdir						out/model_training/model_phi_stitched_1a_v1
-training_data				data/training_data/data_phi_stitched_1a/training
-validation_data				data/training_data/data_phi_stitched_1a/validation
+name						model_phi1_1a_v_mmd1_largenet
+outdir						out/model_training/model_phi1_1a_v_mmd1_largenet
+training_data				data/training_data/data_phi1_1a/training
+validation_data				data/training_data/data_phi1_1a/validation
 ##############################################################  Training
 num_epochs					2000
 batch_size					250
@@ -24,7 +24,7 @@ nan_max_attempts			4
 model_type					deep_phi
 confine						True
 confinement_factor			0.1
-phi_hidden_dims				16 32 32 16
+phi_hidden_dims				16 32 32 32 16
 phi_hidden_acts				softplus
 phi_final_act				None
 phi_layer_normalize			False
@@ -48,7 +48,7 @@ init_tilt_weights_args
 init_tilt_bias_method		constant
 init_tilt_bias_args			0.00
 ##############################################################  Loss Function
-loss						kl
+loss						mmd
 ##############################################################  Optimizer
 optimizer					rms
 momentum					0.5
