@@ -7,6 +7,7 @@ from scipy.optimize import minimize
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
+from scipy.spatial.distance import cdist
 
 
 def estimate_minima(
@@ -20,6 +21,7 @@ def estimate_minima(
         opt_tol=1e-5,
         x0_range=[[-1, 1],[-1, 1]],
         sample_x0=False,
+        extra_x0=[],
         rng=None, 
         seed=None,
 
@@ -45,15 +47,23 @@ def estimate_minima(
     if rng is None:
         rng = np.random.default_rng(seed=seed)
     if x0 is None:
-        x0 = np.nan * np.ones([n, d])
         if sample_x0:
+            x0 = np.nan * np.ones([n, d])
             for i in range(d):
                 x0[:,i] = rng.uniform(*x0_range[i], size=n)
         else:
+            x0 = np.nan * np.ones([n**d, d])
+            xarrs = [np.linspace(*x0_range[i], n) for i in range(d)]
+            xgrids = np.meshgrid(*xarrs)
             for i in range(d):
-                x0[:,i] = np.linspace(*x0_range[i], n)
+                # x0[:,i] = np.linspace(*x0_range[i], n)
+                x0[:,i] = xgrids[i].flatten()
     else:
         n = x0.shape[0]
+    
+    if len(extra_x0) > 0:
+        x0 = np.concatenate([x0, extra_x0], axis=0)
+        n = len(x0)
     
     f = lambda x: model.eval_phi_with_tilts(0, jnp.array(x), jnp.array(tilt))
     
@@ -203,16 +213,18 @@ def check_minima_trajectories_for_bifurcations(
         tilt1 = tilt_trajectory[i]
         num_mins1 = len(mins1)
         if num_mins0 != num_mins1:
+            more_mins = mins0 if num_mins0 > num_mins1 else mins1
+            less_mins = mins0 if num_mins0 < num_mins1 else mins1
             # bifurcation may have occurred between start and stop
             bif_idxs.append(i-1)
             bif_tilt_pairs.append((tilt0, tilt1))
             bif_min_pairs.append((mins0, mins1))
-            for m in mins0:
-                potential_bifs.append(m)
-            for m in mins1:
-                potential_bifs.append(m)
+            # Compute distances
+            cds = cdist(more_mins, less_mins)
+            idx_new = np.argmax(np.min(cds, axis=1))
+            biffed_min = more_mins[idx_new]
+            potential_bifs.append(biffed_min)
         tilt0 = tilt1
         mins0 = mins1
         num_mins0 = num_mins1
-    
     return np.array(potential_bifs), bif_idxs, bif_tilt_pairs, bif_min_pairs

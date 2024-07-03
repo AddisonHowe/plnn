@@ -96,18 +96,19 @@ def get_plnn_bifurcation_curves(
         max_ds=MAX_DS,
         max_delta_p=MAX_DELTA_P,
         rho=RHO,
+        return_aux_info=False,
         rng=None,
         seed=None,
         verbosity=0
 ):
     if rng is None:
         rng = np.random.default_rng(seed=seed)
-    p1lims = p1lims.copy()
-    p2lims = p2lims.copy()
-    p1lims[0] = min(p1lims[0], P1LIMS[0])
-    p1lims[1] = max(p1lims[1], P1LIMS[1])
-    p2lims[0] = min(p2lims[0], P2LIMS[0])
-    p2lims[1] = max(p2lims[1], P2LIMS[1])
+    # p1lims = p1lims.copy()
+    # p2lims = p2lims.copy()
+    # p1lims[0] = min(p1lims[0], P1LIMS[0])
+    # p1lims[1] = max(p1lims[1], P1LIMS[1])
+    # p2lims[0] = min(p2lims[0], P2LIMS[0])
+    # p2lims[1] = max(p2lims[1], P2LIMS[1])
 
     F, J, dxFxPhi, Fp, p_func, p1func, p2func = get_functions_from_model(model)
 
@@ -117,7 +118,7 @@ def get_plnn_bifurcation_curves(
         rng=rng
     )
 
-    curves_p, colors = get_fold_curves(
+    return get_fold_curves(
         F, J, dxFxPhi, Fp,
         xstarts, 
         p1func, 
@@ -130,10 +131,10 @@ def get_plnn_bifurcation_curves(
         max_ds=max_ds,
         max_delta_p=max_delta_p,
         rho=rho,
+        return_aux_info=return_aux_info,
         verbosity=verbosity,
         rng=rng,
     )
-    return curves_p, colors 
 
 
 def add_args(parser):

@@ -126,7 +126,7 @@ def trace_curve(
     if not converged:
         msg = f"Initial step with x0={x0}, p0={p0} did not converge."
         warnings.warn(msg)
-        return [], [], info
+        return [], [], [], info
     
     w_init = update_w(w, x0, x1, p0, p1, dimx, dimp)
     x_init = x1
@@ -243,11 +243,13 @@ def trace_curve(
     # Concatenate forward and reverse paths into a single path.
     xs = np.concatenate([np.flip(path_xs_rev, axis=0)[:-1], path_xs_fwd])
     ps = np.concatenate([np.flip(path_ps_rev, axis=0)[:-1], path_ps_fwd])
+    ps_fwd = np.array(path_ps_fwd)
+    ps_rev = np.array(path_ps_rev)
     info['xs_path_fwd'] = np.array(path_xs_fwd)
-    info['ps_path_fwd'] = np.array(path_ps_fwd)
+    info['ps_path_fwd'] = np.array(ps_fwd)
     info['xs_path_rev'] = np.array(path_xs_rev)
-    info['ps_path_rev'] = np.array(path_ps_rev)
-    return xs, ps, info
+    info['ps_path_rev'] = np.array(ps_rev)
+    return xs, ps_fwd, ps_rev, info
 
 
 def newton(x0, phi0, p0, step_func, tol=1e-5, maxiter=10000):

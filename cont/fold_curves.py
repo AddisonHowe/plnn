@@ -21,6 +21,7 @@ def get_fold_curves(
         max_ds=1e-2,
         max_delta_p=1e-2,
         rho=1e-1,
+        return_aux_info=False,
         verbosity=0,
         rng=None,
         seed=None,
@@ -29,11 +30,12 @@ def get_fold_curves(
         rng = np.random.default_rng(seed=seed)
     curves_p = []
     colors = []
+    aux_info = []
     for i in range(len(xstarts)):
         x0 = np.array(xstarts[i][0])
         col = xstarts[i][1]
         p0 = np.array([p1_func(x0), p2_func(x0)])
-        _, ps, _ = trace_curve(
+        _, ps_fwd, ps_rev, info = trace_curve(
             x0, p0, F, Fx, dxFxPhi, Fp,
             maxiter=maxiter, 
             ds=ds,
@@ -45,9 +47,14 @@ def get_fold_curves(
             verbosity=verbosity,
             rng=rng,
         )
-        if len(ps) > 0:
-            curves_p.append(ps)
-            colors.append(col)
+        if return_aux_info:
+            aux_info.append(info)
+        for ps in [ps_fwd, ps_rev]:
+            if len(ps) > 0:
+                curves_p.append(ps)
+                colors.append(col)
+    if return_aux_info:
+        return curves_p, colors, aux_info
     return curves_p, colors
 
 
@@ -95,7 +102,7 @@ def plot_diagrams(
         x0 = np.array(xstarts[i][0])
         col = xstarts[i][1]
         p0 = np.array([p1func(x0), p2func(x0)])
-        xs, ps, d = trace_curve(
+        xs, ps_fwd, ps_rev, d = trace_curve(
             x0, p0, F, J, dxFxPhi, Fp,
             maxiter=maxiter, 
             ds=ds,

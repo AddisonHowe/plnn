@@ -1368,6 +1368,8 @@ class PLNN(eqx.Module):
             sigparams=None,
             eval_time=None,
             r=4, 
+            xrange=None,
+            yrange=None,
             res=50, 
             plot3d=False, 
             **kwargs
@@ -1407,6 +1409,8 @@ class PLNN(eqx.Module):
             sigparams=sigparams,
             eval_time=eval_time,
             r=r,
+            xrange=xrange,
+            yrange=yrange,
             res=res,
             plot3d=plot3d, 
             **kwargs
@@ -1419,6 +1423,8 @@ class PLNN(eqx.Module):
             sigparams=None,
             eval_time=None,
             r=4, 
+            xrange=None,
+            yrange=None,
             res=50, 
             **kwargs):
         """Plot the vector field f.
@@ -1451,6 +1457,8 @@ class PLNN(eqx.Module):
             sigparams=sigparams,
             eval_time=eval_time,
             r=r, 
+            xrange=xrange,
+            yrange=yrange,
             res=res, 
             **kwargs
         )
