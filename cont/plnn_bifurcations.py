@@ -87,6 +87,7 @@ def get_plnn_bifurcation_curves(
         p1lims=P1LIMS, 
         p2lims=P2LIMS, 
         xstarts=[],
+        grad_tol=GRAD_TOL,
         xlims=XLIMS,
         ylims=YLIMS,
         color='k',
@@ -114,7 +115,7 @@ def get_plnn_bifurcation_curves(
 
     xstarts = get_xstarts(
         xstarts, num_starts, F, p_func, 
-        xlims=[xlims, ylims], grad_tol=GRAD_TOL, color=color, 
+        xlims=[xlims, ylims], grad_tol=grad_tol, color=color, 
         rng=rng
     )
 

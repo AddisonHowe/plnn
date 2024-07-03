@@ -28,12 +28,12 @@ class AlgebraicPL(PLNN):
             ndims=2,
             nparams=2,
             nsigs=2,
-            sigma=1e-2,
+            sigma_init=1e-2,
             phi_module=None,
             algebraic_phi_id=None,
             tilt_weights=None,
             tilt_bias=None,
-            include_tilt_bias=True,
+            include_tilt_bias=False,
             phi_args={},
             **kwargs
     ):
@@ -41,7 +41,7 @@ class AlgebraicPL(PLNN):
         super().__init__(
             subkey, dtype=dtype, 
             ndims=ndims, nsigs=nsigs, nparams=nparams, 
-            confine=False, confinement_factor=1, sigma_init=sigma, 
+            confine=False, confinement_factor=1, sigma_init=sigma_init, 
             tilt_final_act=None, tilt_hidden_dims=[],
             include_tilt_bias=include_tilt_bias, 
             tilt_hidden_acts=None, 
@@ -62,7 +62,8 @@ class AlgebraicPL(PLNN):
         # Initialize tilt module
         if tilt_weights is None:
             tilt_weights = jnp.zeros([self.ndims, self.nparams], dtype=dtype)
-            tilt_weights[jnp.arange(self.nparams), jnp.arange(self.nparams)] = 1.
+            tilt_weights = tilt_weights.at[jnp.arange(self.nparams), 
+                                           jnp.arange(self.nparams)].set(1.)
             assert tilt_weights.sum() == self.nparams
         else:
             tilt_weights = jnp.array(tilt_weights, dtype=dtype)
@@ -174,7 +175,7 @@ class AlgebraicPL(PLNN):
         ncells=100, 
         signal_type='jump', 
         nsigparams=3, 
-        sigma=1e-2, 
+        sigma_init=1e-2, 
         solver='euler', 
         dt0=1e-2, 
         vbt_tol=1e-6,
@@ -184,7 +185,8 @@ class AlgebraicPL(PLNN):
         tilt_bias=None,
         phi_module=None,
         algebraic_phi_id=None,
-        phi_args={},
+        phi_args={}, 
+        **kwargs
     ) -> Tuple['AlgebraicPL', dict]:
         """Construct a model and store all hyperparameters.
         
@@ -197,7 +199,7 @@ class AlgebraicPL(PLNN):
             ncells
             signal_type
             nsigparams
-            sigma
+            sigma_init
             solver
             dt0
             vbt_tol
@@ -224,7 +226,7 @@ class AlgebraicPL(PLNN):
             ncells=ncells,
             signal_type=signal_type, 
             nsigparams=nsigparams,
-            sigma=sigma,
+            sigma_init=sigma_init,
             solver=solver, 
             dt0=dt0, 
             vbt_tol=vbt_tol,
