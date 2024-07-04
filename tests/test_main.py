@@ -107,3 +107,20 @@ def test_reproducibility(argstring_fpath, modelname, dtype):
     w2 = model2.get_parameters()['phi.w']
     for arr1, arr2 in zip(w1, w2):
         assert np.allclose(arr1, arr2), "Mismatch between trained parameters"
+
+
+@pytest.mark.parametrize('argstring_fpath, expected_hist', [
+    [f"{DATDIR}/test_main_args/argstring_dt_schedule1.txt",
+     [0.5, 0.25, 0.25, 0.5, 0.25]],
+])
+def test_dt_schedule(argstring_fpath, expected_hist):
+    argstring = get_args(argstring_fpath)
+    args = parse_args(argstring)
+    args.outdir = f"{TMPDIR}/{args.outdir}"
+    args.training_data = f"{DATDIR}/{args.training_data}"
+    args.validation_data = f"{DATDIR}/{args.validation_data}"
+    main(args)
+    dt_hist = np.load(f"{args.outdir}/dt_hist.npy")
+    remove_dir(args.outdir)
+    assert np.all(dt_hist == expected_hist), \
+        f"Expected {expected_hist}.\nGot {dt_hist}."

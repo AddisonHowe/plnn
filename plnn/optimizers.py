@@ -165,6 +165,19 @@ def _get_warmup_cosine_decay_schedule(
     )
 
 
+##########################
+##  Timestep Scheduler  ##
+##########################
+
+def get_dt_schedule(dt_schedule_name, args) -> optax.Schedule:
+    if dt_schedule_name == 'constant':
+        return optax.constant_schedule(args['dt'])
+    elif dt_schedule_name == 'stepped':
+        bounds = args['dt_schedule_bounds']
+        scales = args['dt_schedule_scales']
+        bounds_and_scales = {b: s for b, s in zip(bounds, scales)}
+        return optax.piecewise_constant_schedule(args['dt'], bounds_and_scales)
+
 ########################
 ##  Helper Functions  ##
 ########################
