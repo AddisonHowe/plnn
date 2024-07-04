@@ -68,11 +68,15 @@ def parse_args(args):
                             "continuing the training of a model, uses the " \
                             "model's `dt0` attribute.")
     grp_sim.add_argument('--dt_schedule', type=str, default='constant',
-                         choices=['constant', 'step'],
+                         choices=['constant', 'stepped'],
                          help="Schedule specifier for timestep dt. "\
                               "Defaults to 'constant'.")
-    grp_sim.add_argument('--dt_schedule_args', type=float, nargs='+',
-                         default=None)
+    grp_sim.add_argument('--dt_schedule_bounds', type=int, nargs='+',
+                         default=[0], 
+                         help="Epochs at which dt changes by a factor.")
+    grp_sim.add_argument('--dt_schedule_scales', type=float, nargs='+',
+                         default=[1.0],
+                         help="Factor by which dt changes at each step.")
     grp_sim.add_argument('--signal_function', type=str, default='jump',
                          choices=['jump', 'sigmoid'], 
                          help="Identifier for the signal function.")
@@ -227,7 +231,6 @@ def main(args):
     ndims = args.ndims
     dt = args.dt
     dt_schedule = args.dt_schedule
-    dt_schedule_args = args.dt_schedule_args
     fix_noise = args.fix_noise
     batch_size = args.batch_size
     patience = args.patience
@@ -321,18 +324,18 @@ def main(args):
     signal_type, nsigparams = get_signal_spec(signal_function_key)
 
     # Get dt schedule
-    dt_schedule = get_dt_schedule(dt_schedule, dt_schedule_args)
+    dt_schedule = get_dt_schedule(dt_schedule, args)
     
     if cont_path:
         # Load previous model
         model, hyperparams = model_class.load(cont_path, dtype=dtype)
-        if args.dt > 0:
+        if dt > 0:
             logprint(
                 f"Overwriting loaded model's dt0. " \
-                f"Was {model.dt0}. Now {args.dt}."
+                f"Was {model.dt0}. Now {dt}."
             )
-            model = eqx.tree_at(lambda m: m.dt0, model, args.dt)
-            hyperparams['dt0'] = args.dt
+            model = eqx.tree_at(lambda m: m.dt0, model, dt)
+            hyperparams['dt0'] = dt
     else:
         # Construct and initialize the model
         args_make, args_init = get_model_args(model_type, args)

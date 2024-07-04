@@ -324,7 +324,6 @@ def train_one_epoch(
                 model, opt_state, loss = make_step(
                     prev_model, inputs, y1, optimizer, orig_opt_state, loss_fn, subkey, 
                 )
-                print(loss)
 
             if jnp.isnan(loss.item()):
                 model, prev_model = handle_nan_loss(
