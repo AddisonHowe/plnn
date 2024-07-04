@@ -212,6 +212,9 @@ class PLNN(eqx.Module):
     def get_sigma(self) -> Float[Array, "1"]:
         return jnp.exp(self.logsigma.item())
     
+    def get_dt0(self) -> float:
+        return self.dt0
+    
     def get_parameters(self) -> dict:
         """Return dictionary of learnable model parameters.
 

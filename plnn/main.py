@@ -18,7 +18,7 @@ from plnn.dataset import get_dataloaders
 from plnn.models import DeepPhiPLNN, GMMPhiPLNN, NEDeepPhiPLNN, NEGMMPhiPLNN
 from plnn.models import AlgebraicPL
 from plnn.loss_functions import select_loss_function
-from plnn.optimizers import get_optimizer_args, select_optimizer
+from plnn.optimizers import get_optimizer_args, select_optimizer, get_dt_schedule
 from plnn.model_training import train_model
 
 
@@ -64,7 +64,15 @@ def parse_args(args):
     grp_sim.add_argument('--ncells_sample', type=int, default=0)
     grp_sim.add_argument('--model_do_sample', action="store_true")
     grp_sim.add_argument('-dt', '--dt', type=float, default=1e-3,
-                         help="Euler timestep to use internally.")
+                         help="Euler timestep to use internally. If 0, and " \
+                            "continuing the training of a model, uses the " \
+                            "model's `dt0` attribute.")
+    grp_sim.add_argument('--dt_schedule', type=str, default='constant',
+                         choices=['constant', 'step'],
+                         help="Schedule specifier for timestep dt. "\
+                              "Defaults to 'constant'.")
+    grp_sim.add_argument('--dt_schedule_args', type=float, nargs='+',
+                         default=None)
     grp_sim.add_argument('--signal_function', type=str, default='jump',
                          choices=['jump', 'sigmoid'], 
                          help="Identifier for the signal function.")
@@ -217,6 +225,9 @@ def main(args):
     nsims_valid = args.nsims_validation if args.nsims_validation else read_nsims(datdir_valid)
     model_type = args.model_type
     ndims = args.ndims
+    dt = args.dt
+    dt_schedule = args.dt_schedule
+    dt_schedule_args = args.dt_schedule_args
     fix_noise = args.fix_noise
     batch_size = args.batch_size
     patience = args.patience
@@ -308,10 +319,20 @@ def main(args):
 
     # Get signal specification
     signal_type, nsigparams = get_signal_spec(signal_function_key)
+
+    # Get dt schedule
+    dt_schedule = get_dt_schedule(dt_schedule, dt_schedule_args)
     
     if cont_path:
         # Load previous model
         model, hyperparams = model_class.load(cont_path, dtype=dtype)
+        if args.dt > 0:
+            logprint(
+                f"Overwriting loaded model's dt0. " \
+                f"Was {model.dt0}. Now {args.dt}."
+            )
+            model = eqx.tree_at(lambda m: m.dt0, model, args.dt)
+            hyperparams['dt0'] = args.dt
     else:
         # Construct and initialize the model
         args_make, args_init = get_model_args(model_type, args)
@@ -357,6 +378,7 @@ def main(args):
         num_epochs=num_epochs,
         batch_size=batch_size,
         patience=patience,
+        dt_schedule=dt_schedule,
         fix_noise=fix_noise,
         model_name=model_name,
         hyperparams=hyperparams,

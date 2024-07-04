@@ -9,6 +9,7 @@ import jax.numpy as jnp
 import jax.random as jrandom
 import jax.tree_util as jtu
 import equinox as eqx
+import optax
 import matplotlib.pyplot as plt
 
 from plnn.models.plnn import PLNN
@@ -25,6 +26,7 @@ def train_model(
     num_epochs=50,
     batch_size=1,
     patience=100,
+    dt_schedule=None,
     fix_noise=False,
     hyperparams={},
     reduce_dt_on_nan=False, 
@@ -84,6 +86,7 @@ def train_model(
     sigma_hist = []
     tilt_weights = []
     tilt_bias = []
+    dt_hist = []
 
     if fix_noise:
         filter_spec = jtu.tree_map(lambda _: True, model)
@@ -95,6 +98,7 @@ def train_model(
         filter_spec = None
 
     opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
+    dt_current = model.get_dt0()
 
     # Initial state plot, if specified
     if plotting:
@@ -107,12 +111,22 @@ def train_model(
     model_path = f"{outdir}/states/{model_name}_0.pth"
     if verbosity: logprint(f"Saving initial model state to: {model_path}")
     model.save(model_path, hyperparams)
-
+    
     for epoch in range(num_epochs):
         if verbosity: logprint(f'EPOCH {epoch + 1}/{num_epochs}:')
         etime0 = time.time()
-        key, trainkey, validkey = jrandom.split(key, 3)
 
+        # Compute model dt value from scheduler, and update if needed.
+        if dt_schedule:
+            dt_new = dt_schedule(epoch)
+            if dt_current != dt_new:
+                model = eqx.tree_at(lambda m: m.dt0, model, dt_new)
+                dt_current = dt_new
+                assert dt_current == model.get_dt0(), "Model dt0 does not match"
+                np.save(f"{outdir}/dt_hist.npy", dt_hist)
+        dt_hist.append(dt_current)
+
+        key, trainkey, validkey = jrandom.split(key, 3)
         # Training pass
         model, avg_tloss, opt_state = train_one_epoch(
             epoch, 
@@ -219,7 +233,7 @@ def train_model(
                 logprint(msg)
             return model
         
-        
+    np.save(f"{outdir}/dt_hist.npy", dt_hist)
     time1 = time.time()
     if verbosity: logprint(f"Finished training in {time1-time0:.3f} seconds.")
     return model
