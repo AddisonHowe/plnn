@@ -29,6 +29,7 @@ def get_args(fpath):
 ###############################   BEGIN TESTS   ###############################
 ###############################################################################
 
+# @pytest.mark.skip()
 @pytest.mark.parametrize('argstring_fpath', [
     f"{DATDIR}/test_main_args/argstring1.txt",
     f"{DATDIR}/test_main_args/argstring2.txt",
@@ -45,7 +46,7 @@ def test_main(argstring_fpath):
     main(args)
     remove_dir(args.outdir)
 
-
+# @pytest.mark.skip()
 @pytest.mark.parametrize(
         "argstring_fpath, expect_warning_context, expect_error_context", [
     # Dataset does not sample. Use 10 cells internal. Model samples.
@@ -74,7 +75,7 @@ def test_main_nonhomogeneous(
             main(args)
     remove_dir(args.outdir)
 
-
+# @pytest.mark.skip()
 @pytest.mark.parametrize('argstring_fpath, modelname, dtype', [
     [f"{DATDIR}/test_main_args/argstring1.txt", "model1", jnp.float32],
     [f"{DATDIR}/test_main_args/argstring2.txt", "model2", jnp.float32],
@@ -108,7 +109,7 @@ def test_reproducibility(argstring_fpath, modelname, dtype):
     for arr1, arr2 in zip(w1, w2):
         assert np.allclose(arr1, arr2), "Mismatch between trained parameters"
 
-
+# @pytest.mark.skip()
 @pytest.mark.parametrize('argstring_fpath, expected_hist', [
     [f"{DATDIR}/test_main_args/argstring_dt_schedule1.txt",
      [0.5, 0.25, 0.25, 0.5, 0.25]],
