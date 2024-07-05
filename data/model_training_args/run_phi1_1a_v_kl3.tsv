@@ -14,6 +14,9 @@ ncells_sample				0
 model_do_sample				True
 solver						heun
 dt							1e-1
+dt_schedule					stepped
+dt_schedule_bounds			200 500 1000
+dt_schedule_scales			0.5 0.5 0.5
 fix_noise					False
 reduce_dt_on_nan			False
 dt_reduction_factor			0.5
@@ -57,6 +60,7 @@ clip						1.0
 ##############################################################  LR Shedule
 lr_schedule					warmup_cosine_decay
 learning_rate				1e-2
+peak_learning_rate			0.02
 final_learning_rate			1e-5
 nepochs_warmup				50
 nepochs_decay				-1
