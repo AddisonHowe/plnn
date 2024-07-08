@@ -177,6 +177,35 @@ def plot_learning_rate_history(
     return ax
 
 
+def plot_dt_history(
+        dt_history, 
+        log=False, 
+        color='k',
+        linestyle='-',
+        linewidth=2,
+        marker='.',
+        title="dt history", 
+        saveas=None,
+        ax=None,
+        sigma_true=None
+):
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+    fplot = ax.semilogy if log else ax.plot
+    fplot(
+        dt_history, 
+        color=color,
+        linestyle=linestyle,
+        marker=marker,
+        linewidth=linewidth,
+    )
+    ax.set_xlabel(f"epoch")
+    ax.set_ylabel(f"dt")
+    ax.set_title(title)
+    if saveas: plt.savefig(saveas)
+    return ax
+
+
 def plot_phi_inferred_vs_true(
         model, signal, landscape, 
         saveas=None,

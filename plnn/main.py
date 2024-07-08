@@ -160,7 +160,16 @@ def parse_args(args):
     # Loss function
     parser.add_argument('--loss', type=str, default="kl", 
                         choices=['kl', 'mcd', 'klv2', 'mmd'], 
-                        help='kl: KL divergence est; mcd: mean+cov difference.')
+                        help="kl: KL divergence est; " \
+                             "mcd: mean+cov difference; " \
+                             "mmd: MMD loss (uses kernel and bw_range); "\
+                             "klv2: KL divergence est using smoothing.")
+    parser.add_argument('--kernel', type=str, default='multiscale', 
+                        choices=['multiscale', 'rbf'], 
+                        help="Kernel to use with mmd loss function.")
+    parser.add_argument('--bw_range', default=None, type=float, nargs='+', 
+                        help="Bandwidth values used in mmd loss kernel.")
+    
     
     # Optimizer
     grp_op = parser.add_argument_group(
@@ -349,7 +358,11 @@ def main(args):
         )
 
     # Get the loss function
-    loss_fn = select_loss_function(loss_fn_key)
+    loss_fn = select_loss_function(
+        loss_fn_key, 
+        kernel=args.kernel,
+        bw_range=args.bw_range,
+    )
 
     # Optimizer construction
     optimizer_args = get_optimizer_args(args, num_epochs)

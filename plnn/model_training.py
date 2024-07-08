@@ -2,8 +2,7 @@
 
 """
 
-import os
-import time
+import os, sys, signal, time
 import numpy as np
 import jax.numpy as jnp
 import jax.random as jrandom
@@ -87,6 +86,19 @@ def train_model(
     tilt_weights = []
     tilt_bias = []
     dt_hist = []
+
+    def sigint_handler(signal, frame):
+        logprint('Interrupted execution!')
+        np.save(f"{outdir}/training_loss_history.npy", loss_hist_train)
+        np.save(f"{outdir}/validation_loss_history.npy", loss_hist_valid)
+        np.save(f"{outdir}/learning_rate_history.npy", learn_rate_hist)
+        np.save(f"{outdir}/sigma_history.npy", sigma_hist)
+        np.save(f"{outdir}/tilt_weights_history.npy", tilt_weights)
+        np.save(f"{outdir}/tilt_bias_history.npy", tilt_bias)
+        np.save(f"{outdir}/dt_hist.npy", dt_hist)
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, sigint_handler)
 
     if fix_noise:
         filter_spec = jtu.tree_map(lambda _: True, model)
@@ -183,17 +195,15 @@ def train_model(
         loss_hist_train.append(avg_tloss)
         loss_hist_valid.append(avg_vloss)
         learn_rate_hist.append(lr)
+        sigma_hist.append(model.get_sigma())
+        tilt_weights.append(model.get_parameters()['tilt.w'])
+        tilt_bias.append(model.get_parameters()['tilt.b'])
+
         np.save(f"{outdir}/training_loss_history.npy", loss_hist_train)
         np.save(f"{outdir}/validation_loss_history.npy", loss_hist_valid)
         np.save(f"{outdir}/learning_rate_history.npy", learn_rate_hist)
-
-        sigma_hist.append(model.get_sigma())
         np.save(f"{outdir}/sigma_history.npy", sigma_hist)
-
-        tilt_weights.append(model.get_parameters()['tilt.w'])
         np.save(f"{outdir}/tilt_weights_history.npy", tilt_weights)
-
-        tilt_bias.append(model.get_parameters()['tilt.b'])
         np.save(f"{outdir}/tilt_bias_history.npy", tilt_bias)
 
         model_improved = avg_vloss < best_vloss

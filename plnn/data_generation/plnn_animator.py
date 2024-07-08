@@ -553,7 +553,7 @@ class PLNNSimulationAnimator:
             self._plot_bifcurves(
                 ax, 
                 linestyle='-',
-                linewidth=self._linewidth,
+                linewidth=1,
             )
         # Plot trace of tilt values
         traj = ax.plot(
@@ -821,7 +821,9 @@ class PLNNSimulationAnimator:
         sig_str = ", ".join([f"{x:.4f}" for x in sig])
         tau = self.get_ps(i)
         tau_str = ", ".join([f"{x:.4f}" for x in tau])
+        dt0 = self.model.get_dt0()
         s = f"$t={t:.3f}$" 
+        s += f"\nModel $dt0={dt0:.3g}$"
         s += f"\n$\\boldsymbol{{s}}=({sig_str})^T$"
         s += f"\n$\\boldsymbol{{\\tau}}=({tau_str})^T$"
         if self.sigparams_str:
