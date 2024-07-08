@@ -6,6 +6,7 @@ process.
 """
 
 import os
+import warnings
 import numpy as np
 import jax.numpy as jnp
 from typing import Tuple
@@ -82,6 +83,14 @@ def load_model_training_metadata(
     lr_hist = np.load(f"{modeldir}/learning_rate_history.npy")
     sigma_hist = np.load(f"{modeldir}/sigma_history.npy")
     tilt_weight_hist = np.load(f"{modeldir}/tilt_weights_history.npy")
+    try:
+        dt_hist = np.load(f"{modeldir}/dt_hist.npy")
+    except FileNotFoundError as e:
+        dt_hist = None
+        msg = "Could not load dt history at: " \
+              f"{modeldir}/dt_hist.npy. File not found"
+        f"{modeldir}/dt_hist.npy"
+        warnings.warn(msg)
     logged_args = _load_args_from_log(f"{modeldir}/log_args.txt")
     return_dict = {
         "loss_hist_train" : loss_hist_train,
@@ -89,6 +98,7 @@ def load_model_training_metadata(
         "learning_rate_hist" : lr_hist,
         "sigma_hist" : sigma_hist,
         "tilt_weight_hist" : tilt_weight_hist,
+        "dt_hist" : dt_hist,
     }
     return logged_args, return_dict
 

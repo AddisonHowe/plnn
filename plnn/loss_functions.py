@@ -11,6 +11,7 @@ import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
+
 def select_loss_function(func_id, **kwargs)->callable:
     """Loss function selector method.
     
@@ -20,6 +21,13 @@ def select_loss_function(func_id, **kwargs)->callable:
     Keyword Arguments:
         tol (float, kwarg, default 1e-6) : tolerance if using loss function
             kl_divergence_loss_v2.
+        kernel (str, kwarg, default 'multiscale') : kernel choice if using mmd 
+            loss function. Can be multiscale or rbf (radial basis functions).
+        bw_range (list or None, kwarg, default None) : bandwidth values to use
+            in kernel when mmd loss function is specified. If None, the default
+            depends on the chosen kernel. For multiscale kernel, the default 
+            bandwidth array is [0.2, 0.5, 0.9, 1.3]. For rbf kernel, the default
+            bandwidth array is [10, 15, 20, 50].
     
     Returns:
         callable : Loss function, taking as inputs simulated and observed data.
@@ -42,7 +50,7 @@ def select_loss_function(func_id, **kwargs)->callable:
             if kernel == 'multiscale':
                 bw_range = jnp.array([0.2, 0.5, 0.9, 1.3])
             elif kernel == 'rbf':
-                bw_range = jnp.array([[10, 15, 20, 50]])
+                bw_range = jnp.array([10, 15, 20, 50])
         def loss_fn(xsim, xobs):
             return mmd_loss(xsim, xobs, kernel=kernel, bw_range=bw_range) 
         return loss_fn
@@ -77,6 +85,7 @@ def kl_divergence_loss(
     """
     return jnp.mean(jax.vmap(kl_divergence_est)(p_samps, q_samps))
 
+
 def kl_divergence_loss_v2(
         q_samps: Float[Array, "b m d"], 
         p_samps: Float[Array, "b n d"],
@@ -101,6 +110,7 @@ def kl_divergence_loss_v2(
     """
     return jnp.mean(jax.vmap(smooth_kl_est, (0,0,None))(p_samps, q_samps, tol))
 
+
 def mean_cov_loss(y_sim, y_obs) -> float:
     """Loss function based on the difference of first and second moments.
 
@@ -119,6 +129,7 @@ def mean_cov_loss(y_sim, y_obs) -> float:
     cov_err = jnp.sum(jnp.square(cov_sim - cov_obs), axis=(1,2))
     return jnp.mean(mu_err + cov_err)
 
+
 def mean_diff_loss(y_sim, y_obs) -> float:
     """Loss function based on the difference of first moments.
 
@@ -133,6 +144,7 @@ def mean_diff_loss(y_sim, y_obs) -> float:
     mu_obs = jnp.mean(y_obs, axis=1)
     mu_err = jnp.sum(jnp.square(mu_sim - mu_obs), axis=1)
     return jnp.mean(mu_err)
+
 
 def mmd_loss(y_sim, y_obs, kernel='multiscale', bw_range=None) -> float:
     """Loss function based on Maximum Mean Discrepancy.
@@ -150,6 +162,7 @@ def mmd_loss(y_sim, y_obs, kernel='multiscale', bw_range=None) -> float:
         )
     )
 
+
 ########################
 ##  Helper Functions  ##
 ########################
@@ -157,12 +170,14 @@ def mmd_loss(y_sim, y_obs, kernel='multiscale', bw_range=None) -> float:
 def euclidean_distance(x, y):
     return jnp.sqrt(jnp.sum(jnp.square(x - y)))
 
+
 def batch_cov(batch_points):
     """
     Returns:
         Shape (b,d,d) tensor
     """
     return jax.vmap(jnp.cov, 0)(batch_points.transpose((0, 2, 1)))
+
 
 def cdist(
         x: Float[Array, "n d"], 
@@ -180,6 +195,7 @@ def cdist(
     """
     return jax.vmap(lambda x1: jax.vmap(
         lambda y1: euclidean_distance(x1, y1))(y))(x)
+
 
 def kl_divergence_est(
         p_samp: Float[Array, "n d"],
@@ -218,6 +234,7 @@ def kl_divergence_est(
     s = -jax.lax.top_k(-diffs_xy, 1)[0][:,0]
     lossval = jnp.log(m/(n-1.)) - jnp.log(r/s).sum() * d/n
     return lossval
+
 
 def smooth_kl_est(p_samp, q_samp, tol=1e-6):
     """Estimate the KL divergence.
@@ -260,11 +277,13 @@ def _multiscale_kernel(dxx, dyy, dxy, bw):
     xy = a / (a + dxy)
     return xx, yy, xy
 
+
 def _rbf_kernel(dxx, dyy, dxy, bw):
     xx = jnp.exp(-0.5 * dxx / bw)
     yy = jnp.exp(-0.5 * dyy / bw)
     xy = jnp.exp(-0.5 * dxy / bw)
     return xx, yy, xy
+
 
 def compute_mmd(x, y, kernel='multiscale', bw_range=[0.2, 0.5, 0.9, 1.3]):
     """
