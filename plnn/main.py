@@ -333,7 +333,7 @@ def main(args):
     signal_type, nsigparams = get_signal_spec(signal_function_key)
 
     # Get dt schedule
-    dt_schedule = get_dt_schedule(dt_schedule, args)
+    dt_schedule = get_dt_schedule(dt_schedule, vars(args))
     
     if cont_path:
         # Load previous model

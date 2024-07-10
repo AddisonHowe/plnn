@@ -170,9 +170,9 @@ def _get_warmup_cosine_decay_schedule(
 ##########################
 
 def get_dt_schedule(dt_schedule_name, args) -> optax.Schedule:
-    dt = args.dt
-    bounds = args.dt_schedule_bounds
-    scales = args.dt_schedule_scales
+    dt = args['dt']
+    bounds = args['dt_schedule_bounds']
+    scales = args['dt_schedule_scales']
     if dt_schedule_name == 'constant':
         return optax.constant_schedule(dt)
     elif dt_schedule_name == 'stepped':

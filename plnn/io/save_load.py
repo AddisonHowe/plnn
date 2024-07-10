@@ -116,7 +116,8 @@ _ARGS_TO_LOAD = {
     'init_phi_weights_args', 'init_phi_weights_method', 
     'init_tilt_bias_args', 'init_tilt_bias_method', 
     'init_tilt_weights_args', 'init_tilt_weights_method',
-    'loss', 'learning_rate', 'optimizer'
+    'loss', 'learning_rate', 'optimizer',
+    'dt', 'dt_schedule', 'dt_schedule_bounds', 'dt_schedule_scales'
 }
 
 def _load_args_from_log(logfilepath, args_to_load=_ARGS_TO_LOAD) -> dict:
