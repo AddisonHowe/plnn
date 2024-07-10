@@ -5,7 +5,7 @@ Generate plots used in Figure 1 of the accompanying manuscript.
 
 import os
 import matplotlib.pyplot as plt
-plt.style.use('figures/fig1.mplstyle')
+plt.style.use('figures/styles/fig1.mplstyle')
 
 from plnn.pl import plot_landscape
 

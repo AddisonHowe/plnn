@@ -10,7 +10,7 @@ import jax
 jax.config.update("jax_enable_x64", True)
 
 import matplotlib.pyplot as plt
-plt.style.use('figures/fig3.mplstyle')
+plt.style.use('figures/styles/fig3.mplstyle')
 
 from plnn.io import load_model_from_directory, load_model_training_metadata
 from plnn.pl import plot_landscape, plot_phi

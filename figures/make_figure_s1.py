@@ -3,13 +3,14 @@
 Generate plots used in Figure S1 of the accompanying manuscript.
 """
 
+import argparse
 import os
 import numpy as np
 import jax
 jax.config.update("jax_enable_x64", True)
 
 import matplotlib.pyplot as plt
-plt.style.use('figures/fig3.mplstyle')
+plt.style.use('figures/styles/fig_standard.mplstyle')
 
 from plnn.io import load_model_from_directory, load_model_training_metadata
 from plnn.pl import plot_landscape, plot_phi
@@ -19,13 +20,33 @@ from plnn.pl import plot_sigma_history
 from cont.binary_choice import get_binary_choice_curves
 from cont.plnn_bifurcations import get_plnn_bifurcation_curves 
 
-SEED = 12345
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-i', '--input', type=str, required=True, 
+                    help="Name of trained model directory w/o prefix.")
+parser.add_argument('--truesigma', type=float, required=True)
+parser.add_argument('--logloss', default=True, 
+                    action=argparse.BooleanOptionalAction)
+parser.add_argument('--startidx', default=0, type=int)
+args = parser.parse_args()
+
+modeldir = args.input  # trained model directory
+
+logloss = args.logloss
+startidx = args.startidx
+truesigma = args.truesigma
+print("logloss", logloss)
+print("startidx", startidx)
+print("truesigma", truesigma)
+
+SAVEPLOTS = True
+
+MODELDIRBASE = "data/trained_models"
+OUTDIRBASE = "figures/out/fig_S1"
+SEED = 12345
 rng = np.random.default_rng(seed=SEED)
 
-
-OUTDIR = "figures/out/fig_S1"
-SAVEPLOTS = True
+OUTDIR = f"{OUTDIRBASE}/{modeldir}/"
 
 os.makedirs(OUTDIR, exist_ok=True)
 
@@ -49,7 +70,7 @@ LINEWIDTH_VALID = 1
 ##############################################################################
 ##  Load model and training information
 
-MODELDIR = "data/trained_models/model_phi1_1a_v1_20240311_130654"
+MODELDIR = f"{MODELDIRBASE}/{modeldir}"
 
 model, hps, idx, name, fpath = load_model_from_directory(MODELDIR)
 logged_args, training_info = load_model_training_metadata(MODELDIR)
@@ -81,7 +102,7 @@ print("inferred noise:\n", noise_parameter)
 ##  Plot the training history
 
 FIGNAME = "training_history"
-FIGSIZE = (17*sf, 15*sf)
+FIGSIZE = (8*sf, 12*sf)
 
 fig, axes = plt.subplots(3, 1, figsize=FIGSIZE)
 
@@ -89,7 +110,7 @@ ax=axes[0]
 plot_loss_history(
     training_info['loss_hist_train'],
     training_info['loss_hist_valid'],
-    startidx=0, log=True, 
+    startidx=startidx, log=logloss, 
     color_train=COLOR_TRAIN, color_valid=COLOR_VALID,
     marker_train=MARKER_TRAIN, marker_valid=MARKER_VALID,
     linestyle_train=LINESTYLE_TRAIN, linestyle_valid=LINESTYLE_VALID,
@@ -103,7 +124,7 @@ ax=axes[1]
 plot_sigma_history(
     training_info['sigma_hist'],
     log=False, 
-    sigma_true=0.1,
+    sigma_true=truesigma,
     color='k',
     linewidth=2,
     marker=None,
@@ -127,7 +148,7 @@ plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
 ##  Plot parameter history
 
 FIGNAME = "parameter_history"
-FIGSIZE = (15*sf, 15*sf)
+FIGSIZE = (8*sf, 8*sf)
 
 fig, axes = plt.subplots(2, 2, figsize=FIGSIZE)
 
@@ -137,7 +158,7 @@ ax21 = axes[1][0]
 ax22 = axes[1][1]
 
 color = 'k'
-linewidth = 2
+linewidth = 1
 
 
 ax11.plot(
@@ -174,7 +195,7 @@ for ax in axes.flatten():
 for ax in [ax21, ax22]:
     ax.set_xlabel("Epoch")
 
-fig.suptitle("Inferred signal transformation over training epochs")
+fig.suptitle("Signal transformation over training")
 
 plt.tight_layout()
 plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
@@ -185,7 +206,7 @@ plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
 ##  Plot NORMALIZED parameter history
 
 FIGNAME = "parameter_history_difference"
-FIGSIZE = (15*sf, 15*sf)
+FIGSIZE = (8*sf, 8*sf)
 
 fig, axes = plt.subplots(2, 2, figsize=FIGSIZE)
 
@@ -195,12 +216,12 @@ ax21 = axes[1][0]
 ax22 = axes[1][1]
 
 tilt_weights = training_info['tilt_weight_hist'][:,0,:,:]
-tilt_weights_true = np.array([[-1., 0.],[0., 1.]])
+tilt_weights_true = np.array([[1., 0.],[0., 1.]])
 
 tilt_weights_diffs = tilt_weights - tilt_weights_true
 
 color = 'k'
-linewidth = 2
+linewidth = 1
 
 
 ax11.plot(
@@ -238,7 +259,7 @@ for ax in axes.flatten():
 for ax in [ax21, ax22]:
     ax.set_xlabel("Epoch")
 
-fig.suptitle("Signal transformation inferred vs. true")
+fig.suptitle("Signal transformation error")
 
 plt.tight_layout()
 plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')

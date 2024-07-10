@@ -381,15 +381,16 @@ class PLNNSimulationAnimator:
         ax.axis([*self.xlims, *self.ylims])
         ax.set_xlabel(f"$x$", size=self._axlabelsize)
         ax.set_ylabel(f"$y$", size=self._axlabelsize)
-        ax.set_title("cell simulation", size=self._titlesize)
-        # ax.set_xticks([])
-        # ax.set_yticks([])
-        
+        ax.set_title("cell simulation", size=self._titlesize)        
         # Text
-        pos = [self.xlims[0] + (self.xlims[1]-self.xlims[0])*.5, 
-               self.ylims[0] + (self.ylims[1]-self.ylims[0])*.95]
-        self.maintext = ax.text(*pos, "", fontsize='small')
-
+        pos = [0.05, 0.99]
+        self.maintext = ax.text(
+            *pos, "", 
+            fontsize='small', 
+            ha='left', 
+            va='top', 
+            transform=ax.transAxes
+        )
         # Heatmap
         self.heatmap = ax.pcolormesh(
             self.heatmeshx, 
@@ -401,7 +402,6 @@ class PLNNSimulationAnimator:
             animated=True,
             shading='gouraud',
         )
-        
         # Gradient field
         self.meshx, self.meshy = np.meshgrid(np.linspace(*self.xlims, 20),
                                              np.linspace(*self.ylims, 20))
@@ -823,7 +823,7 @@ class PLNNSimulationAnimator:
         tau_str = ", ".join([f"{x:.4f}" for x in tau])
         dt0 = self.model.get_dt0()
         s = f"$t={t:.3f}$" 
-        s += f"\nModel $dt0={dt0:.3g}$"
+        s += f"\nModel $\\mathtt{{dt0}}: {dt0:.3g}$"
         s += f"\n$\\boldsymbol{{s}}=({sig_str})^T$"
         s += f"\n$\\boldsymbol{{\\tau}}=({tau_str})^T$"
         if self.sigparams_str:

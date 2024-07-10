@@ -12,7 +12,7 @@ import jax.numpy as jnp
 import jax.random as jrandom
 
 import matplotlib.pyplot as plt
-plt.style.use('figures/fig3.mplstyle')
+plt.style.use('figures/styles/fig3.mplstyle')
 
 from plnn.io import load_model_from_directory, load_model_training_metadata
 from plnn.pl import plot_landscape, plot_phi
@@ -168,7 +168,7 @@ res = 200   # resolution
 lognormalize = True
 clip = None
 ax = plot_phi(
-    model, tilt=[0., 0.5], 
+    model, tilt=TILT_TO_PLOT, 
     r=r, res=res,
     lognormalize=lognormalize,
     clip=clip,
