@@ -1,0 +1,61 @@
+#ARGUMENT					#VALUE
+##############################################################  I/O
+name						model_algphiq_1a_v_kl1
+outdir						out/model_training/model_algphiq_1a_v_kl1
+training_data				data/training_data/data_phiq_1a/training
+validation_data				data/training_data/data_phiq_1a/validation
+##############################################################  Training
+num_epochs					500
+batch_size					250
+passes_per_epoch			1
+patience					100
+ncells						200
+ncells_sample				0
+model_do_sample				True
+solver						heun
+dt							1e-1
+dt_schedule					stepped
+dt_schedule_bounds			50 100 250
+dt_schedule_scales			0.5 0.5 0.5
+fix_noise					False
+reduce_dt_on_nan			False
+reduce_cf_on_nan			False
+nan_max_attempts			4
+##############################################################  Architecture
+model_type					quadratic
+quadratic_a					1.
+quadratic_b					1.
+tilt_hidden_dims			0
+tilt_hidden_acts			None
+tilt_final_act				None
+tilt_layer_normalize		False
+##############################################################  Model Constants
+nsigs						2
+signal_function				sigmoid
+ndims						2
+nparams						2
+##############################################################  Initialization
+sigma						0.05
+init_tilt_weights_method	xavier_uniform
+init_tilt_weights_args		
+init_tilt_bias_method		constant
+init_tilt_bias_args			0.00
+##############################################################  Loss Function
+loss						kl
+##############################################################  Optimizer
+optimizer					rms
+momentum					0.5
+weight_decay				0.9
+clip						1.0
+##############################################################  LR Shedule
+lr_schedule					exponential_decay
+learning_rate				1e-2
+final_learning_rate			1e-5
+nepochs_warmup				50
+nepochs_decay				-1
+##############################################################  Misc
+dtype						float64
+save_all					False
+plot						True
+enforce_gpu					True
+timestamp					True
