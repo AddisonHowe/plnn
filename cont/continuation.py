@@ -357,6 +357,7 @@ def get_stepper(
             dxp = np.linalg.solve(M, RHS)
         except np.linalg.LinAlgError as e:
             if verbosity > 2:
+                # TODO: Revisit this scenario. Issue with quadratics?
                 print(f"\t\tCaught error: {e}\n\t\t\tComputing lstsq")
             dxp = np.linalg.lstsq(M, RHS, rcond=None)[0]
         return dxp
