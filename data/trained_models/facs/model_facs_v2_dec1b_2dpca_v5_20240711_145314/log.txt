@@ -1,0 +1,3425 @@
+Args:
+Namespace(name='model_facs_v2_dec1b_2dpca_v5', outdir='out/model_training/model_facs_v2_dec1b_2dpca_v5', training_data='data/training_data/facs_v2/pca/dec1_fitonsubset/transition1_subset_epi_tr_ce_an_pc12/training', validation_data='data/training_data/facs_v2/pca/dec1_fitonsubset/transition1_subset_epi_tr_ce_an_pc12/validation', model_type='deep_phi', nsims_training=None, nsims_validation=None, num_epochs=2000, passes_per_epoch=10, batch_size=50, patience=200, report_every=10, reduce_dt_on_nan=False, dt_reduction_factor=0.5, reduce_cf_on_nan=True, cf_reduction_factor=0.1, nan_max_attempts=4, quadratic_a=1.0, quadratic_b=1.0, ndims=2, nparams=2, nsigs=2, ncells=50, ncells_sample=50, model_do_sample=False, dt=0.005, dt_schedule='stepped', dt_schedule_bounds=[500, 1000, 1500], dt_schedule_scales=[0.5, 0.5, 0.5], signal_function='sigmoid', solver='heun', confine=True, confinement_factor=0.1, phi_hidden_dims=[16, 32, 32, 16], phi_hidden_acts=['softplus'], phi_final_act='None', phi_layer_normalize=False, tilt_hidden_dims=[0], tilt_hidden_acts=['None'], tilt_final_act='None', tilt_layer_normalize=False, infer_metric=False, metric_hidden_dims=[8, 8, 8, 8], metric_hidden_acts=['softplus', 'softplus', 'softplus', 'softplus'], metric_final_act=None, metric_layer_normalize=False, fix_noise=True, sigma=0.02, init_phi_weights_method='xavier_uniform', init_phi_weights_args=[], init_phi_bias_method='constant', init_phi_bias_args=[0.0], init_tilt_weights_method='xavier_uniform', init_tilt_weights_args=[], init_tilt_bias_method='constant', init_tilt_bias_args=[0.0], init_metric_weights_method='xavier_uniform', init_metric_weights_args=[], init_metric_bias_method=None, init_metric_bias_args=None, loss='mmd', kernel='multiscale', bw_range=[0.2, 0.5, 0.9, 1.1, 1.3, 1.5, 2.0], optimizer='rms', momentum=0.5, weight_decay=0.9, clip=1.0, lr_schedule='exponential_decay', learning_rate=0.01, nepochs_warmup=50, nepochs_decay=-1, final_learning_rate=1e-05, peak_learning_rate=0.02, warmup_cosine_decay_exponent=1.0, plot_radius=4, plot=True, dtype='float64', seed=0, timestamp=True, save_all=False, enforce_gpu=True, continuation=None)
+
+Using seed: 3954314308
+
+Training model...
+
+Saving initial model state to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_0.pth
+EPOCH 1/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.626302174537061		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 1.626302174537061 | validation: 1.3436886614353794]
+	TIME [epoch: 41.6 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_1.pth
+	Model improved!!!
+EPOCH 2/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.3412921786794425		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 1.3412921786794425 | validation: 1.1928285038967101]
+	TIME [epoch: 6.74 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_2.pth
+	Model improved!!!
+EPOCH 3/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.282859835528103		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 1.282859835528103 | validation: 1.1504115759831248]
+	TIME [epoch: 6.74 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_3.pth
+	Model improved!!!
+EPOCH 4/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.1899667893527794		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 1.1899667893527794 | validation: 1.0988430066845887]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_4.pth
+	Model improved!!!
+EPOCH 5/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.168383662389249		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 1.168383662389249 | validation: 1.2457625323868255]
+	TIME [epoch: 6.7 sec]
+EPOCH 6/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.1267700201104394		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 1.1267700201104394 | validation: 0.9980610534558487]
+	TIME [epoch: 6.71 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_6.pth
+	Model improved!!!
+EPOCH 7/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.0569774143905262		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 1.0569774143905262 | validation: 0.9085029600636731]
+	TIME [epoch: 6.73 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_7.pth
+	Model improved!!!
+EPOCH 8/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.9979699831364002		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.9979699831364002 | validation: 0.9356665340548884]
+	TIME [epoch: 6.74 sec]
+EPOCH 9/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.9995172510269007		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.9995172510269007 | validation: 0.8783169314010604]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_9.pth
+	Model improved!!!
+EPOCH 10/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.9586059966113688		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.9586059966113688 | validation: 0.8395066412077636]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_10.pth
+	Model improved!!!
+EPOCH 11/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.9713237470774163		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.9713237470774163 | validation: 0.8199524411985621]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_11.pth
+	Model improved!!!
+EPOCH 12/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.8877385086835864		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.8877385086835864 | validation: 0.8742221751026626]
+	TIME [epoch: 6.74 sec]
+EPOCH 13/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.8613825579851985		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.8613825579851985 | validation: 0.8276997387715912]
+	TIME [epoch: 6.72 sec]
+EPOCH 14/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7771482653601223		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.7771482653601223 | validation: 0.686704585514039]
+	TIME [epoch: 6.73 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_14.pth
+	Model improved!!!
+EPOCH 15/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7494393625215365		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.7494393625215365 | validation: 0.6332412018699186]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_15.pth
+	Model improved!!!
+EPOCH 16/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.9034466223500259		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.9034466223500259 | validation: 0.658999321565659]
+	TIME [epoch: 6.72 sec]
+EPOCH 17/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7720352992859113		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.7720352992859113 | validation: 0.7082357448521677]
+	TIME [epoch: 6.73 sec]
+EPOCH 18/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.643458372592036		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.643458372592036 | validation: 0.5781069403441533]
+	TIME [epoch: 6.73 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_18.pth
+	Model improved!!!
+EPOCH 19/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6390295551467313		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.6390295551467313 | validation: 0.745668904246719]
+	TIME [epoch: 6.7 sec]
+EPOCH 20/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7551429343217897		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.7551429343217897 | validation: 0.7722537023494928]
+	TIME [epoch: 6.72 sec]
+EPOCH 21/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6741635828176593		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.6741635828176593 | validation: 0.5282224439929205]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_21.pth
+	Model improved!!!
+EPOCH 22/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5994905760866589		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.5994905760866589 | validation: 0.6564957307505158]
+	TIME [epoch: 6.73 sec]
+EPOCH 23/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5700997447417842		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.5700997447417842 | validation: 0.5601256654857645]
+	TIME [epoch: 6.72 sec]
+EPOCH 24/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6592126424713071		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.6592126424713071 | validation: 0.5433339888553865]
+	TIME [epoch: 6.72 sec]
+EPOCH 25/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6079034962383674		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.6079034962383674 | validation: 0.5849562804207667]
+	TIME [epoch: 6.71 sec]
+EPOCH 26/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5834763674392872		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.5834763674392872 | validation: 0.6307975063115168]
+	TIME [epoch: 6.72 sec]
+EPOCH 27/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6306206961376937		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.6306206961376937 | validation: 0.5125807728738104]
+	TIME [epoch: 6.74 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_27.pth
+	Model improved!!!
+EPOCH 28/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.49977007095387727		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.49977007095387727 | validation: 0.4872622827522804]
+	TIME [epoch: 6.73 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_28.pth
+	Model improved!!!
+EPOCH 29/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.562260492686177		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.562260492686177 | validation: 0.599824522173183]
+	TIME [epoch: 6.71 sec]
+EPOCH 30/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5100337935190242		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.5100337935190242 | validation: 0.6894399559542468]
+	TIME [epoch: 6.71 sec]
+EPOCH 31/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6893294109591555		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.6893294109591555 | validation: 0.5511805964230495]
+	TIME [epoch: 6.72 sec]
+EPOCH 32/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6965197723502138		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.6965197723502138 | validation: 0.6796090490483871]
+	TIME [epoch: 6.73 sec]
+EPOCH 33/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.638392911254774		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.638392911254774 | validation: 0.5115379082723985]
+	TIME [epoch: 6.74 sec]
+EPOCH 34/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6474412561761006		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.6474412561761006 | validation: 0.5324837161415938]
+	TIME [epoch: 6.72 sec]
+EPOCH 35/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6246008729451464		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.6246008729451464 | validation: 0.5263504199511464]
+	TIME [epoch: 6.72 sec]
+EPOCH 36/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6877880072874157		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.6877880072874157 | validation: 0.5662409545422488]
+	TIME [epoch: 6.72 sec]
+EPOCH 37/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5671320200687447		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.5671320200687447 | validation: 0.5486011964258594]
+	TIME [epoch: 6.71 sec]
+EPOCH 38/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5030914475761431		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.5030914475761431 | validation: 0.6902743664565596]
+	TIME [epoch: 6.74 sec]
+EPOCH 39/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5625237547229702		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.5625237547229702 | validation: 0.44591014527541406]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_39.pth
+	Model improved!!!
+EPOCH 40/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6342175954547328		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.6342175954547328 | validation: 0.5010801707371786]
+	TIME [epoch: 6.73 sec]
+EPOCH 41/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4586462650770478		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.4586462650770478 | validation: 0.6045759005877704]
+	TIME [epoch: 6.74 sec]
+EPOCH 42/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5227165632756239		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.5227165632756239 | validation: 0.4818408348871587]
+	TIME [epoch: 6.73 sec]
+EPOCH 43/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6212322362767925		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.6212322362767925 | validation: 0.4504764612458212]
+	TIME [epoch: 6.75 sec]
+EPOCH 44/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.545332828080647		[learning rate: 0.01]
+	Learning Rate: 0.01
+	LOSS [training: 0.545332828080647 | validation: 0.516947652274368]
+	TIME [epoch: 6.72 sec]
+EPOCH 45/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4560638959140384		[learning rate: 0.0099823]
+	Learning Rate: 0.0099823
+	LOSS [training: 0.4560638959140384 | validation: 0.4812197149636894]
+	TIME [epoch: 6.73 sec]
+EPOCH 46/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5990545795510793		[learning rate: 0.0099426]
+	Learning Rate: 0.0099426
+	LOSS [training: 0.5990545795510793 | validation: 0.4657209880081454]
+	TIME [epoch: 6.72 sec]
+EPOCH 47/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4651480328120275		[learning rate: 0.0099031]
+	Learning Rate: 0.00990306
+	LOSS [training: 0.4651480328120275 | validation: 0.43266532725746004]
+	TIME [epoch: 6.73 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_47.pth
+	Model improved!!!
+EPOCH 48/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6042931299391023		[learning rate: 0.0098637]
+	Learning Rate: 0.00986367
+	LOSS [training: 0.6042931299391023 | validation: 0.44639159859775546]
+	TIME [epoch: 6.74 sec]
+EPOCH 49/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.582025989638312		[learning rate: 0.0098244]
+	Learning Rate: 0.00982444
+	LOSS [training: 0.582025989638312 | validation: 0.49282604161812743]
+	TIME [epoch: 6.72 sec]
+EPOCH 50/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5647316382938053		[learning rate: 0.0097854]
+	Learning Rate: 0.00978536
+	LOSS [training: 0.5647316382938053 | validation: 0.5948027117325043]
+	TIME [epoch: 6.72 sec]
+EPOCH 51/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5499358032563442		[learning rate: 0.0097464]
+	Learning Rate: 0.00974644
+	LOSS [training: 0.5499358032563442 | validation: 0.661317337306393]
+	TIME [epoch: 6.72 sec]
+EPOCH 52/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5559529570387449		[learning rate: 0.0097077]
+	Learning Rate: 0.00970768
+	LOSS [training: 0.5559529570387449 | validation: 0.4575651485462357]
+	TIME [epoch: 6.72 sec]
+EPOCH 53/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5061434716307303		[learning rate: 0.0096691]
+	Learning Rate: 0.00966907
+	LOSS [training: 0.5061434716307303 | validation: 0.3968937982231894]
+	TIME [epoch: 6.74 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_53.pth
+	Model improved!!!
+EPOCH 54/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5127482118004766		[learning rate: 0.0096306]
+	Learning Rate: 0.00963061
+	LOSS [training: 0.5127482118004766 | validation: 0.48931184638098635]
+	TIME [epoch: 6.73 sec]
+EPOCH 55/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.46545571349199427		[learning rate: 0.0095923]
+	Learning Rate: 0.00959231
+	LOSS [training: 0.46545571349199427 | validation: 0.4309383929474665]
+	TIME [epoch: 6.73 sec]
+EPOCH 56/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5094039776151412		[learning rate: 0.0095542]
+	Learning Rate: 0.00955415
+	LOSS [training: 0.5094039776151412 | validation: 0.4125678852320024]
+	TIME [epoch: 6.71 sec]
+EPOCH 57/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4611914965805559		[learning rate: 0.0095162]
+	Learning Rate: 0.00951616
+	LOSS [training: 0.4611914965805559 | validation: 0.7647632528578496]
+	TIME [epoch: 6.72 sec]
+EPOCH 58/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.49451236351076566		[learning rate: 0.0094783]
+	Learning Rate: 0.00947831
+	LOSS [training: 0.49451236351076566 | validation: 0.5337141431071156]
+	TIME [epoch: 6.72 sec]
+EPOCH 59/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4323399246452904		[learning rate: 0.0094406]
+	Learning Rate: 0.00944061
+	LOSS [training: 0.4323399246452904 | validation: 0.3754251403327761]
+	TIME [epoch: 6.74 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_59.pth
+	Model improved!!!
+EPOCH 60/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.48047782915166537		[learning rate: 0.0094031]
+	Learning Rate: 0.00940306
+	LOSS [training: 0.48047782915166537 | validation: 0.6153384664999533]
+	TIME [epoch: 6.71 sec]
+EPOCH 61/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5114044629914529		[learning rate: 0.0093657]
+	Learning Rate: 0.00936566
+	LOSS [training: 0.5114044629914529 | validation: 0.4710456580649306]
+	TIME [epoch: 6.72 sec]
+EPOCH 62/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4566131267522269		[learning rate: 0.0093284]
+	Learning Rate: 0.00932841
+	LOSS [training: 0.4566131267522269 | validation: 0.46049164951062915]
+	TIME [epoch: 6.71 sec]
+EPOCH 63/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4603798305233337		[learning rate: 0.0092913]
+	Learning Rate: 0.00929131
+	LOSS [training: 0.4603798305233337 | validation: 0.44384122417239114]
+	TIME [epoch: 6.73 sec]
+EPOCH 64/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.49950116969934744		[learning rate: 0.0092544]
+	Learning Rate: 0.00925435
+	LOSS [training: 0.49950116969934744 | validation: 0.4041476076733187]
+	TIME [epoch: 6.74 sec]
+EPOCH 65/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.44813165635581903		[learning rate: 0.0092175]
+	Learning Rate: 0.00921755
+	LOSS [training: 0.44813165635581903 | validation: 0.39365763332069875]
+	TIME [epoch: 6.73 sec]
+EPOCH 66/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4283849302297691		[learning rate: 0.0091809]
+	Learning Rate: 0.00918089
+	LOSS [training: 0.4283849302297691 | validation: 0.4336203640329389]
+	TIME [epoch: 6.71 sec]
+EPOCH 67/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.45015795787468665		[learning rate: 0.0091444]
+	Learning Rate: 0.00914437
+	LOSS [training: 0.45015795787468665 | validation: 0.4816088237145033]
+	TIME [epoch: 6.73 sec]
+EPOCH 68/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5025213284619279		[learning rate: 0.009108]
+	Learning Rate: 0.009108
+	LOSS [training: 0.5025213284619279 | validation: 0.618742201735929]
+	TIME [epoch: 6.71 sec]
+EPOCH 69/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4600761905963204		[learning rate: 0.0090718]
+	Learning Rate: 0.00907178
+	LOSS [training: 0.4600761905963204 | validation: 0.3946640034776109]
+	TIME [epoch: 6.74 sec]
+EPOCH 70/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.43318343521679015		[learning rate: 0.0090357]
+	Learning Rate: 0.00903569
+	LOSS [training: 0.43318343521679015 | validation: 0.46525299783966323]
+	TIME [epoch: 6.72 sec]
+EPOCH 71/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4533270878495183		[learning rate: 0.0089998]
+	Learning Rate: 0.00899976
+	LOSS [training: 0.4533270878495183 | validation: 0.4947665143045275]
+	TIME [epoch: 6.72 sec]
+EPOCH 72/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4143642016071538		[learning rate: 0.008964]
+	Learning Rate: 0.00896396
+	LOSS [training: 0.4143642016071538 | validation: 0.4197348292871911]
+	TIME [epoch: 6.72 sec]
+EPOCH 73/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4021605560388509		[learning rate: 0.0089283]
+	Learning Rate: 0.00892831
+	LOSS [training: 0.4021605560388509 | validation: 0.3608362334579601]
+	TIME [epoch: 6.73 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_73.pth
+	Model improved!!!
+EPOCH 74/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4372932040308486		[learning rate: 0.0088928]
+	Learning Rate: 0.0088928
+	LOSS [training: 0.4372932040308486 | validation: 0.3505134559106493]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_74.pth
+	Model improved!!!
+EPOCH 75/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4696980092473685		[learning rate: 0.0088574]
+	Learning Rate: 0.00885743
+	LOSS [training: 0.4696980092473685 | validation: 0.4297956626643374]
+	TIME [epoch: 6.73 sec]
+EPOCH 76/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4121591632232876		[learning rate: 0.0088222]
+	Learning Rate: 0.0088222
+	LOSS [training: 0.4121591632232876 | validation: 0.37423089606893195]
+	TIME [epoch: 6.72 sec]
+EPOCH 77/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.43793053896866685		[learning rate: 0.0087871]
+	Learning Rate: 0.00878711
+	LOSS [training: 0.43793053896866685 | validation: 0.35949272580238356]
+	TIME [epoch: 6.73 sec]
+EPOCH 78/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4234880526950226		[learning rate: 0.0087522]
+	Learning Rate: 0.00875216
+	LOSS [training: 0.4234880526950226 | validation: 0.38920216920847783]
+	TIME [epoch: 6.71 sec]
+EPOCH 79/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.41742069691110245		[learning rate: 0.0087174]
+	Learning Rate: 0.00871735
+	LOSS [training: 0.41742069691110245 | validation: 0.4271639035253944]
+	TIME [epoch: 6.73 sec]
+EPOCH 80/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5055850700999439		[learning rate: 0.0086827]
+	Learning Rate: 0.00868268
+	LOSS [training: 0.5055850700999439 | validation: 0.4061020134975286]
+	TIME [epoch: 6.73 sec]
+EPOCH 81/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.37924044675583857		[learning rate: 0.0086481]
+	Learning Rate: 0.00864815
+	LOSS [training: 0.37924044675583857 | validation: 0.3816935364093145]
+	TIME [epoch: 6.72 sec]
+EPOCH 82/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3795406027705533		[learning rate: 0.0086138]
+	Learning Rate: 0.00861375
+	LOSS [training: 0.3795406027705533 | validation: 0.3545050457716954]
+	TIME [epoch: 6.72 sec]
+EPOCH 83/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.36120337052511287		[learning rate: 0.0085795]
+	Learning Rate: 0.00857949
+	LOSS [training: 0.36120337052511287 | validation: 0.4704926505866659]
+	TIME [epoch: 6.72 sec]
+EPOCH 84/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3791508525863505		[learning rate: 0.0085454]
+	Learning Rate: 0.00854537
+	LOSS [training: 0.3791508525863505 | validation: 0.36855921101271294]
+	TIME [epoch: 6.72 sec]
+EPOCH 85/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4045964542865918		[learning rate: 0.0085114]
+	Learning Rate: 0.00851138
+	LOSS [training: 0.4045964542865918 | validation: 0.3600448665772101]
+	TIME [epoch: 6.74 sec]
+EPOCH 86/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.41294492138885386		[learning rate: 0.0084775]
+	Learning Rate: 0.00847753
+	LOSS [training: 0.41294492138885386 | validation: 0.4676726670780208]
+	TIME [epoch: 6.73 sec]
+EPOCH 87/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.38217915802304286		[learning rate: 0.0084438]
+	Learning Rate: 0.00844381
+	LOSS [training: 0.38217915802304286 | validation: 0.38000409900719817]
+	TIME [epoch: 6.72 sec]
+EPOCH 88/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3848314965229602		[learning rate: 0.0084102]
+	Learning Rate: 0.00841023
+	LOSS [training: 0.3848314965229602 | validation: 0.36673197166254085]
+	TIME [epoch: 6.71 sec]
+EPOCH 89/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3782025868801618		[learning rate: 0.0083768]
+	Learning Rate: 0.00837678
+	LOSS [training: 0.3782025868801618 | validation: 0.37520192683247655]
+	TIME [epoch: 6.72 sec]
+EPOCH 90/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.43249945360426184		[learning rate: 0.0083435]
+	Learning Rate: 0.00834346
+	LOSS [training: 0.43249945360426184 | validation: 0.36093431992070746]
+	TIME [epoch: 6.73 sec]
+EPOCH 91/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.39285569914798163		[learning rate: 0.0083103]
+	Learning Rate: 0.00831027
+	LOSS [training: 0.39285569914798163 | validation: 0.4525792362206995]
+	TIME [epoch: 6.72 sec]
+EPOCH 92/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.40804229499525424		[learning rate: 0.0082772]
+	Learning Rate: 0.00827722
+	LOSS [training: 0.40804229499525424 | validation: 0.3759849261991925]
+	TIME [epoch: 6.72 sec]
+EPOCH 93/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3671393858561166		[learning rate: 0.0082443]
+	Learning Rate: 0.0082443
+	LOSS [training: 0.3671393858561166 | validation: 0.3546322799608133]
+	TIME [epoch: 6.73 sec]
+EPOCH 94/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.38143614469920706		[learning rate: 0.0082115]
+	Learning Rate: 0.00821151
+	LOSS [training: 0.38143614469920706 | validation: 0.32875845321836483]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_94.pth
+	Model improved!!!
+EPOCH 95/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34935566624693687		[learning rate: 0.0081789]
+	Learning Rate: 0.00817885
+	LOSS [training: 0.34935566624693687 | validation: 0.39953324795747125]
+	TIME [epoch: 6.73 sec]
+EPOCH 96/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.37764678646982		[learning rate: 0.0081463]
+	Learning Rate: 0.00814632
+	LOSS [training: 0.37764678646982 | validation: 0.42813592043405074]
+	TIME [epoch: 6.72 sec]
+EPOCH 97/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.36894801193167687		[learning rate: 0.0081139]
+	Learning Rate: 0.00811392
+	LOSS [training: 0.36894801193167687 | validation: 0.35764312042380986]
+	TIME [epoch: 6.71 sec]
+EPOCH 98/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3776382727050793		[learning rate: 0.0080816]
+	Learning Rate: 0.00808165
+	LOSS [training: 0.3776382727050793 | validation: 0.43266126016108625]
+	TIME [epoch: 6.72 sec]
+EPOCH 99/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3728170385788128		[learning rate: 0.0080495]
+	Learning Rate: 0.00804951
+	LOSS [training: 0.3728170385788128 | validation: 0.35846374192054087]
+	TIME [epoch: 6.73 sec]
+EPOCH 100/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.41595581730280684		[learning rate: 0.0080175]
+	Learning Rate: 0.00801749
+	LOSS [training: 0.41595581730280684 | validation: 0.43575691659680393]
+	TIME [epoch: 6.74 sec]
+EPOCH 101/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.37456176860630264		[learning rate: 0.0079856]
+	Learning Rate: 0.0079856
+	LOSS [training: 0.37456176860630264 | validation: 0.33554817144566457]
+	TIME [epoch: 6.73 sec]
+EPOCH 102/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3669095862847399		[learning rate: 0.0079538]
+	Learning Rate: 0.00795384
+	LOSS [training: 0.3669095862847399 | validation: 0.3588656363256797]
+	TIME [epoch: 6.73 sec]
+EPOCH 103/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3777753427304772		[learning rate: 0.0079222]
+	Learning Rate: 0.00792221
+	LOSS [training: 0.3777753427304772 | validation: 0.46042699963638534]
+	TIME [epoch: 6.73 sec]
+EPOCH 104/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.35429203483703436		[learning rate: 0.0078907]
+	Learning Rate: 0.0078907
+	LOSS [training: 0.35429203483703436 | validation: 0.43840782050911803]
+	TIME [epoch: 6.72 sec]
+EPOCH 105/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3816719629063749		[learning rate: 0.0078593]
+	Learning Rate: 0.00785931
+	LOSS [training: 0.3816719629063749 | validation: 0.33385721683849984]
+	TIME [epoch: 6.74 sec]
+EPOCH 106/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.40207802446959084		[learning rate: 0.0078281]
+	Learning Rate: 0.00782805
+	LOSS [training: 0.40207802446959084 | validation: 0.35005457073382945]
+	TIME [epoch: 6.73 sec]
+EPOCH 107/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.338404453777533		[learning rate: 0.0077969]
+	Learning Rate: 0.00779692
+	LOSS [training: 0.338404453777533 | validation: 0.3910564788622791]
+	TIME [epoch: 6.74 sec]
+EPOCH 108/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.39483341270432526		[learning rate: 0.0077659]
+	Learning Rate: 0.00776591
+	LOSS [training: 0.39483341270432526 | validation: 0.4680680948687206]
+	TIME [epoch: 6.71 sec]
+EPOCH 109/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3748611399616989		[learning rate: 0.007735]
+	Learning Rate: 0.00773502
+	LOSS [training: 0.3748611399616989 | validation: 0.32621389409393925]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_109.pth
+	Model improved!!!
+EPOCH 110/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3624295173087153		[learning rate: 0.0077043]
+	Learning Rate: 0.00770426
+	LOSS [training: 0.3624295173087153 | validation: 0.36951577852631334]
+	TIME [epoch: 6.74 sec]
+EPOCH 111/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.37642109677118385		[learning rate: 0.0076736]
+	Learning Rate: 0.00767362
+	LOSS [training: 0.37642109677118385 | validation: 0.3626809031971473]
+	TIME [epoch: 6.74 sec]
+EPOCH 112/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3482083461840224		[learning rate: 0.0076431]
+	Learning Rate: 0.00764309
+	LOSS [training: 0.3482083461840224 | validation: 0.328428310510381]
+	TIME [epoch: 6.73 sec]
+EPOCH 113/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3683748097990669		[learning rate: 0.0076127]
+	Learning Rate: 0.00761269
+	LOSS [training: 0.3683748097990669 | validation: 0.36815624437098593]
+	TIME [epoch: 6.72 sec]
+EPOCH 114/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.35470170221467734		[learning rate: 0.0075824]
+	Learning Rate: 0.00758242
+	LOSS [training: 0.35470170221467734 | validation: 0.33845254198670294]
+	TIME [epoch: 6.72 sec]
+EPOCH 115/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.37357400513472583		[learning rate: 0.0075523]
+	Learning Rate: 0.00755226
+	LOSS [training: 0.37357400513472583 | validation: 0.48817523692417486]
+	TIME [epoch: 6.72 sec]
+EPOCH 116/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.42368921601285436		[learning rate: 0.0075222]
+	Learning Rate: 0.00752222
+	LOSS [training: 0.42368921601285436 | validation: 0.3491063099096524]
+	TIME [epoch: 6.73 sec]
+EPOCH 117/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3524964748757883		[learning rate: 0.0074923]
+	Learning Rate: 0.0074923
+	LOSS [training: 0.3524964748757883 | validation: 0.4011664414143052]
+	TIME [epoch: 6.72 sec]
+EPOCH 118/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.39457242829773365		[learning rate: 0.0074625]
+	Learning Rate: 0.0074625
+	LOSS [training: 0.39457242829773365 | validation: 0.37664331908083326]
+	TIME [epoch: 6.72 sec]
+EPOCH 119/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.39540166268925875		[learning rate: 0.0074328]
+	Learning Rate: 0.00743282
+	LOSS [training: 0.39540166268925875 | validation: 0.3278771210837175]
+	TIME [epoch: 6.72 sec]
+EPOCH 120/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.35318846360141515		[learning rate: 0.0074033]
+	Learning Rate: 0.00740326
+	LOSS [training: 0.35318846360141515 | validation: 0.3461541794590985]
+	TIME [epoch: 6.72 sec]
+EPOCH 121/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4738953634493384		[learning rate: 0.0073738]
+	Learning Rate: 0.00737382
+	LOSS [training: 0.4738953634493384 | validation: 0.3631965004198242]
+	TIME [epoch: 6.73 sec]
+EPOCH 122/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3762628911673687		[learning rate: 0.0073445]
+	Learning Rate: 0.00734449
+	LOSS [training: 0.3762628911673687 | validation: 0.3781486891821381]
+	TIME [epoch: 6.72 sec]
+EPOCH 123/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.36403748320002727		[learning rate: 0.0073153]
+	Learning Rate: 0.00731528
+	LOSS [training: 0.36403748320002727 | validation: 0.43737535323693216]
+	TIME [epoch: 6.72 sec]
+EPOCH 124/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34317809326311755		[learning rate: 0.0072862]
+	Learning Rate: 0.00728618
+	LOSS [training: 0.34317809326311755 | validation: 0.3597400222814458]
+	TIME [epoch: 6.72 sec]
+EPOCH 125/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.35726335671440973		[learning rate: 0.0072572]
+	Learning Rate: 0.0072572
+	LOSS [training: 0.35726335671440973 | validation: 0.3576868542942313]
+	TIME [epoch: 6.72 sec]
+EPOCH 126/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34192671707601263		[learning rate: 0.0072283]
+	Learning Rate: 0.00722834
+	LOSS [training: 0.34192671707601263 | validation: 0.3428270241518526]
+	TIME [epoch: 6.74 sec]
+EPOCH 127/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.40558627002744074		[learning rate: 0.0071996]
+	Learning Rate: 0.00719959
+	LOSS [training: 0.40558627002744074 | validation: 0.5177046722610639]
+	TIME [epoch: 6.72 sec]
+EPOCH 128/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4212183548230558		[learning rate: 0.007171]
+	Learning Rate: 0.00717095
+	LOSS [training: 0.4212183548230558 | validation: 0.39472171191680927]
+	TIME [epoch: 6.72 sec]
+EPOCH 129/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3705268399296118		[learning rate: 0.0071424]
+	Learning Rate: 0.00714243
+	LOSS [training: 0.3705268399296118 | validation: 0.4017762915370845]
+	TIME [epoch: 6.72 sec]
+EPOCH 130/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3867430845452555		[learning rate: 0.007114]
+	Learning Rate: 0.00711403
+	LOSS [training: 0.3867430845452555 | validation: 0.45790411960197985]
+	TIME [epoch: 6.72 sec]
+EPOCH 131/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3632801252391714		[learning rate: 0.0070857]
+	Learning Rate: 0.00708573
+	LOSS [training: 0.3632801252391714 | validation: 0.362645583098081]
+	TIME [epoch: 6.73 sec]
+EPOCH 132/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.38503764013008407		[learning rate: 0.0070575]
+	Learning Rate: 0.00705755
+	LOSS [training: 0.38503764013008407 | validation: 0.3671743552879276]
+	TIME [epoch: 6.72 sec]
+EPOCH 133/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3166332410114724		[learning rate: 0.0070295]
+	Learning Rate: 0.00702948
+	LOSS [training: 0.3166332410114724 | validation: 0.35633000404408494]
+	TIME [epoch: 6.72 sec]
+EPOCH 134/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.36565357066129195		[learning rate: 0.0070015]
+	Learning Rate: 0.00700152
+	LOSS [training: 0.36565357066129195 | validation: 0.3587571437072765]
+	TIME [epoch: 6.72 sec]
+EPOCH 135/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3637254823098694		[learning rate: 0.0069737]
+	Learning Rate: 0.00697367
+	LOSS [training: 0.3637254823098694 | validation: 0.5385013250026616]
+	TIME [epoch: 6.73 sec]
+EPOCH 136/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4042663687867837		[learning rate: 0.0069459]
+	Learning Rate: 0.00694594
+	LOSS [training: 0.4042663687867837 | validation: 0.36091351521661963]
+	TIME [epoch: 6.73 sec]
+EPOCH 137/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3510882860657473		[learning rate: 0.0069183]
+	Learning Rate: 0.00691831
+	LOSS [training: 0.3510882860657473 | validation: 0.3351810812295972]
+	TIME [epoch: 6.72 sec]
+EPOCH 138/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33229293128692866		[learning rate: 0.0068908]
+	Learning Rate: 0.00689079
+	LOSS [training: 0.33229293128692866 | validation: 0.32605306528980094]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_138.pth
+	Model improved!!!
+EPOCH 139/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3551431894603939		[learning rate: 0.0068634]
+	Learning Rate: 0.00686339
+	LOSS [training: 0.3551431894603939 | validation: 0.40000418065664417]
+	TIME [epoch: 6.71 sec]
+EPOCH 140/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.49329223327559757		[learning rate: 0.0068361]
+	Learning Rate: 0.00683609
+	LOSS [training: 0.49329223327559757 | validation: 0.47684589251033105]
+	TIME [epoch: 6.74 sec]
+EPOCH 141/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.38811298804171873		[learning rate: 0.0068089]
+	Learning Rate: 0.0068089
+	LOSS [training: 0.38811298804171873 | validation: 0.38895538679566677]
+	TIME [epoch: 6.72 sec]
+EPOCH 142/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3195645014673944		[learning rate: 0.0067818]
+	Learning Rate: 0.00678182
+	LOSS [training: 0.3195645014673944 | validation: 0.3982272780639685]
+	TIME [epoch: 6.72 sec]
+EPOCH 143/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3647422089703724		[learning rate: 0.0067548]
+	Learning Rate: 0.00675485
+	LOSS [training: 0.3647422089703724 | validation: 0.4596751311942004]
+	TIME [epoch: 6.73 sec]
+EPOCH 144/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.38218556826054456		[learning rate: 0.006728]
+	Learning Rate: 0.00672798
+	LOSS [training: 0.38218556826054456 | validation: 0.428365238979039]
+	TIME [epoch: 6.72 sec]
+EPOCH 145/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3537922057832985		[learning rate: 0.0067012]
+	Learning Rate: 0.00670122
+	LOSS [training: 0.3537922057832985 | validation: 0.36387381478770753]
+	TIME [epoch: 6.73 sec]
+EPOCH 146/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3756809209146249		[learning rate: 0.0066746]
+	Learning Rate: 0.00667457
+	LOSS [training: 0.3756809209146249 | validation: 0.3290492747880408]
+	TIME [epoch: 6.74 sec]
+EPOCH 147/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3395578240336564		[learning rate: 0.006648]
+	Learning Rate: 0.00664802
+	LOSS [training: 0.3395578240336564 | validation: 0.37264390376042156]
+	TIME [epoch: 6.71 sec]
+EPOCH 148/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3586617474412448		[learning rate: 0.0066216]
+	Learning Rate: 0.00662158
+	LOSS [training: 0.3586617474412448 | validation: 0.39079558692504834]
+	TIME [epoch: 6.72 sec]
+EPOCH 149/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3169475823277358		[learning rate: 0.0065952]
+	Learning Rate: 0.00659524
+	LOSS [training: 0.3169475823277358 | validation: 0.37624539466275597]
+	TIME [epoch: 6.72 sec]
+EPOCH 150/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31972397304200645		[learning rate: 0.006569]
+	Learning Rate: 0.00656901
+	LOSS [training: 0.31972397304200645 | validation: 0.36942864433107314]
+	TIME [epoch: 6.74 sec]
+EPOCH 151/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3548951418194573		[learning rate: 0.0065429]
+	Learning Rate: 0.00654288
+	LOSS [training: 0.3548951418194573 | validation: 0.39546042281257004]
+	TIME [epoch: 6.73 sec]
+EPOCH 152/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.37237012847033957		[learning rate: 0.0065169]
+	Learning Rate: 0.00651686
+	LOSS [training: 0.37237012847033957 | validation: 0.4421917063604089]
+	TIME [epoch: 6.73 sec]
+EPOCH 153/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.43708532655312		[learning rate: 0.0064909]
+	Learning Rate: 0.00649094
+	LOSS [training: 0.43708532655312 | validation: 0.3437845014812012]
+	TIME [epoch: 6.72 sec]
+EPOCH 154/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4036562090998903		[learning rate: 0.0064651]
+	Learning Rate: 0.00646512
+	LOSS [training: 0.4036562090998903 | validation: 0.329987835544188]
+	TIME [epoch: 6.72 sec]
+EPOCH 155/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3579784747522115		[learning rate: 0.0064394]
+	Learning Rate: 0.00643941
+	LOSS [training: 0.3579784747522115 | validation: 0.32811350345119683]
+	TIME [epoch: 6.72 sec]
+EPOCH 156/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4576574361665757		[learning rate: 0.0064138]
+	Learning Rate: 0.0064138
+	LOSS [training: 0.4576574361665757 | validation: 0.4765796270801858]
+	TIME [epoch: 6.73 sec]
+EPOCH 157/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3808702953515571		[learning rate: 0.0063883]
+	Learning Rate: 0.00638829
+	LOSS [training: 0.3808702953515571 | validation: 0.3306205563108503]
+	TIME [epoch: 6.72 sec]
+EPOCH 158/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3417324644976054		[learning rate: 0.0063629]
+	Learning Rate: 0.00636288
+	LOSS [training: 0.3417324644976054 | validation: 0.3693756038553426]
+	TIME [epoch: 6.72 sec]
+EPOCH 159/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32202594337932156		[learning rate: 0.0063376]
+	Learning Rate: 0.00633757
+	LOSS [training: 0.32202594337932156 | validation: 0.3010327820223856]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_159.pth
+	Model improved!!!
+EPOCH 160/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31002287458105804		[learning rate: 0.0063124]
+	Learning Rate: 0.00631237
+	LOSS [training: 0.31002287458105804 | validation: 0.46709580142863383]
+	TIME [epoch: 6.73 sec]
+EPOCH 161/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33460664129953077		[learning rate: 0.0062873]
+	Learning Rate: 0.00628726
+	LOSS [training: 0.33460664129953077 | validation: 0.3185846637337164]
+	TIME [epoch: 6.74 sec]
+EPOCH 162/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.37168107065842626		[learning rate: 0.0062623]
+	Learning Rate: 0.00626226
+	LOSS [training: 0.37168107065842626 | validation: 0.4774725070394763]
+	TIME [epoch: 6.72 sec]
+EPOCH 163/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.37553871340551126		[learning rate: 0.0062373]
+	Learning Rate: 0.00623735
+	LOSS [training: 0.37553871340551126 | validation: 0.33108995444945116]
+	TIME [epoch: 6.71 sec]
+EPOCH 164/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34896629702782317		[learning rate: 0.0062125]
+	Learning Rate: 0.00621254
+	LOSS [training: 0.34896629702782317 | validation: 0.3487306805676326]
+	TIME [epoch: 6.71 sec]
+EPOCH 165/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32335776065184263		[learning rate: 0.0061878]
+	Learning Rate: 0.00618783
+	LOSS [training: 0.32335776065184263 | validation: 0.334894674980384]
+	TIME [epoch: 6.72 sec]
+EPOCH 166/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3053159585207794		[learning rate: 0.0061632]
+	Learning Rate: 0.00616322
+	LOSS [training: 0.3053159585207794 | validation: 0.36916022148098826]
+	TIME [epoch: 6.74 sec]
+EPOCH 167/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32429091538557475		[learning rate: 0.0061387]
+	Learning Rate: 0.00613871
+	LOSS [training: 0.32429091538557475 | validation: 0.3425054097011935]
+	TIME [epoch: 6.72 sec]
+EPOCH 168/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.35197940063461025		[learning rate: 0.0061143]
+	Learning Rate: 0.00611429
+	LOSS [training: 0.35197940063461025 | validation: 0.3420532397321134]
+	TIME [epoch: 6.72 sec]
+EPOCH 169/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3332879699569308		[learning rate: 0.00609]
+	Learning Rate: 0.00608997
+	LOSS [training: 0.3332879699569308 | validation: 0.3277173539607019]
+	TIME [epoch: 6.72 sec]
+EPOCH 170/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31213702247675323		[learning rate: 0.0060658]
+	Learning Rate: 0.00606575
+	LOSS [training: 0.31213702247675323 | validation: 0.2965365146912335]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_170.pth
+	Model improved!!!
+EPOCH 171/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31267643374502585		[learning rate: 0.0060416]
+	Learning Rate: 0.00604163
+	LOSS [training: 0.31267643374502585 | validation: 0.28956138689619]
+	TIME [epoch: 6.73 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_171.pth
+	Model improved!!!
+EPOCH 172/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3303402864986937		[learning rate: 0.0060176]
+	Learning Rate: 0.0060176
+	LOSS [training: 0.3303402864986937 | validation: 0.5703228654785173]
+	TIME [epoch: 6.7 sec]
+EPOCH 173/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5140254608106912		[learning rate: 0.0059937]
+	Learning Rate: 0.00599366
+	LOSS [training: 0.5140254608106912 | validation: 0.346367893552887]
+	TIME [epoch: 6.73 sec]
+EPOCH 174/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33346447447294797		[learning rate: 0.0059698]
+	Learning Rate: 0.00596982
+	LOSS [training: 0.33346447447294797 | validation: 0.323002034821408]
+	TIME [epoch: 6.72 sec]
+EPOCH 175/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30397244919376015		[learning rate: 0.0059461]
+	Learning Rate: 0.00594608
+	LOSS [training: 0.30397244919376015 | validation: 0.32585223995316553]
+	TIME [epoch: 6.71 sec]
+EPOCH 176/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3341784134638859		[learning rate: 0.0059224]
+	Learning Rate: 0.00592243
+	LOSS [training: 0.3341784134638859 | validation: 0.313636159669339]
+	TIME [epoch: 6.73 sec]
+EPOCH 177/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3157713280791732		[learning rate: 0.0058989]
+	Learning Rate: 0.00589888
+	LOSS [training: 0.3157713280791732 | validation: 0.3532764827750253]
+	TIME [epoch: 6.71 sec]
+EPOCH 178/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3459367297002196		[learning rate: 0.0058754]
+	Learning Rate: 0.00587541
+	LOSS [training: 0.3459367297002196 | validation: 0.3821187394183832]
+	TIME [epoch: 6.73 sec]
+EPOCH 179/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30141820400652664		[learning rate: 0.005852]
+	Learning Rate: 0.00585205
+	LOSS [training: 0.30141820400652664 | validation: 0.3457172295540655]
+	TIME [epoch: 6.72 sec]
+EPOCH 180/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3513571109078199		[learning rate: 0.0058288]
+	Learning Rate: 0.00582877
+	LOSS [training: 0.3513571109078199 | validation: 0.3840045665127061]
+	TIME [epoch: 6.72 sec]
+EPOCH 181/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34930713181661327		[learning rate: 0.0058056]
+	Learning Rate: 0.00580559
+	LOSS [training: 0.34930713181661327 | validation: 0.33014177128854033]
+	TIME [epoch: 6.73 sec]
+EPOCH 182/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29652939701718534		[learning rate: 0.0057825]
+	Learning Rate: 0.0057825
+	LOSS [training: 0.29652939701718534 | validation: 0.332609114375422]
+	TIME [epoch: 6.73 sec]
+EPOCH 183/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31782756518551836		[learning rate: 0.0057595]
+	Learning Rate: 0.0057595
+	LOSS [training: 0.31782756518551836 | validation: 0.2895581368601638]
+	TIME [epoch: 6.7 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_183.pth
+	Model improved!!!
+EPOCH 184/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.309775481349683		[learning rate: 0.0057366]
+	Learning Rate: 0.00573659
+	LOSS [training: 0.309775481349683 | validation: 0.38316336991970984]
+	TIME [epoch: 6.72 sec]
+EPOCH 185/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.342788151760309		[learning rate: 0.0057138]
+	Learning Rate: 0.00571377
+	LOSS [training: 0.342788151760309 | validation: 0.3008332593577817]
+	TIME [epoch: 6.73 sec]
+EPOCH 186/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30783534605274376		[learning rate: 0.005691]
+	Learning Rate: 0.00569105
+	LOSS [training: 0.30783534605274376 | validation: 0.3162101629271923]
+	TIME [epoch: 6.72 sec]
+EPOCH 187/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32884269247300524		[learning rate: 0.0056684]
+	Learning Rate: 0.00566841
+	LOSS [training: 0.32884269247300524 | validation: 0.33676351351903905]
+	TIME [epoch: 6.71 sec]
+EPOCH 188/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3453426869597505		[learning rate: 0.0056459]
+	Learning Rate: 0.00564587
+	LOSS [training: 0.3453426869597505 | validation: 0.32411874167558835]
+	TIME [epoch: 6.71 sec]
+EPOCH 189/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3234102100734915		[learning rate: 0.0056234]
+	Learning Rate: 0.00562341
+	LOSS [training: 0.3234102100734915 | validation: 0.3514807666841]
+	TIME [epoch: 6.71 sec]
+EPOCH 190/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3217049483829793		[learning rate: 0.005601]
+	Learning Rate: 0.00560105
+	LOSS [training: 0.3217049483829793 | validation: 0.30172525319512083]
+	TIME [epoch: 6.71 sec]
+EPOCH 191/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3162853969708334		[learning rate: 0.0055788]
+	Learning Rate: 0.00557877
+	LOSS [training: 0.3162853969708334 | validation: 0.3011809956890222]
+	TIME [epoch: 6.73 sec]
+EPOCH 192/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3783873335829602		[learning rate: 0.0055566]
+	Learning Rate: 0.00555658
+	LOSS [training: 0.3783873335829602 | validation: 0.3821963378684834]
+	TIME [epoch: 6.72 sec]
+EPOCH 193/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.418487808014264		[learning rate: 0.0055345]
+	Learning Rate: 0.00553448
+	LOSS [training: 0.418487808014264 | validation: 0.4133887562745192]
+	TIME [epoch: 6.72 sec]
+EPOCH 194/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4121048612499934		[learning rate: 0.0055125]
+	Learning Rate: 0.00551247
+	LOSS [training: 0.4121048612499934 | validation: 0.40304843503971044]
+	TIME [epoch: 6.71 sec]
+EPOCH 195/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.35051508278299764		[learning rate: 0.0054905]
+	Learning Rate: 0.00549054
+	LOSS [training: 0.35051508278299764 | validation: 0.32655204731667026]
+	TIME [epoch: 6.71 sec]
+EPOCH 196/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3223887794537479		[learning rate: 0.0054687]
+	Learning Rate: 0.00546871
+	LOSS [training: 0.3223887794537479 | validation: 0.31665456651042073]
+	TIME [epoch: 6.73 sec]
+EPOCH 197/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33580129820904614		[learning rate: 0.005447]
+	Learning Rate: 0.00544696
+	LOSS [training: 0.33580129820904614 | validation: 0.4633507396391529]
+	TIME [epoch: 6.72 sec]
+EPOCH 198/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34877134911574637		[learning rate: 0.0054253]
+	Learning Rate: 0.00542529
+	LOSS [training: 0.34877134911574637 | validation: 0.3480308687737691]
+	TIME [epoch: 6.71 sec]
+EPOCH 199/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30635483519185946		[learning rate: 0.0054037]
+	Learning Rate: 0.00540371
+	LOSS [training: 0.30635483519185946 | validation: 0.31754023896103417]
+	TIME [epoch: 6.71 sec]
+EPOCH 200/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32070803707236045		[learning rate: 0.0053822]
+	Learning Rate: 0.00538222
+	LOSS [training: 0.32070803707236045 | validation: 0.3073907993120592]
+	TIME [epoch: 6.7 sec]
+EPOCH 201/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34391008526298594		[learning rate: 0.0053608]
+	Learning Rate: 0.00536081
+	LOSS [training: 0.34391008526298594 | validation: 0.33758955165212506]
+	TIME [epoch: 6.73 sec]
+EPOCH 202/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31740397128231707		[learning rate: 0.0053395]
+	Learning Rate: 0.00533949
+	LOSS [training: 0.31740397128231707 | validation: 0.31083030084664676]
+	TIME [epoch: 6.72 sec]
+EPOCH 203/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30098142028046443		[learning rate: 0.0053183]
+	Learning Rate: 0.00531826
+	LOSS [training: 0.30098142028046443 | validation: 0.2890997366898225]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_203.pth
+	Model improved!!!
+EPOCH 204/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34145228309119385		[learning rate: 0.0052971]
+	Learning Rate: 0.0052971
+	LOSS [training: 0.34145228309119385 | validation: 0.31963624550204667]
+	TIME [epoch: 6.72 sec]
+EPOCH 205/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30336745050102276		[learning rate: 0.005276]
+	Learning Rate: 0.00527604
+	LOSS [training: 0.30336745050102276 | validation: 0.28646222592584514]
+	TIME [epoch: 6.71 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_205.pth
+	Model improved!!!
+EPOCH 206/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3112136236302759		[learning rate: 0.0052551]
+	Learning Rate: 0.00525505
+	LOSS [training: 0.3112136236302759 | validation: 0.3028984826857658]
+	TIME [epoch: 6.73 sec]
+EPOCH 207/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3068041193955615		[learning rate: 0.0052341]
+	Learning Rate: 0.00523415
+	LOSS [training: 0.3068041193955615 | validation: 0.31263567094607403]
+	TIME [epoch: 6.73 sec]
+EPOCH 208/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29119848560750544		[learning rate: 0.0052133]
+	Learning Rate: 0.00521333
+	LOSS [training: 0.29119848560750544 | validation: 0.3176248289618031]
+	TIME [epoch: 6.72 sec]
+EPOCH 209/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29643649246760007		[learning rate: 0.0051926]
+	Learning Rate: 0.0051926
+	LOSS [training: 0.29643649246760007 | validation: 0.32165123624466796]
+	TIME [epoch: 6.72 sec]
+EPOCH 210/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2906623718758071		[learning rate: 0.0051719]
+	Learning Rate: 0.00517194
+	LOSS [training: 0.2906623718758071 | validation: 0.33453610629268093]
+	TIME [epoch: 6.72 sec]
+EPOCH 211/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2996864543926152		[learning rate: 0.0051514]
+	Learning Rate: 0.00515137
+	LOSS [training: 0.2996864543926152 | validation: 0.30303768794120634]
+	TIME [epoch: 6.74 sec]
+EPOCH 212/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3433597045762775		[learning rate: 0.0051309]
+	Learning Rate: 0.00513089
+	LOSS [training: 0.3433597045762775 | validation: 0.33303765547022357]
+	TIME [epoch: 6.71 sec]
+EPOCH 213/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29708842317493006		[learning rate: 0.0051105]
+	Learning Rate: 0.00511048
+	LOSS [training: 0.29708842317493006 | validation: 0.30288359717590063]
+	TIME [epoch: 6.72 sec]
+EPOCH 214/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.27897344897311466		[learning rate: 0.0050902]
+	Learning Rate: 0.00509015
+	LOSS [training: 0.27897344897311466 | validation: 0.2955966078143543]
+	TIME [epoch: 6.72 sec]
+EPOCH 215/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29115321573533887		[learning rate: 0.0050699]
+	Learning Rate: 0.00506991
+	LOSS [training: 0.29115321573533887 | validation: 0.3284749257134052]
+	TIME [epoch: 6.72 sec]
+EPOCH 216/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2998739815536429		[learning rate: 0.0050497]
+	Learning Rate: 0.00504974
+	LOSS [training: 0.2998739815536429 | validation: 0.3093787222538107]
+	TIME [epoch: 6.71 sec]
+EPOCH 217/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31775807636439396		[learning rate: 0.0050297]
+	Learning Rate: 0.00502966
+	LOSS [training: 0.31775807636439396 | validation: 0.32709051489945645]
+	TIME [epoch: 6.73 sec]
+EPOCH 218/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30756809185167133		[learning rate: 0.0050097]
+	Learning Rate: 0.00500965
+	LOSS [training: 0.30756809185167133 | validation: 0.3386644583812478]
+	TIME [epoch: 6.72 sec]
+EPOCH 219/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31209140275717906		[learning rate: 0.0049897]
+	Learning Rate: 0.00498973
+	LOSS [training: 0.31209140275717906 | validation: 0.3046725281622151]
+	TIME [epoch: 6.72 sec]
+EPOCH 220/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29393546672631454		[learning rate: 0.0049699]
+	Learning Rate: 0.00496988
+	LOSS [training: 0.29393546672631454 | validation: 0.3011693797803801]
+	TIME [epoch: 6.71 sec]
+EPOCH 221/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30611006817847497		[learning rate: 0.0049501]
+	Learning Rate: 0.00495012
+	LOSS [training: 0.30611006817847497 | validation: 0.38075470382477916]
+	TIME [epoch: 6.72 sec]
+EPOCH 222/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4640288298663392		[learning rate: 0.0049304]
+	Learning Rate: 0.00493043
+	LOSS [training: 0.4640288298663392 | validation: 0.3651283614882656]
+	TIME [epoch: 6.73 sec]
+EPOCH 223/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33613472059545796		[learning rate: 0.0049108]
+	Learning Rate: 0.00491082
+	LOSS [training: 0.33613472059545796 | validation: 0.2995543477952244]
+	TIME [epoch: 6.72 sec]
+EPOCH 224/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30372713969857723		[learning rate: 0.0048913]
+	Learning Rate: 0.00489129
+	LOSS [training: 0.30372713969857723 | validation: 0.32083124552991726]
+	TIME [epoch: 6.72 sec]
+EPOCH 225/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3037065576019391		[learning rate: 0.0048718]
+	Learning Rate: 0.00487183
+	LOSS [training: 0.3037065576019391 | validation: 0.28945312921764416]
+	TIME [epoch: 6.73 sec]
+EPOCH 226/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2878760874054055		[learning rate: 0.0048525]
+	Learning Rate: 0.00485245
+	LOSS [training: 0.2878760874054055 | validation: 0.2941769353822858]
+	TIME [epoch: 6.73 sec]
+EPOCH 227/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.27970813373099673		[learning rate: 0.0048332]
+	Learning Rate: 0.00483316
+	LOSS [training: 0.27970813373099673 | validation: 0.34319208878472307]
+	TIME [epoch: 6.72 sec]
+EPOCH 228/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7585304933718933		[learning rate: 0.0048139]
+	Learning Rate: 0.00481393
+	LOSS [training: 0.7585304933718933 | validation: 0.5701759296840474]
+	TIME [epoch: 6.72 sec]
+EPOCH 229/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5584256099120483		[learning rate: 0.0047948]
+	Learning Rate: 0.00479479
+	LOSS [training: 0.5584256099120483 | validation: 0.34088779632949134]
+	TIME [epoch: 6.72 sec]
+EPOCH 230/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.45112111763054075		[learning rate: 0.0047757]
+	Learning Rate: 0.00477572
+	LOSS [training: 0.45112111763054075 | validation: 0.3381969492013487]
+	TIME [epoch: 6.72 sec]
+EPOCH 231/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3951613896037852		[learning rate: 0.0047567]
+	Learning Rate: 0.00475672
+	LOSS [training: 0.3951613896037852 | validation: 0.3203461022223429]
+	TIME [epoch: 6.74 sec]
+EPOCH 232/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.39851716771738327		[learning rate: 0.0047378]
+	Learning Rate: 0.0047378
+	LOSS [training: 0.39851716771738327 | validation: 0.31861493993100465]
+	TIME [epoch: 6.72 sec]
+EPOCH 233/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.35289630765600727		[learning rate: 0.004719]
+	Learning Rate: 0.00471896
+	LOSS [training: 0.35289630765600727 | validation: 0.336276291991951]
+	TIME [epoch: 6.72 sec]
+EPOCH 234/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3473729519990263		[learning rate: 0.0047002]
+	Learning Rate: 0.00470019
+	LOSS [training: 0.3473729519990263 | validation: 0.3203300142447686]
+	TIME [epoch: 6.72 sec]
+EPOCH 235/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32184546778717804		[learning rate: 0.0046815]
+	Learning Rate: 0.0046815
+	LOSS [training: 0.32184546778717804 | validation: 0.3480151608565068]
+	TIME [epoch: 6.72 sec]
+EPOCH 236/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33484033971836386		[learning rate: 0.0046629]
+	Learning Rate: 0.00466288
+	LOSS [training: 0.33484033971836386 | validation: 0.30757968191691604]
+	TIME [epoch: 6.73 sec]
+EPOCH 237/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32668764254306953		[learning rate: 0.0046443]
+	Learning Rate: 0.00464433
+	LOSS [training: 0.32668764254306953 | validation: 0.33654054362212416]
+	TIME [epoch: 6.72 sec]
+EPOCH 238/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3610015866088681		[learning rate: 0.0046259]
+	Learning Rate: 0.00462586
+	LOSS [training: 0.3610015866088681 | validation: 0.35131182238859415]
+	TIME [epoch: 6.72 sec]
+EPOCH 239/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33364866950678174		[learning rate: 0.0046075]
+	Learning Rate: 0.00460746
+	LOSS [training: 0.33364866950678174 | validation: 0.3113079800658941]
+	TIME [epoch: 6.72 sec]
+EPOCH 240/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3060511980430337		[learning rate: 0.0045891]
+	Learning Rate: 0.00458913
+	LOSS [training: 0.3060511980430337 | validation: 0.2999342799897863]
+	TIME [epoch: 6.72 sec]
+EPOCH 241/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3062518886494658		[learning rate: 0.0045709]
+	Learning Rate: 0.00457088
+	LOSS [training: 0.3062518886494658 | validation: 0.31853026407329754]
+	TIME [epoch: 6.75 sec]
+EPOCH 242/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31136330937622303		[learning rate: 0.0045527]
+	Learning Rate: 0.0045527
+	LOSS [training: 0.31136330937622303 | validation: 0.3259562697493402]
+	TIME [epoch: 6.71 sec]
+EPOCH 243/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31942435958970744		[learning rate: 0.0045346]
+	Learning Rate: 0.00453459
+	LOSS [training: 0.31942435958970744 | validation: 0.3166781973520044]
+	TIME [epoch: 6.72 sec]
+EPOCH 244/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33091918164909045		[learning rate: 0.0045166]
+	Learning Rate: 0.00451656
+	LOSS [training: 0.33091918164909045 | validation: 0.3204290325610263]
+	TIME [epoch: 6.71 sec]
+EPOCH 245/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3167142351234842		[learning rate: 0.0044986]
+	Learning Rate: 0.0044986
+	LOSS [training: 0.3167142351234842 | validation: 0.27907353569435467]
+	TIME [epoch: 6.72 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_245.pth
+	Model improved!!!
+EPOCH 246/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29587999623865724		[learning rate: 0.0044807]
+	Learning Rate: 0.0044807
+	LOSS [training: 0.29587999623865724 | validation: 0.35506163542785435]
+	TIME [epoch: 6.74 sec]
+EPOCH 247/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30754123319896265		[learning rate: 0.0044629]
+	Learning Rate: 0.00446288
+	LOSS [training: 0.30754123319896265 | validation: 0.29674496424311886]
+	TIME [epoch: 6.72 sec]
+EPOCH 248/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29893343101191083		[learning rate: 0.0044451]
+	Learning Rate: 0.00444513
+	LOSS [training: 0.29893343101191083 | validation: 0.31545447916030483]
+	TIME [epoch: 6.72 sec]
+EPOCH 249/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3158257788578942		[learning rate: 0.0044275]
+	Learning Rate: 0.00442745
+	LOSS [training: 0.3158257788578942 | validation: 0.3221586419867798]
+	TIME [epoch: 6.72 sec]
+EPOCH 250/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31327733296254845		[learning rate: 0.0044098]
+	Learning Rate: 0.00440984
+	LOSS [training: 0.31327733296254845 | validation: 0.3173124260602832]
+	TIME [epoch: 6.72 sec]
+EPOCH 251/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28518412820882993		[learning rate: 0.0043923]
+	Learning Rate: 0.0043923
+	LOSS [training: 0.28518412820882993 | validation: 0.28711350095627225]
+	TIME [epoch: 6.74 sec]
+EPOCH 252/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33156233167637195		[learning rate: 0.0043748]
+	Learning Rate: 0.00437483
+	LOSS [training: 0.33156233167637195 | validation: 0.3493314062297937]
+	TIME [epoch: 6.71 sec]
+EPOCH 253/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3034113434474589		[learning rate: 0.0043574]
+	Learning Rate: 0.00435743
+	LOSS [training: 0.3034113434474589 | validation: 0.280183577400973]
+	TIME [epoch: 6.71 sec]
+EPOCH 254/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3295716967710407		[learning rate: 0.0043401]
+	Learning Rate: 0.0043401
+	LOSS [training: 0.3295716967710407 | validation: 0.32347514855043336]
+	TIME [epoch: 6.71 sec]
+EPOCH 255/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3104564319750235		[learning rate: 0.0043228]
+	Learning Rate: 0.00432284
+	LOSS [training: 0.3104564319750235 | validation: 0.3837024109060641]
+	TIME [epoch: 6.72 sec]
+EPOCH 256/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3193538719394203		[learning rate: 0.0043056]
+	Learning Rate: 0.00430565
+	LOSS [training: 0.3193538719394203 | validation: 0.326620742450574]
+	TIME [epoch: 6.73 sec]
+EPOCH 257/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30602981173259214		[learning rate: 0.0042885]
+	Learning Rate: 0.00428852
+	LOSS [training: 0.30602981173259214 | validation: 0.2756825510260432]
+	TIME [epoch: 6.71 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_257.pth
+	Model improved!!!
+EPOCH 258/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2874961865227941		[learning rate: 0.0042715]
+	Learning Rate: 0.00427147
+	LOSS [training: 0.2874961865227941 | validation: 0.3479477756809578]
+	TIME [epoch: 6.71 sec]
+EPOCH 259/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.35443150816834557		[learning rate: 0.0042545]
+	Learning Rate: 0.00425448
+	LOSS [training: 0.35443150816834557 | validation: 0.4182473745155158]
+	TIME [epoch: 6.72 sec]
+EPOCH 260/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34685450228299075		[learning rate: 0.0042376]
+	Learning Rate: 0.00423756
+	LOSS [training: 0.34685450228299075 | validation: 0.31582893331579526]
+	TIME [epoch: 6.72 sec]
+EPOCH 261/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3852688732250178		[learning rate: 0.0042207]
+	Learning Rate: 0.0042207
+	LOSS [training: 0.3852688732250178 | validation: 0.3196639957922299]
+	TIME [epoch: 6.75 sec]
+EPOCH 262/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2985444942374154		[learning rate: 0.0042039]
+	Learning Rate: 0.00420391
+	LOSS [training: 0.2985444942374154 | validation: 0.400216818268775]
+	TIME [epoch: 6.72 sec]
+EPOCH 263/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3470891868372048		[learning rate: 0.0041872]
+	Learning Rate: 0.00418719
+	LOSS [training: 0.3470891868372048 | validation: 0.31809894584554144]
+	TIME [epoch: 6.72 sec]
+EPOCH 264/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30213802987632393		[learning rate: 0.0041705]
+	Learning Rate: 0.00417054
+	LOSS [training: 0.30213802987632393 | validation: 0.2969355859766917]
+	TIME [epoch: 6.72 sec]
+EPOCH 265/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3091702311647354		[learning rate: 0.004154]
+	Learning Rate: 0.00415395
+	LOSS [training: 0.3091702311647354 | validation: 0.31034213059211935]
+	TIME [epoch: 6.71 sec]
+EPOCH 266/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3136237184876679		[learning rate: 0.0041374]
+	Learning Rate: 0.00413743
+	LOSS [training: 0.3136237184876679 | validation: 0.31455974833475514]
+	TIME [epoch: 6.72 sec]
+EPOCH 267/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.307999668131027		[learning rate: 0.004121]
+	Learning Rate: 0.00412098
+	LOSS [training: 0.307999668131027 | validation: 0.3180779795653002]
+	TIME [epoch: 6.73 sec]
+EPOCH 268/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3010605654586966		[learning rate: 0.0041046]
+	Learning Rate: 0.00410458
+	LOSS [training: 0.3010605654586966 | validation: 0.3312624285065482]
+	TIME [epoch: 6.72 sec]
+EPOCH 269/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.342684442116311		[learning rate: 0.0040883]
+	Learning Rate: 0.00408826
+	LOSS [training: 0.342684442116311 | validation: 0.3260395590511951]
+	TIME [epoch: 6.73 sec]
+EPOCH 270/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4516173888904346		[learning rate: 0.004072]
+	Learning Rate: 0.004072
+	LOSS [training: 0.4516173888904346 | validation: 0.35580250823353776]
+	TIME [epoch: 6.72 sec]
+EPOCH 271/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4395712308412259		[learning rate: 0.0040558]
+	Learning Rate: 0.0040558
+	LOSS [training: 0.4395712308412259 | validation: 0.3353236367302991]
+	TIME [epoch: 6.73 sec]
+EPOCH 272/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34061604461848594		[learning rate: 0.0040397]
+	Learning Rate: 0.00403967
+	LOSS [training: 0.34061604461848594 | validation: 0.2865682047556482]
+	TIME [epoch: 6.72 sec]
+EPOCH 273/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.27896759301634994		[learning rate: 0.0040236]
+	Learning Rate: 0.00402361
+	LOSS [training: 0.27896759301634994 | validation: 0.29566896902384154]
+	TIME [epoch: 6.71 sec]
+EPOCH 274/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3193091019536835		[learning rate: 0.0040076]
+	Learning Rate: 0.0040076
+	LOSS [training: 0.3193091019536835 | validation: 0.2802552536770776]
+	TIME [epoch: 6.73 sec]
+EPOCH 275/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4083910252244288		[learning rate: 0.0039917]
+	Learning Rate: 0.00399166
+	LOSS [training: 0.4083910252244288 | validation: 0.36210607292461805]
+	TIME [epoch: 6.73 sec]
+EPOCH 276/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5134960274884252		[learning rate: 0.0039758]
+	Learning Rate: 0.00397579
+	LOSS [training: 0.5134960274884252 | validation: 0.4107820989276762]
+	TIME [epoch: 6.73 sec]
+EPOCH 277/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34628201885639043		[learning rate: 0.00396]
+	Learning Rate: 0.00395997
+	LOSS [training: 0.34628201885639043 | validation: 0.2948010296625946]
+	TIME [epoch: 6.74 sec]
+EPOCH 278/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30117341591789776		[learning rate: 0.0039442]
+	Learning Rate: 0.00394422
+	LOSS [training: 0.30117341591789776 | validation: 0.3035507911953335]
+	TIME [epoch: 6.7 sec]
+EPOCH 279/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2925530767968396		[learning rate: 0.0039285]
+	Learning Rate: 0.00392854
+	LOSS [training: 0.2925530767968396 | validation: 0.29291764576291807]
+	TIME [epoch: 6.7 sec]
+EPOCH 280/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2970665952898532		[learning rate: 0.0039129]
+	Learning Rate: 0.00391291
+	LOSS [training: 0.2970665952898532 | validation: 0.28145501002870843]
+	TIME [epoch: 6.71 sec]
+EPOCH 281/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2890911207939593		[learning rate: 0.0038973]
+	Learning Rate: 0.00389735
+	LOSS [training: 0.2890911207939593 | validation: 0.3119977450302317]
+	TIME [epoch: 6.73 sec]
+EPOCH 282/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2892799623992351		[learning rate: 0.0038818]
+	Learning Rate: 0.00388185
+	LOSS [training: 0.2892799623992351 | validation: 0.3052506980256063]
+	TIME [epoch: 6.73 sec]
+EPOCH 283/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30944993798468556		[learning rate: 0.0038664]
+	Learning Rate: 0.00386641
+	LOSS [training: 0.30944993798468556 | validation: 0.29077310243783694]
+	TIME [epoch: 6.7 sec]
+EPOCH 284/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2983091019354316		[learning rate: 0.003851]
+	Learning Rate: 0.00385103
+	LOSS [training: 0.2983091019354316 | validation: 0.29746091347267717]
+	TIME [epoch: 6.71 sec]
+EPOCH 285/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3028541165695739		[learning rate: 0.0038357]
+	Learning Rate: 0.00383571
+	LOSS [training: 0.3028541165695739 | validation: 0.3002859234074875]
+	TIME [epoch: 6.71 sec]
+EPOCH 286/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28988141571891163		[learning rate: 0.0038205]
+	Learning Rate: 0.00382046
+	LOSS [training: 0.28988141571891163 | validation: 0.28801159754937533]
+	TIME [epoch: 6.73 sec]
+EPOCH 287/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28371558066953806		[learning rate: 0.0038053]
+	Learning Rate: 0.00380526
+	LOSS [training: 0.28371558066953806 | validation: 0.3079013414839191]
+	TIME [epoch: 6.73 sec]
+EPOCH 288/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29821138936510094		[learning rate: 0.0037901]
+	Learning Rate: 0.00379013
+	LOSS [training: 0.29821138936510094 | validation: 0.29403739454297445]
+	TIME [epoch: 6.71 sec]
+EPOCH 289/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2842463407655902		[learning rate: 0.0037751]
+	Learning Rate: 0.00377505
+	LOSS [training: 0.2842463407655902 | validation: 0.34437522893000094]
+	TIME [epoch: 6.72 sec]
+EPOCH 290/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3133297582062006		[learning rate: 0.00376]
+	Learning Rate: 0.00376004
+	LOSS [training: 0.3133297582062006 | validation: 0.31265089335564716]
+	TIME [epoch: 6.71 sec]
+EPOCH 291/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3000938933489485		[learning rate: 0.0037451]
+	Learning Rate: 0.00374508
+	LOSS [training: 0.3000938933489485 | validation: 0.2886594736128431]
+	TIME [epoch: 6.73 sec]
+EPOCH 292/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.282397704460964		[learning rate: 0.0037302]
+	Learning Rate: 0.00373019
+	LOSS [training: 0.282397704460964 | validation: 0.30775693566686974]
+	TIME [epoch: 6.72 sec]
+EPOCH 293/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30574881889653593		[learning rate: 0.0037154]
+	Learning Rate: 0.00371535
+	LOSS [training: 0.30574881889653593 | validation: 0.3300211956361081]
+	TIME [epoch: 6.72 sec]
+EPOCH 294/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3152687996953658		[learning rate: 0.0037006]
+	Learning Rate: 0.00370058
+	LOSS [training: 0.3152687996953658 | validation: 0.3119188372549859]
+	TIME [epoch: 6.72 sec]
+EPOCH 295/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2993670983278603		[learning rate: 0.0036859]
+	Learning Rate: 0.00368586
+	LOSS [training: 0.2993670983278603 | validation: 0.2994641365985668]
+	TIME [epoch: 6.72 sec]
+EPOCH 296/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29407235810400234		[learning rate: 0.0036712]
+	Learning Rate: 0.0036712
+	LOSS [training: 0.29407235810400234 | validation: 0.30283846996605346]
+	TIME [epoch: 6.74 sec]
+EPOCH 297/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28728644623056765		[learning rate: 0.0036566]
+	Learning Rate: 0.0036566
+	LOSS [training: 0.28728644623056765 | validation: 0.3263964652021268]
+	TIME [epoch: 6.73 sec]
+EPOCH 298/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.270658839918848		[learning rate: 0.0036421]
+	Learning Rate: 0.00364205
+	LOSS [training: 0.270658839918848 | validation: 0.31764549174443457]
+	TIME [epoch: 6.72 sec]
+EPOCH 299/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3252550400832817		[learning rate: 0.0036276]
+	Learning Rate: 0.00362757
+	LOSS [training: 0.3252550400832817 | validation: 0.3102194313716701]
+	TIME [epoch: 6.71 sec]
+EPOCH 300/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3222064428439504		[learning rate: 0.0036131]
+	Learning Rate: 0.00361314
+	LOSS [training: 0.3222064428439504 | validation: 0.37999908866663185]
+	TIME [epoch: 6.73 sec]
+EPOCH 301/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33134943596089317		[learning rate: 0.0035988]
+	Learning Rate: 0.00359877
+	LOSS [training: 0.33134943596089317 | validation: 0.3593125272589824]
+	TIME [epoch: 6.73 sec]
+EPOCH 302/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3029997354182923		[learning rate: 0.0035845]
+	Learning Rate: 0.00358445
+	LOSS [training: 0.3029997354182923 | validation: 0.3348103394605242]
+	TIME [epoch: 6.72 sec]
+EPOCH 303/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33094762379444664		[learning rate: 0.0035702]
+	Learning Rate: 0.0035702
+	LOSS [training: 0.33094762379444664 | validation: 0.3201780022975981]
+	TIME [epoch: 6.72 sec]
+EPOCH 304/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28168966071252677		[learning rate: 0.003556]
+	Learning Rate: 0.003556
+	LOSS [training: 0.28168966071252677 | validation: 0.2946747865656111]
+	TIME [epoch: 6.71 sec]
+EPOCH 305/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2892534693875072		[learning rate: 0.0035419]
+	Learning Rate: 0.00354185
+	LOSS [training: 0.2892534693875072 | validation: 0.30670523028479624]
+	TIME [epoch: 6.72 sec]
+EPOCH 306/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3438941749892709		[learning rate: 0.0035278]
+	Learning Rate: 0.00352777
+	LOSS [training: 0.3438941749892709 | validation: 0.29862252923330773]
+	TIME [epoch: 6.74 sec]
+EPOCH 307/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29235107767931323		[learning rate: 0.0035137]
+	Learning Rate: 0.00351374
+	LOSS [training: 0.29235107767931323 | validation: 0.33242329035753765]
+	TIME [epoch: 6.73 sec]
+EPOCH 308/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2928032252933254		[learning rate: 0.0034998]
+	Learning Rate: 0.00349976
+	LOSS [training: 0.2928032252933254 | validation: 0.30169156858211255]
+	TIME [epoch: 6.73 sec]
+EPOCH 309/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28567795163105214		[learning rate: 0.0034858]
+	Learning Rate: 0.00348584
+	LOSS [training: 0.28567795163105214 | validation: 0.3189718257037869]
+	TIME [epoch: 6.73 sec]
+EPOCH 310/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3005124961666512		[learning rate: 0.003472]
+	Learning Rate: 0.00347198
+	LOSS [training: 0.3005124961666512 | validation: 0.407203990362422]
+	TIME [epoch: 6.72 sec]
+EPOCH 311/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3301834493329192		[learning rate: 0.0034582]
+	Learning Rate: 0.00345817
+	LOSS [training: 0.3301834493329192 | validation: 0.30738932907752253]
+	TIME [epoch: 6.73 sec]
+EPOCH 312/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3089212927759711		[learning rate: 0.0034444]
+	Learning Rate: 0.00344441
+	LOSS [training: 0.3089212927759711 | validation: 0.28341095981037756]
+	TIME [epoch: 6.73 sec]
+EPOCH 313/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2965234336792238		[learning rate: 0.0034307]
+	Learning Rate: 0.00343071
+	LOSS [training: 0.2965234336792238 | validation: 0.29189345581840287]
+	TIME [epoch: 6.72 sec]
+EPOCH 314/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30551034920613535		[learning rate: 0.0034171]
+	Learning Rate: 0.00341707
+	LOSS [training: 0.30551034920613535 | validation: 0.35091493508677596]
+	TIME [epoch: 6.72 sec]
+EPOCH 315/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31718041125685215		[learning rate: 0.0034035]
+	Learning Rate: 0.00340348
+	LOSS [training: 0.31718041125685215 | validation: 0.3155292141982865]
+	TIME [epoch: 6.73 sec]
+EPOCH 316/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28935685927240873		[learning rate: 0.0033899]
+	Learning Rate: 0.00338994
+	LOSS [training: 0.28935685927240873 | validation: 0.35059059897562905]
+	TIME [epoch: 6.74 sec]
+EPOCH 317/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29113527175244297		[learning rate: 0.0033765]
+	Learning Rate: 0.00337646
+	LOSS [training: 0.29113527175244297 | validation: 0.3254795297226109]
+	TIME [epoch: 6.74 sec]
+EPOCH 318/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28785314476118923		[learning rate: 0.003363]
+	Learning Rate: 0.00336303
+	LOSS [training: 0.28785314476118923 | validation: 0.3117361974753808]
+	TIME [epoch: 6.72 sec]
+EPOCH 319/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2709879350189468		[learning rate: 0.0033497]
+	Learning Rate: 0.00334965
+	LOSS [training: 0.2709879350189468 | validation: 0.34105213713612254]
+	TIME [epoch: 6.72 sec]
+EPOCH 320/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28032372218313123		[learning rate: 0.0033363]
+	Learning Rate: 0.00333633
+	LOSS [training: 0.28032372218313123 | validation: 0.28745815968533195]
+	TIME [epoch: 6.73 sec]
+EPOCH 321/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29868279630857947		[learning rate: 0.0033231]
+	Learning Rate: 0.00332306
+	LOSS [training: 0.29868279630857947 | validation: 0.31569505444209756]
+	TIME [epoch: 6.74 sec]
+EPOCH 322/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.27473475644356216		[learning rate: 0.0033098]
+	Learning Rate: 0.00330985
+	LOSS [training: 0.27473475644356216 | validation: 0.33885103721562804]
+	TIME [epoch: 6.73 sec]
+EPOCH 323/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28603383736929805		[learning rate: 0.0032967]
+	Learning Rate: 0.00329668
+	LOSS [training: 0.28603383736929805 | validation: 0.2967198071184673]
+	TIME [epoch: 6.72 sec]
+EPOCH 324/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31300341073432114		[learning rate: 0.0032836]
+	Learning Rate: 0.00328357
+	LOSS [training: 0.31300341073432114 | validation: 0.2822099003229323]
+	TIME [epoch: 6.73 sec]
+EPOCH 325/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.27849869743046507		[learning rate: 0.0032705]
+	Learning Rate: 0.00327051
+	LOSS [training: 0.27849869743046507 | validation: 0.28722465394234464]
+	TIME [epoch: 6.72 sec]
+EPOCH 326/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.27969052291744617		[learning rate: 0.0032575]
+	Learning Rate: 0.0032575
+	LOSS [training: 0.27969052291744617 | validation: 0.2895791699375737]
+	TIME [epoch: 6.74 sec]
+EPOCH 327/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2857776334948074		[learning rate: 0.0032445]
+	Learning Rate: 0.00324455
+	LOSS [training: 0.2857776334948074 | validation: 0.3203304598056187]
+	TIME [epoch: 6.72 sec]
+EPOCH 328/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31593690319513507		[learning rate: 0.0032316]
+	Learning Rate: 0.00323164
+	LOSS [training: 0.31593690319513507 | validation: 0.32732502714457223]
+	TIME [epoch: 6.73 sec]
+EPOCH 329/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.27682947028001126		[learning rate: 0.0032188]
+	Learning Rate: 0.00321879
+	LOSS [training: 0.27682947028001126 | validation: 0.28716661852825953]
+	TIME [epoch: 6.71 sec]
+EPOCH 330/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2858235494046157		[learning rate: 0.003206]
+	Learning Rate: 0.00320599
+	LOSS [training: 0.2858235494046157 | validation: 0.34804650785846303]
+	TIME [epoch: 6.71 sec]
+EPOCH 331/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34538946926237885		[learning rate: 0.0031932]
+	Learning Rate: 0.00319323
+	LOSS [training: 0.34538946926237885 | validation: 0.3769466398166102]
+	TIME [epoch: 6.73 sec]
+EPOCH 332/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31433027915151723		[learning rate: 0.0031805]
+	Learning Rate: 0.00318053
+	LOSS [training: 0.31433027915151723 | validation: 0.3128685442820427]
+	TIME [epoch: 6.72 sec]
+EPOCH 333/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2862533184742073		[learning rate: 0.0031679]
+	Learning Rate: 0.00316788
+	LOSS [training: 0.2862533184742073 | validation: 0.2783929364405232]
+	TIME [epoch: 6.71 sec]
+EPOCH 334/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.27534069228944136		[learning rate: 0.0031553]
+	Learning Rate: 0.00315528
+	LOSS [training: 0.27534069228944136 | validation: 0.28949052723989227]
+	TIME [epoch: 6.71 sec]
+EPOCH 335/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2856106243999008		[learning rate: 0.0031427]
+	Learning Rate: 0.00314273
+	LOSS [training: 0.2856106243999008 | validation: 0.2934004638350397]
+	TIME [epoch: 6.72 sec]
+EPOCH 336/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2795142671537052		[learning rate: 0.0031302]
+	Learning Rate: 0.00313023
+	LOSS [training: 0.2795142671537052 | validation: 0.3270485407502759]
+	TIME [epoch: 6.74 sec]
+EPOCH 337/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3057143790819729		[learning rate: 0.0031178]
+	Learning Rate: 0.00311779
+	LOSS [training: 0.3057143790819729 | validation: 0.2827553901444509]
+	TIME [epoch: 6.72 sec]
+EPOCH 338/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.37839219100366456		[learning rate: 0.0031054]
+	Learning Rate: 0.00310538
+	LOSS [training: 0.37839219100366456 | validation: 0.36261139336297277]
+	TIME [epoch: 6.71 sec]
+EPOCH 339/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3279031056240144		[learning rate: 0.003093]
+	Learning Rate: 0.00309303
+	LOSS [training: 0.3279031056240144 | validation: 0.30619988819381305]
+	TIME [epoch: 6.72 sec]
+EPOCH 340/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3229876455357056		[learning rate: 0.0030807]
+	Learning Rate: 0.00308073
+	LOSS [training: 0.3229876455357056 | validation: 0.337847473526659]
+	TIME [epoch: 6.72 sec]
+EPOCH 341/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32243618835987875		[learning rate: 0.0030685]
+	Learning Rate: 0.00306848
+	LOSS [training: 0.32243618835987875 | validation: 0.3111156726098312]
+	TIME [epoch: 6.74 sec]
+EPOCH 342/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30441415343035605		[learning rate: 0.0030563]
+	Learning Rate: 0.00305627
+	LOSS [training: 0.30441415343035605 | validation: 0.30761754734971614]
+	TIME [epoch: 6.73 sec]
+EPOCH 343/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2841596147343251		[learning rate: 0.0030441]
+	Learning Rate: 0.00304412
+	LOSS [training: 0.2841596147343251 | validation: 0.3096229195950344]
+	TIME [epoch: 6.73 sec]
+EPOCH 344/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3573449830614033		[learning rate: 0.003032]
+	Learning Rate: 0.00303201
+	LOSS [training: 0.3573449830614033 | validation: 0.30678150337213084]
+	TIME [epoch: 6.71 sec]
+EPOCH 345/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30218557493835657		[learning rate: 0.00302]
+	Learning Rate: 0.00301995
+	LOSS [training: 0.30218557493835657 | validation: 0.32196089693137153]
+	TIME [epoch: 6.72 sec]
+EPOCH 346/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28615974527997795		[learning rate: 0.0030079]
+	Learning Rate: 0.00300794
+	LOSS [training: 0.28615974527997795 | validation: 0.3011238936466093]
+	TIME [epoch: 6.73 sec]
+EPOCH 347/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2916692816051153		[learning rate: 0.002996]
+	Learning Rate: 0.00299598
+	LOSS [training: 0.2916692816051153 | validation: 0.277200427997871]
+	TIME [epoch: 6.73 sec]
+EPOCH 348/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.285710032862194		[learning rate: 0.0029841]
+	Learning Rate: 0.00298406
+	LOSS [training: 0.285710032862194 | validation: 0.292543678188288]
+	TIME [epoch: 6.77 sec]
+EPOCH 349/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.27704986616106175		[learning rate: 0.0029722]
+	Learning Rate: 0.00297219
+	LOSS [training: 0.27704986616106175 | validation: 0.2975142889669749]
+	TIME [epoch: 6.72 sec]
+EPOCH 350/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28190878742528014		[learning rate: 0.0029604]
+	Learning Rate: 0.00296037
+	LOSS [training: 0.28190878742528014 | validation: 0.2851527598285635]
+	TIME [epoch: 6.74 sec]
+EPOCH 351/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.27957994635356165		[learning rate: 0.0029486]
+	Learning Rate: 0.0029486
+	LOSS [training: 0.27957994635356165 | validation: 0.31064629172810343]
+	TIME [epoch: 6.73 sec]
+EPOCH 352/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28790742670981717		[learning rate: 0.0029369]
+	Learning Rate: 0.00293687
+	LOSS [training: 0.28790742670981717 | validation: 0.3207890022600325]
+	TIME [epoch: 6.73 sec]
+EPOCH 353/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28542898421640545		[learning rate: 0.0029252]
+	Learning Rate: 0.00292519
+	LOSS [training: 0.28542898421640545 | validation: 0.30265634016335674]
+	TIME [epoch: 6.73 sec]
+EPOCH 354/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28502031996996824		[learning rate: 0.0029136]
+	Learning Rate: 0.00291355
+	LOSS [training: 0.28502031996996824 | validation: 0.27834134831133617]
+	TIME [epoch: 6.73 sec]
+EPOCH 355/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.26309404630817174		[learning rate: 0.002902]
+	Learning Rate: 0.00290197
+	LOSS [training: 0.26309404630817174 | validation: 0.2775658170080069]
+	TIME [epoch: 6.75 sec]
+EPOCH 356/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29550364765764725		[learning rate: 0.0028904]
+	Learning Rate: 0.00289042
+	LOSS [training: 0.29550364765764725 | validation: 0.3827831665388084]
+	TIME [epoch: 6.74 sec]
+EPOCH 357/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29783550387682967		[learning rate: 0.0028789]
+	Learning Rate: 0.00287893
+	LOSS [training: 0.29783550387682967 | validation: 0.27362622620583704]
+	TIME [epoch: 6.73 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_357.pth
+	Model improved!!!
+EPOCH 358/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2788943998050184		[learning rate: 0.0028675]
+	Learning Rate: 0.00286748
+	LOSS [training: 0.2788943998050184 | validation: 0.30229005050560087]
+	TIME [epoch: 6.72 sec]
+EPOCH 359/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30817269815521664		[learning rate: 0.0028561]
+	Learning Rate: 0.00285607
+	LOSS [training: 0.30817269815521664 | validation: 0.33536696537313354]
+	TIME [epoch: 6.72 sec]
+EPOCH 360/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3203633278375786		[learning rate: 0.0028447]
+	Learning Rate: 0.00284471
+	LOSS [training: 0.3203633278375786 | validation: 0.33754822620749636]
+	TIME [epoch: 6.74 sec]
+EPOCH 361/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3315570225463569		[learning rate: 0.0028334]
+	Learning Rate: 0.0028334
+	LOSS [training: 0.3315570225463569 | validation: 1.4419424589850252]
+	TIME [epoch: 6.73 sec]
+EPOCH 362/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.9394228872371269		[learning rate: 0.0028221]
+	Learning Rate: 0.00282213
+	LOSS [training: 0.9394228872371269 | validation: 0.5743389996525687]
+	TIME [epoch: 6.72 sec]
+EPOCH 363/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.44511573697231455		[learning rate: 0.0028109]
+	Learning Rate: 0.00281091
+	LOSS [training: 0.44511573697231455 | validation: 0.3571462127691971]
+	TIME [epoch: 6.72 sec]
+EPOCH 364/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.35293795877451256		[learning rate: 0.0027997]
+	Learning Rate: 0.00279973
+	LOSS [training: 0.35293795877451256 | validation: 0.3594523707881561]
+	TIME [epoch: 6.72 sec]
+EPOCH 365/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3345219886542021		[learning rate: 0.0027886]
+	Learning Rate: 0.00278859
+	LOSS [training: 0.3345219886542021 | validation: 0.35108381873923566]
+	TIME [epoch: 6.73 sec]
+EPOCH 366/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3193210027548381		[learning rate: 0.0027775]
+	Learning Rate: 0.0027775
+	LOSS [training: 0.3193210027548381 | validation: 0.4072171601230627]
+	TIME [epoch: 6.73 sec]
+EPOCH 367/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3230734705327346		[learning rate: 0.0027665]
+	Learning Rate: 0.00276645
+	LOSS [training: 0.3230734705327346 | validation: 0.32721456381178415]
+	TIME [epoch: 6.73 sec]
+EPOCH 368/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.299710191980671		[learning rate: 0.0027554]
+	Learning Rate: 0.00275545
+	LOSS [training: 0.299710191980671 | validation: 0.30556181409095073]
+	TIME [epoch: 6.72 sec]
+EPOCH 369/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29362838400313124		[learning rate: 0.0027445]
+	Learning Rate: 0.00274449
+	LOSS [training: 0.29362838400313124 | validation: 0.35030741739323834]
+	TIME [epoch: 6.72 sec]
+EPOCH 370/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.28814036989271075		[learning rate: 0.0027336]
+	Learning Rate: 0.00273357
+	LOSS [training: 0.28814036989271075 | validation: 0.29898805887631735]
+	TIME [epoch: 6.74 sec]
+EPOCH 371/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2830100365929422		[learning rate: 0.0027227]
+	Learning Rate: 0.0027227
+	LOSS [training: 0.2830100365929422 | validation: 0.3631517959815945]
+	TIME [epoch: 6.73 sec]
+EPOCH 372/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33118228221871265		[learning rate: 0.0027119]
+	Learning Rate: 0.00271187
+	LOSS [training: 0.33118228221871265 | validation: 0.3327930598293739]
+	TIME [epoch: 6.72 sec]
+EPOCH 373/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.375828801265532		[learning rate: 0.0027011]
+	Learning Rate: 0.00270109
+	LOSS [training: 0.375828801265532 | validation: 0.37911217944882114]
+	TIME [epoch: 6.72 sec]
+EPOCH 374/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31842218912548825		[learning rate: 0.0026903]
+	Learning Rate: 0.00269034
+	LOSS [training: 0.31842218912548825 | validation: 0.3319037476265493]
+	TIME [epoch: 6.72 sec]
+EPOCH 375/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.318080125403693		[learning rate: 0.0026796]
+	Learning Rate: 0.00267964
+	LOSS [training: 0.318080125403693 | validation: 0.3256546935168752]
+	TIME [epoch: 6.74 sec]
+EPOCH 376/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2944159642408995		[learning rate: 0.002669]
+	Learning Rate: 0.00266899
+	LOSS [training: 0.2944159642408995 | validation: 0.2950593096328233]
+	TIME [epoch: 6.72 sec]
+EPOCH 377/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29269986910961876		[learning rate: 0.0026584]
+	Learning Rate: 0.00265837
+	LOSS [training: 0.29269986910961876 | validation: 0.29472204707960653]
+	TIME [epoch: 6.72 sec]
+EPOCH 378/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32374740627434206		[learning rate: 0.0026478]
+	Learning Rate: 0.0026478
+	LOSS [training: 0.32374740627434206 | validation: 0.3381928973673789]
+	TIME [epoch: 6.72 sec]
+EPOCH 379/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31452056799548356		[learning rate: 0.0026373]
+	Learning Rate: 0.00263727
+	LOSS [training: 0.31452056799548356 | validation: 0.3061910607244175]
+	TIME [epoch: 6.72 sec]
+EPOCH 380/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30477599062254507		[learning rate: 0.0026268]
+	Learning Rate: 0.00262678
+	LOSS [training: 0.30477599062254507 | validation: 0.3156399082700426]
+	TIME [epoch: 6.73 sec]
+EPOCH 381/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2834048293215283		[learning rate: 0.0026163]
+	Learning Rate: 0.00261633
+	LOSS [training: 0.2834048293215283 | validation: 0.3351364234365064]
+	TIME [epoch: 6.73 sec]
+EPOCH 382/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29863842268794033		[learning rate: 0.0026059]
+	Learning Rate: 0.00260592
+	LOSS [training: 0.29863842268794033 | validation: 0.32170042761617995]
+	TIME [epoch: 6.72 sec]
+EPOCH 383/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3085839197268625		[learning rate: 0.0025956]
+	Learning Rate: 0.00259556
+	LOSS [training: 0.3085839197268625 | validation: 0.35590778089720554]
+	TIME [epoch: 6.73 sec]
+EPOCH 384/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.41811221787081404		[learning rate: 0.0025852]
+	Learning Rate: 0.00258523
+	LOSS [training: 0.41811221787081404 | validation: 0.5378551537706205]
+	TIME [epoch: 6.73 sec]
+EPOCH 385/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6283332404547203		[learning rate: 0.002575]
+	Learning Rate: 0.00257495
+	LOSS [training: 0.6283332404547203 | validation: 0.48229630731852097]
+	TIME [epoch: 6.74 sec]
+EPOCH 386/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.40348695433666826		[learning rate: 0.0025647]
+	Learning Rate: 0.00256471
+	LOSS [training: 0.40348695433666826 | validation: 0.3877257996071994]
+	TIME [epoch: 6.73 sec]
+EPOCH 387/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3684531932351462		[learning rate: 0.0025545]
+	Learning Rate: 0.00255451
+	LOSS [training: 0.3684531932351462 | validation: 0.3562787256795577]
+	TIME [epoch: 6.72 sec]
+EPOCH 388/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34447501692822		[learning rate: 0.0025444]
+	Learning Rate: 0.00254435
+	LOSS [training: 0.34447501692822 | validation: 0.31659188723425385]
+	TIME [epoch: 6.71 sec]
+EPOCH 389/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30686175849976977		[learning rate: 0.0025342]
+	Learning Rate: 0.00253423
+	LOSS [training: 0.30686175849976977 | validation: 0.3423383522839082]
+	TIME [epoch: 6.73 sec]
+EPOCH 390/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.35571316841945777		[learning rate: 0.0025242]
+	Learning Rate: 0.00252415
+	LOSS [training: 0.35571316841945777 | validation: 0.35013092346398916]
+	TIME [epoch: 6.72 sec]
+EPOCH 391/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3439243498893232		[learning rate: 0.0025141]
+	Learning Rate: 0.00251411
+	LOSS [training: 0.3439243498893232 | validation: 0.45585244618268]
+	TIME [epoch: 6.72 sec]
+EPOCH 392/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5106183291262392		[learning rate: 0.0025041]
+	Learning Rate: 0.00250411
+	LOSS [training: 0.5106183291262392 | validation: 0.43339331149280425]
+	TIME [epoch: 6.72 sec]
+EPOCH 393/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3915553867527434		[learning rate: 0.0024942]
+	Learning Rate: 0.00249415
+	LOSS [training: 0.3915553867527434 | validation: 0.3688718976113211]
+	TIME [epoch: 6.72 sec]
+EPOCH 394/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33562486542335596		[learning rate: 0.0024842]
+	Learning Rate: 0.00248423
+	LOSS [training: 0.33562486542335596 | validation: 0.3273930026678093]
+	TIME [epoch: 6.74 sec]
+EPOCH 395/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.36195322703372373		[learning rate: 0.0024744]
+	Learning Rate: 0.00247435
+	LOSS [training: 0.36195322703372373 | validation: 0.329877347475729]
+	TIME [epoch: 6.73 sec]
+EPOCH 396/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.335576152062222		[learning rate: 0.0024645]
+	Learning Rate: 0.00246451
+	LOSS [training: 0.335576152062222 | validation: 0.34050365538435123]
+	TIME [epoch: 6.72 sec]
+EPOCH 397/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32673259971816027		[learning rate: 0.0024547]
+	Learning Rate: 0.00245471
+	LOSS [training: 0.32673259971816027 | validation: 0.34774954095958127]
+	TIME [epoch: 6.73 sec]
+EPOCH 398/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3186308974970744		[learning rate: 0.0024449]
+	Learning Rate: 0.00244495
+	LOSS [training: 0.3186308974970744 | validation: 0.3252649026045598]
+	TIME [epoch: 6.73 sec]
+EPOCH 399/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31583498186035036		[learning rate: 0.0024352]
+	Learning Rate: 0.00243522
+	LOSS [training: 0.31583498186035036 | validation: 0.29889245417982924]
+	TIME [epoch: 6.73 sec]
+EPOCH 400/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3032969604321306		[learning rate: 0.0024255]
+	Learning Rate: 0.00242554
+	LOSS [training: 0.3032969604321306 | validation: 0.3098951065407037]
+	TIME [epoch: 6.74 sec]
+EPOCH 401/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30740841159805044		[learning rate: 0.0024159]
+	Learning Rate: 0.00241589
+	LOSS [training: 0.30740841159805044 | validation: 0.2761815301835656]
+	TIME [epoch: 6.71 sec]
+EPOCH 402/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.27794487132306644		[learning rate: 0.0024063]
+	Learning Rate: 0.00240628
+	LOSS [training: 0.27794487132306644 | validation: 0.519342996976183]
+	TIME [epoch: 6.73 sec]
+EPOCH 403/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5212470918849921		[learning rate: 0.0023967]
+	Learning Rate: 0.00239671
+	LOSS [training: 0.5212470918849921 | validation: 0.32618124496653605]
+	TIME [epoch: 6.73 sec]
+EPOCH 404/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.48241818889044885		[learning rate: 0.0023872]
+	Learning Rate: 0.00238718
+	LOSS [training: 0.48241818889044885 | validation: 0.4822581653441226]
+	TIME [epoch: 6.75 sec]
+EPOCH 405/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.47950255229835825		[learning rate: 0.0023777]
+	Learning Rate: 0.00237768
+	LOSS [training: 0.47950255229835825 | validation: 0.4602371090571234]
+	TIME [epoch: 6.73 sec]
+EPOCH 406/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.42512313975730953		[learning rate: 0.0023682]
+	Learning Rate: 0.00236823
+	LOSS [training: 0.42512313975730953 | validation: 0.37617174907661005]
+	TIME [epoch: 6.72 sec]
+EPOCH 407/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.37163381024727116		[learning rate: 0.0023588]
+	Learning Rate: 0.00235881
+	LOSS [training: 0.37163381024727116 | validation: 0.3819849464167868]
+	TIME [epoch: 6.73 sec]
+EPOCH 408/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3204831177817187		[learning rate: 0.0023494]
+	Learning Rate: 0.00234942
+	LOSS [training: 0.3204831177817187 | validation: 0.35509535129019154]
+	TIME [epoch: 6.72 sec]
+EPOCH 409/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.330117800238212		[learning rate: 0.0023401]
+	Learning Rate: 0.00234008
+	LOSS [training: 0.330117800238212 | validation: 0.3070648509796528]
+	TIME [epoch: 6.73 sec]
+EPOCH 410/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32424465620258225		[learning rate: 0.0023308]
+	Learning Rate: 0.00233077
+	LOSS [training: 0.32424465620258225 | validation: 0.3206177182041477]
+	TIME [epoch: 6.73 sec]
+EPOCH 411/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32497303544415485		[learning rate: 0.0023215]
+	Learning Rate: 0.0023215
+	LOSS [training: 0.32497303544415485 | validation: 0.30826690581164884]
+	TIME [epoch: 6.72 sec]
+EPOCH 412/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5158106829152507		[learning rate: 0.0023123]
+	Learning Rate: 0.00231227
+	LOSS [training: 0.5158106829152507 | validation: 0.7095375319099192]
+	TIME [epoch: 6.72 sec]
+EPOCH 413/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6115279981876174		[learning rate: 0.0023031]
+	Learning Rate: 0.00230307
+	LOSS [training: 0.6115279981876174 | validation: 0.824456107859705]
+	TIME [epoch: 6.73 sec]
+EPOCH 414/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7335545736352076		[learning rate: 0.0022939]
+	Learning Rate: 0.00229391
+	LOSS [training: 0.7335545736352076 | validation: 1.0116058562002261]
+	TIME [epoch: 6.74 sec]
+EPOCH 415/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.184886888920061		[learning rate: 0.0022848]
+	Learning Rate: 0.00228479
+	LOSS [training: 1.184886888920061 | validation: 2.3650340343279446]
+	TIME [epoch: 6.72 sec]
+EPOCH 416/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.8486485210318202		[learning rate: 0.0022757]
+	Learning Rate: 0.0022757
+	LOSS [training: 1.8486485210318202 | validation: 2.1475658579746133]
+	TIME [epoch: 6.72 sec]
+EPOCH 417/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.9803454602885238		[learning rate: 0.0022667]
+	Learning Rate: 0.00226665
+	LOSS [training: 1.9803454602885238 | validation: 2.8897626929200317]
+	TIME [epoch: 6.73 sec]
+EPOCH 418/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 2.381493334235495		[learning rate: 0.0022576]
+	Learning Rate: 0.00225764
+	LOSS [training: 2.381493334235495 | validation: 2.683470139625636]
+	TIME [epoch: 6.72 sec]
+EPOCH 419/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 2.0873830059721197		[learning rate: 0.0022487]
+	Learning Rate: 0.00224866
+	LOSS [training: 2.0873830059721197 | validation: 2.5074976082255085]
+	TIME [epoch: 6.74 sec]
+EPOCH 420/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 2.392106243114013		[learning rate: 0.0022397]
+	Learning Rate: 0.00223971
+	LOSS [training: 2.392106243114013 | validation: 2.190215656023329]
+	TIME [epoch: 6.73 sec]
+EPOCH 421/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 2.182145954245798		[learning rate: 0.0022308]
+	Learning Rate: 0.0022308
+	LOSS [training: 2.182145954245798 | validation: 2.499880276939842]
+	TIME [epoch: 6.72 sec]
+EPOCH 422/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 2.141724638192971		[learning rate: 0.0022219]
+	Learning Rate: 0.00222193
+	LOSS [training: 2.141724638192971 | validation: 2.195353268261369]
+	TIME [epoch: 6.71 sec]
+EPOCH 423/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.7323213431288949		[learning rate: 0.0022131]
+	Learning Rate: 0.00221309
+	LOSS [training: 1.7323213431288949 | validation: 2.252367024009094]
+	TIME [epoch: 6.73 sec]
+EPOCH 424/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 2.167166671599934		[learning rate: 0.0022043]
+	Learning Rate: 0.00220429
+	LOSS [training: 2.167166671599934 | validation: 2.364681520021363]
+	TIME [epoch: 6.75 sec]
+EPOCH 425/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 2.4714347215897536		[learning rate: 0.0021955]
+	Learning Rate: 0.00219553
+	LOSS [training: 2.4714347215897536 | validation: 2.899425184239994]
+	TIME [epoch: 6.73 sec]
+EPOCH 426/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 2.8220455737219896		[learning rate: 0.0021868]
+	Learning Rate: 0.00218679
+	LOSS [training: 2.8220455737219896 | validation: 3.344865469506465]
+	TIME [epoch: 6.73 sec]
+EPOCH 427/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 3.1751943096799824		[learning rate: 0.0021781]
+	Learning Rate: 0.0021781
+	LOSS [training: 3.1751943096799824 | validation: 3.109124920513941]
+	TIME [epoch: 6.73 sec]
+EPOCH 428/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 2.819581997514616		[learning rate: 0.0021694]
+	Learning Rate: 0.00216943
+	LOSS [training: 2.819581997514616 | validation: 2.3973751313834697]
+	TIME [epoch: 6.72 sec]
+EPOCH 429/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 2.2347981060157527		[learning rate: 0.0021608]
+	Learning Rate: 0.0021608
+	LOSS [training: 2.2347981060157527 | validation: 2.3117409005061162]
+	TIME [epoch: 6.74 sec]
+EPOCH 430/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.960002482459291		[learning rate: 0.0021522]
+	Learning Rate: 0.00215221
+	LOSS [training: 1.960002482459291 | validation: 2.1533072691883843]
+	TIME [epoch: 6.71 sec]
+EPOCH 431/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.9552844049631861		[learning rate: 0.0021436]
+	Learning Rate: 0.00214365
+	LOSS [training: 1.9552844049631861 | validation: 2.313504701856452]
+	TIME [epoch: 6.72 sec]
+EPOCH 432/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.761794187920617		[learning rate: 0.0021351]
+	Learning Rate: 0.00213512
+	LOSS [training: 1.761794187920617 | validation: 1.7158824509733233]
+	TIME [epoch: 6.71 sec]
+EPOCH 433/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.5112663448971582		[learning rate: 0.0021266]
+	Learning Rate: 0.00212663
+	LOSS [training: 1.5112663448971582 | validation: 1.8084033167979077]
+	TIME [epoch: 6.74 sec]
+EPOCH 434/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.4617767840669638		[learning rate: 0.0021182]
+	Learning Rate: 0.00211817
+	LOSS [training: 1.4617767840669638 | validation: 1.3545052040801628]
+	TIME [epoch: 6.74 sec]
+EPOCH 435/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.999980525364093		[learning rate: 0.0021097]
+	Learning Rate: 0.00210975
+	LOSS [training: 0.999980525364093 | validation: 0.8138103812260857]
+	TIME [epoch: 6.72 sec]
+EPOCH 436/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7949310915783205		[learning rate: 0.0021014]
+	Learning Rate: 0.00210136
+	LOSS [training: 0.7949310915783205 | validation: 1.3689018439811178]
+	TIME [epoch: 6.73 sec]
+EPOCH 437/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.0469061987258799		[learning rate: 0.002093]
+	Learning Rate: 0.002093
+	LOSS [training: 1.0469061987258799 | validation: 0.7443980935914363]
+	TIME [epoch: 6.73 sec]
+EPOCH 438/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5803277780256171		[learning rate: 0.0020847]
+	Learning Rate: 0.00208468
+	LOSS [training: 0.5803277780256171 | validation: 0.5477938219121391]
+	TIME [epoch: 6.75 sec]
+EPOCH 439/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5437994388908536		[learning rate: 0.0020764]
+	Learning Rate: 0.00207638
+	LOSS [training: 0.5437994388908536 | validation: 0.6257141983517027]
+	TIME [epoch: 6.73 sec]
+EPOCH 440/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.47523711685409775		[learning rate: 0.0020681]
+	Learning Rate: 0.00206813
+	LOSS [training: 0.47523711685409775 | validation: 0.48094250964698687]
+	TIME [epoch: 6.74 sec]
+EPOCH 441/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6080496441180776		[learning rate: 0.0020599]
+	Learning Rate: 0.0020599
+	LOSS [training: 0.6080496441180776 | validation: 0.4862483909857345]
+	TIME [epoch: 6.73 sec]
+EPOCH 442/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4958591270125336		[learning rate: 0.0020517]
+	Learning Rate: 0.00205171
+	LOSS [training: 0.4958591270125336 | validation: 0.4767191848062947]
+	TIME [epoch: 6.73 sec]
+EPOCH 443/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5191066296763694		[learning rate: 0.0020435]
+	Learning Rate: 0.00204355
+	LOSS [training: 0.5191066296763694 | validation: 0.5322158145898458]
+	TIME [epoch: 6.74 sec]
+EPOCH 444/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6662513242398357		[learning rate: 0.0020354]
+	Learning Rate: 0.00203542
+	LOSS [training: 0.6662513242398357 | validation: 0.5693094239103559]
+	TIME [epoch: 6.74 sec]
+EPOCH 445/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5829447234427824		[learning rate: 0.0020273]
+	Learning Rate: 0.00202732
+	LOSS [training: 0.5829447234427824 | validation: 0.5766007724188392]
+	TIME [epoch: 6.71 sec]
+EPOCH 446/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6988220737977259		[learning rate: 0.0020193]
+	Learning Rate: 0.00201926
+	LOSS [training: 0.6988220737977259 | validation: 0.9519021137751794]
+	TIME [epoch: 6.73 sec]
+EPOCH 447/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7593537119706826		[learning rate: 0.0020112]
+	Learning Rate: 0.00201123
+	LOSS [training: 0.7593537119706826 | validation: 0.8738779021758661]
+	TIME [epoch: 6.73 sec]
+EPOCH 448/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7569232232632329		[learning rate: 0.0020032]
+	Learning Rate: 0.00200323
+	LOSS [training: 0.7569232232632329 | validation: 0.8062177463395898]
+	TIME [epoch: 6.75 sec]
+EPOCH 449/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6137842814766081		[learning rate: 0.0019953]
+	Learning Rate: 0.00199526
+	LOSS [training: 0.6137842814766081 | validation: 0.6484395025390899]
+	TIME [epoch: 6.72 sec]
+EPOCH 450/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5788843785693353		[learning rate: 0.0019873]
+	Learning Rate: 0.00198733
+	LOSS [training: 0.5788843785693353 | validation: 0.49818959217535186]
+	TIME [epoch: 6.73 sec]
+EPOCH 451/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5070715879949655		[learning rate: 0.0019794]
+	Learning Rate: 0.00197942
+	LOSS [training: 0.5070715879949655 | validation: 0.4990910059538843]
+	TIME [epoch: 6.72 sec]
+EPOCH 452/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5826471473804742		[learning rate: 0.0019715]
+	Learning Rate: 0.00197155
+	LOSS [training: 0.5826471473804742 | validation: 0.4964849051858673]
+	TIME [epoch: 6.72 sec]
+EPOCH 453/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.44406787388187724		[learning rate: 0.0019637]
+	Learning Rate: 0.00196371
+	LOSS [training: 0.44406787388187724 | validation: 0.35969955932570075]
+	TIME [epoch: 6.75 sec]
+EPOCH 454/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3972066460857906		[learning rate: 0.0019559]
+	Learning Rate: 0.0019559
+	LOSS [training: 0.3972066460857906 | validation: 0.4409693202744281]
+	TIME [epoch: 6.72 sec]
+EPOCH 455/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5115141738960789		[learning rate: 0.0019481]
+	Learning Rate: 0.00194812
+	LOSS [training: 0.5115141738960789 | validation: 0.5947726500114208]
+	TIME [epoch: 6.72 sec]
+EPOCH 456/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.577632065091082		[learning rate: 0.0019404]
+	Learning Rate: 0.00194037
+	LOSS [training: 0.577632065091082 | validation: 0.43467375592869245]
+	TIME [epoch: 6.72 sec]
+EPOCH 457/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4663388204663465		[learning rate: 0.0019327]
+	Learning Rate: 0.00193265
+	LOSS [training: 0.4663388204663465 | validation: 0.4442242970550381]
+	TIME [epoch: 6.73 sec]
+EPOCH 458/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6571228693383878		[learning rate: 0.001925]
+	Learning Rate: 0.00192497
+	LOSS [training: 0.6571228693383878 | validation: 0.6920227361973553]
+	TIME [epoch: 6.74 sec]
+EPOCH 459/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6547341425313562		[learning rate: 0.0019173]
+	Learning Rate: 0.00191731
+	LOSS [training: 0.6547341425313562 | validation: 0.49435747108344213]
+	TIME [epoch: 6.73 sec]
+EPOCH 460/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5559438211667599		[learning rate: 0.0019097]
+	Learning Rate: 0.00190968
+	LOSS [training: 0.5559438211667599 | validation: 0.5923422108564121]
+	TIME [epoch: 6.73 sec]
+EPOCH 461/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5590409694340549		[learning rate: 0.0019021]
+	Learning Rate: 0.00190209
+	LOSS [training: 0.5590409694340549 | validation: 0.6449545905852887]
+	TIME [epoch: 6.73 sec]
+EPOCH 462/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5930827600585766		[learning rate: 0.0018945]
+	Learning Rate: 0.00189452
+	LOSS [training: 0.5930827600585766 | validation: 0.6174268083186243]
+	TIME [epoch: 6.73 sec]
+EPOCH 463/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6150273304337441		[learning rate: 0.001887]
+	Learning Rate: 0.00188699
+	LOSS [training: 0.6150273304337441 | validation: 0.6686854807908234]
+	TIME [epoch: 6.74 sec]
+EPOCH 464/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7084898029975101		[learning rate: 0.0018795]
+	Learning Rate: 0.00187948
+	LOSS [training: 0.7084898029975101 | validation: 0.835756370826255]
+	TIME [epoch: 6.73 sec]
+EPOCH 465/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.743863261988457		[learning rate: 0.001872]
+	Learning Rate: 0.00187201
+	LOSS [training: 0.743863261988457 | validation: 0.6597813951487665]
+	TIME [epoch: 6.72 sec]
+EPOCH 466/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5704345928279335		[learning rate: 0.0018646]
+	Learning Rate: 0.00186456
+	LOSS [training: 0.5704345928279335 | validation: 0.5428987645158894]
+	TIME [epoch: 6.73 sec]
+EPOCH 467/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4970220941871448		[learning rate: 0.0018571]
+	Learning Rate: 0.00185715
+	LOSS [training: 0.4970220941871448 | validation: 0.4378283391136639]
+	TIME [epoch: 6.73 sec]
+EPOCH 468/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.41599896763072614		[learning rate: 0.0018498]
+	Learning Rate: 0.00184976
+	LOSS [training: 0.41599896763072614 | validation: 0.39550865948963765]
+	TIME [epoch: 6.74 sec]
+EPOCH 469/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.39015696918269593		[learning rate: 0.0018424]
+	Learning Rate: 0.0018424
+	LOSS [training: 0.39015696918269593 | validation: 0.3730283287062658]
+	TIME [epoch: 6.73 sec]
+EPOCH 470/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3769693803606559		[learning rate: 0.0018351]
+	Learning Rate: 0.00183508
+	LOSS [training: 0.3769693803606559 | validation: 0.3837220238958951]
+	TIME [epoch: 6.73 sec]
+EPOCH 471/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3633696801746578		[learning rate: 0.0018278]
+	Learning Rate: 0.00182778
+	LOSS [training: 0.3633696801746578 | validation: 0.35546956438011934]
+	TIME [epoch: 6.73 sec]
+EPOCH 472/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3359163845271415		[learning rate: 0.0018205]
+	Learning Rate: 0.00182051
+	LOSS [training: 0.3359163845271415 | validation: 0.34751692643776766]
+	TIME [epoch: 6.75 sec]
+EPOCH 473/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3423682336185343		[learning rate: 0.0018133]
+	Learning Rate: 0.00181327
+	LOSS [training: 0.3423682336185343 | validation: 0.3507175784557739]
+	TIME [epoch: 6.74 sec]
+EPOCH 474/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3208277600594972		[learning rate: 0.0018061]
+	Learning Rate: 0.00180605
+	LOSS [training: 0.3208277600594972 | validation: 0.3078945375963154]
+	TIME [epoch: 6.72 sec]
+EPOCH 475/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.316816299850827		[learning rate: 0.0017989]
+	Learning Rate: 0.00179887
+	LOSS [training: 0.316816299850827 | validation: 0.33421027265102754]
+	TIME [epoch: 6.72 sec]
+EPOCH 476/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32152623668914593		[learning rate: 0.0017917]
+	Learning Rate: 0.00179172
+	LOSS [training: 0.32152623668914593 | validation: 0.3260066778037475]
+	TIME [epoch: 6.72 sec]
+EPOCH 477/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3089295080701481		[learning rate: 0.0017846]
+	Learning Rate: 0.00178459
+	LOSS [training: 0.3089295080701481 | validation: 0.3252993891255997]
+	TIME [epoch: 6.75 sec]
+EPOCH 478/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30385240030638716		[learning rate: 0.0017775]
+	Learning Rate: 0.00177749
+	LOSS [training: 0.30385240030638716 | validation: 0.3199522924041279]
+	TIME [epoch: 6.73 sec]
+EPOCH 479/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2967301691023222		[learning rate: 0.0017704]
+	Learning Rate: 0.00177042
+	LOSS [training: 0.2967301691023222 | validation: 0.29153052590417133]
+	TIME [epoch: 6.73 sec]
+EPOCH 480/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30300059095769344		[learning rate: 0.0017634]
+	Learning Rate: 0.00176338
+	LOSS [training: 0.30300059095769344 | validation: 0.32942385627474224]
+	TIME [epoch: 6.72 sec]
+EPOCH 481/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32804746623346054		[learning rate: 0.0017564]
+	Learning Rate: 0.00175637
+	LOSS [training: 0.32804746623346054 | validation: 0.31595280286783145]
+	TIME [epoch: 6.73 sec]
+EPOCH 482/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32513745374680547		[learning rate: 0.0017494]
+	Learning Rate: 0.00174938
+	LOSS [training: 0.32513745374680547 | validation: 0.316353341452509]
+	TIME [epoch: 6.75 sec]
+EPOCH 483/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31639687943920985		[learning rate: 0.0017424]
+	Learning Rate: 0.00174242
+	LOSS [training: 0.31639687943920985 | validation: 0.35427999121034237]
+	TIME [epoch: 6.73 sec]
+EPOCH 484/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4043730188521262		[learning rate: 0.0017355]
+	Learning Rate: 0.00173549
+	LOSS [training: 0.4043730188521262 | validation: 0.6081591047711274]
+	TIME [epoch: 6.72 sec]
+EPOCH 485/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4998942077667434		[learning rate: 0.0017286]
+	Learning Rate: 0.00172859
+	LOSS [training: 0.4998942077667434 | validation: 0.4234875122273699]
+	TIME [epoch: 6.72 sec]
+EPOCH 486/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3603736779022663		[learning rate: 0.0017217]
+	Learning Rate: 0.00172172
+	LOSS [training: 0.3603736779022663 | validation: 0.33480002057230496]
+	TIME [epoch: 6.73 sec]
+EPOCH 487/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.32821863385858296		[learning rate: 0.0017149]
+	Learning Rate: 0.00171487
+	LOSS [training: 0.32821863385858296 | validation: 0.3222671455869906]
+	TIME [epoch: 6.75 sec]
+EPOCH 488/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3122325779889496		[learning rate: 0.001708]
+	Learning Rate: 0.00170805
+	LOSS [training: 0.3122325779889496 | validation: 0.32061341410318367]
+	TIME [epoch: 6.73 sec]
+EPOCH 489/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3059176926015714		[learning rate: 0.0017013]
+	Learning Rate: 0.00170125
+	LOSS [training: 0.3059176926015714 | validation: 0.33905429249486124]
+	TIME [epoch: 6.72 sec]
+EPOCH 490/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3026750663426709		[learning rate: 0.0016945]
+	Learning Rate: 0.00169449
+	LOSS [training: 0.3026750663426709 | validation: 0.2842196604412558]
+	TIME [epoch: 6.73 sec]
+EPOCH 491/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.297431601457987		[learning rate: 0.0016877]
+	Learning Rate: 0.00168775
+	LOSS [training: 0.297431601457987 | validation: 0.30809717799093844]
+	TIME [epoch: 6.73 sec]
+EPOCH 492/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2983774617279669		[learning rate: 0.001681]
+	Learning Rate: 0.00168104
+	LOSS [training: 0.2983774617279669 | validation: 0.3254043322748157]
+	TIME [epoch: 6.74 sec]
+EPOCH 493/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2837556838622975		[learning rate: 0.0016743]
+	Learning Rate: 0.00167435
+	LOSS [training: 0.2837556838622975 | validation: 0.3046641182618095]
+	TIME [epoch: 6.73 sec]
+EPOCH 494/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29529366220635356		[learning rate: 0.0016677]
+	Learning Rate: 0.00166769
+	LOSS [training: 0.29529366220635356 | validation: 0.2854668310221377]
+	TIME [epoch: 6.73 sec]
+EPOCH 495/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3502244961836694		[learning rate: 0.0016611]
+	Learning Rate: 0.00166106
+	LOSS [training: 0.3502244961836694 | validation: 0.501537721240887]
+	TIME [epoch: 6.72 sec]
+EPOCH 496/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.515017087820072		[learning rate: 0.0016545]
+	Learning Rate: 0.00165445
+	LOSS [training: 0.515017087820072 | validation: 0.9146572448497828]
+	TIME [epoch: 6.73 sec]
+EPOCH 497/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5318928905018782		[learning rate: 0.0016479]
+	Learning Rate: 0.00164787
+	LOSS [training: 0.5318928905018782 | validation: 0.4976944181229344]
+	TIME [epoch: 6.73 sec]
+EPOCH 498/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.383095563153699		[learning rate: 0.0016413]
+	Learning Rate: 0.00164132
+	LOSS [training: 0.383095563153699 | validation: 0.478434363109414]
+	TIME [epoch: 6.72 sec]
+EPOCH 499/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4667174367058725		[learning rate: 0.0016348]
+	Learning Rate: 0.00163479
+	LOSS [training: 0.4667174367058725 | validation: 0.4578266730896061]
+	TIME [epoch: 6.72 sec]
+EPOCH 500/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.41726497800808215		[learning rate: 0.0016283]
+	Learning Rate: 0.00162829
+	LOSS [training: 0.41726497800808215 | validation: 0.3842381551202405]
+	TIME [epoch: 6.72 sec]
+EPOCH 501/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.38290165034518325		[learning rate: 0.0016218]
+	Learning Rate: 0.00162181
+	LOSS [training: 0.38290165034518325 | validation: 0.36727499518786155]
+	TIME [epoch: 37.9 sec]
+EPOCH 502/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3448140863109122		[learning rate: 0.0016154]
+	Learning Rate: 0.00161536
+	LOSS [training: 0.3448140863109122 | validation: 0.32890392720090383]
+	TIME [epoch: 12.9 sec]
+EPOCH 503/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30073247261514413		[learning rate: 0.0016089]
+	Learning Rate: 0.00160893
+	LOSS [training: 0.30073247261514413 | validation: 0.31189379926279537]
+	TIME [epoch: 12.9 sec]
+EPOCH 504/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.30409388809917304		[learning rate: 0.0016025]
+	Learning Rate: 0.00160254
+	LOSS [training: 0.30409388809917304 | validation: 0.32964498893761696]
+	TIME [epoch: 12.9 sec]
+EPOCH 505/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29563414807113575		[learning rate: 0.0015962]
+	Learning Rate: 0.00159616
+	LOSS [training: 0.29563414807113575 | validation: 0.2972360447703611]
+	TIME [epoch: 12.9 sec]
+EPOCH 506/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3000814798480117		[learning rate: 0.0015898]
+	Learning Rate: 0.00158981
+	LOSS [training: 0.3000814798480117 | validation: 0.30159791786623574]
+	TIME [epoch: 12.8 sec]
+EPOCH 507/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29925213501362824		[learning rate: 0.0015835]
+	Learning Rate: 0.00158349
+	LOSS [training: 0.29925213501362824 | validation: 0.2973313322103991]
+	TIME [epoch: 12.8 sec]
+EPOCH 508/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2894282449547308		[learning rate: 0.0015772]
+	Learning Rate: 0.00157719
+	LOSS [training: 0.2894282449547308 | validation: 0.28285532182593653]
+	TIME [epoch: 12.9 sec]
+EPOCH 509/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29657736699767745		[learning rate: 0.0015709]
+	Learning Rate: 0.00157092
+	LOSS [training: 0.29657736699767745 | validation: 0.30377586237466914]
+	TIME [epoch: 12.8 sec]
+EPOCH 510/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2823204739610176		[learning rate: 0.0015647]
+	Learning Rate: 0.00156467
+	LOSS [training: 0.2823204739610176 | validation: 0.3199261317391686]
+	TIME [epoch: 12.8 sec]
+EPOCH 511/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2888197791324574		[learning rate: 0.0015584]
+	Learning Rate: 0.00155845
+	LOSS [training: 0.2888197791324574 | validation: 0.30021272993401915]
+	TIME [epoch: 12.9 sec]
+EPOCH 512/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.304276023867377		[learning rate: 0.0015522]
+	Learning Rate: 0.00155225
+	LOSS [training: 0.304276023867377 | validation: 0.29557714769090043]
+	TIME [epoch: 12.8 sec]
+EPOCH 513/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2846637207311906		[learning rate: 0.0015461]
+	Learning Rate: 0.00154608
+	LOSS [training: 0.2846637207311906 | validation: 0.30798763020827946]
+	TIME [epoch: 12.9 sec]
+EPOCH 514/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2895603225323987		[learning rate: 0.0015399]
+	Learning Rate: 0.00153993
+	LOSS [training: 0.2895603225323987 | validation: 0.2972743529430691]
+	TIME [epoch: 12.8 sec]
+EPOCH 515/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2880033484538186		[learning rate: 0.0015338]
+	Learning Rate: 0.0015338
+	LOSS [training: 0.2880033484538186 | validation: 0.29080629906874594]
+	TIME [epoch: 12.9 sec]
+EPOCH 516/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29559311291034873		[learning rate: 0.0015277]
+	Learning Rate: 0.0015277
+	LOSS [training: 0.29559311291034873 | validation: 0.3177494649785217]
+	TIME [epoch: 12.9 sec]
+EPOCH 517/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.27705042947925906		[learning rate: 0.0015216]
+	Learning Rate: 0.00152163
+	LOSS [training: 0.27705042947925906 | validation: 0.2895556432518387]
+	TIME [epoch: 12.8 sec]
+EPOCH 518/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2912437048530995		[learning rate: 0.0015156]
+	Learning Rate: 0.00151557
+	LOSS [training: 0.2912437048530995 | validation: 0.3141718323297542]
+	TIME [epoch: 12.9 sec]
+EPOCH 519/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2841617459429467		[learning rate: 0.0015095]
+	Learning Rate: 0.00150955
+	LOSS [training: 0.2841617459429467 | validation: 0.2939135044713753]
+	TIME [epoch: 12.9 sec]
+EPOCH 520/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.29176323889363015		[learning rate: 0.0015035]
+	Learning Rate: 0.00150354
+	LOSS [training: 0.29176323889363015 | validation: 0.30357156773803207]
+	TIME [epoch: 12.8 sec]
+EPOCH 521/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.39790404531193735		[learning rate: 0.0014976]
+	Learning Rate: 0.00149756
+	LOSS [training: 0.39790404531193735 | validation: 0.6853115887130405]
+	TIME [epoch: 12.9 sec]
+EPOCH 522/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7832178126294509		[learning rate: 0.0014916]
+	Learning Rate: 0.00149161
+	LOSS [training: 0.7832178126294509 | validation: 0.9658649774676787]
+	TIME [epoch: 12.9 sec]
+EPOCH 523/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4812010349504936		[learning rate: 0.0014857]
+	Learning Rate: 0.00148567
+	LOSS [training: 0.4812010349504936 | validation: 0.9263698904627974]
+	TIME [epoch: 12.8 sec]
+EPOCH 524/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.8151311764201412		[learning rate: 0.0014798]
+	Learning Rate: 0.00147976
+	LOSS [training: 0.8151311764201412 | validation: 1.237310995899278]
+	TIME [epoch: 12.9 sec]
+EPOCH 525/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.9646134351753718		[learning rate: 0.0014739]
+	Learning Rate: 0.00147388
+	LOSS [training: 0.9646134351753718 | validation: 1.170499806971558]
+	TIME [epoch: 12.9 sec]
+EPOCH 526/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7869513129493394		[learning rate: 0.001468]
+	Learning Rate: 0.00146802
+	LOSS [training: 0.7869513129493394 | validation: 0.8618510396112148]
+	TIME [epoch: 12.8 sec]
+EPOCH 527/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5742918496273574		[learning rate: 0.0014622]
+	Learning Rate: 0.00146218
+	LOSS [training: 0.5742918496273574 | validation: 0.5331018518919997]
+	TIME [epoch: 12.9 sec]
+EPOCH 528/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.46981675705625403		[learning rate: 0.0014564]
+	Learning Rate: 0.00145636
+	LOSS [training: 0.46981675705625403 | validation: 0.5096139666603922]
+	TIME [epoch: 12.8 sec]
+EPOCH 529/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.39904437821713734		[learning rate: 0.0014506]
+	Learning Rate: 0.00145057
+	LOSS [training: 0.39904437821713734 | validation: 0.38032849323351864]
+	TIME [epoch: 12.8 sec]
+EPOCH 530/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.3632549287672882		[learning rate: 0.0014448]
+	Learning Rate: 0.0014448
+	LOSS [training: 0.3632549287672882 | validation: 0.39868290963704606]
+	TIME [epoch: 12.9 sec]
+EPOCH 531/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.330863180631844		[learning rate: 0.0014391]
+	Learning Rate: 0.00143905
+	LOSS [training: 0.330863180631844 | validation: 0.4536696949336343]
+	TIME [epoch: 12.8 sec]
+EPOCH 532/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4453115348741093		[learning rate: 0.0014333]
+	Learning Rate: 0.00143333
+	LOSS [training: 0.4453115348741093 | validation: 0.4997677819965891]
+	TIME [epoch: 12.9 sec]
+EPOCH 533/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.34164287345842365		[learning rate: 0.0014276]
+	Learning Rate: 0.00142763
+	LOSS [training: 0.34164287345842365 | validation: 0.32234364486859673]
+	TIME [epoch: 12.8 sec]
+EPOCH 534/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.31499447734020447		[learning rate: 0.001422]
+	Learning Rate: 0.00142195
+	LOSS [training: 0.31499447734020447 | validation: 0.3199488582577513]
+	TIME [epoch: 12.8 sec]
+EPOCH 535/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.2972433612683273		[learning rate: 0.0014163]
+	Learning Rate: 0.0014163
+	LOSS [training: 0.2972433612683273 | validation: 0.44194143616555703]
+	TIME [epoch: 12.9 sec]
+EPOCH 536/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5665104421733674		[learning rate: 0.0014107]
+	Learning Rate: 0.00141066
+	LOSS [training: 0.5665104421733674 | validation: 0.6876905421108372]
+	TIME [epoch: 12.9 sec]
+EPOCH 537/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7308612751338173		[learning rate: 0.0014051]
+	Learning Rate: 0.00140505
+	LOSS [training: 0.7308612751338173 | validation: 0.974189920654427]
+	TIME [epoch: 12.9 sec]
+EPOCH 538/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.8429471953940142		[learning rate: 0.0013995]
+	Learning Rate: 0.00139946
+	LOSS [training: 0.8429471953940142 | validation: 1.174758219296673]
+	TIME [epoch: 12.9 sec]
+EPOCH 539/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.1368236355513817		[learning rate: 0.0013939]
+	Learning Rate: 0.0013939
+	LOSS [training: 1.1368236355513817 | validation: 1.3352413133651375]
+	TIME [epoch: 12.8 sec]
+EPOCH 540/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.2299172062967623		[learning rate: 0.0013884]
+	Learning Rate: 0.00138835
+	LOSS [training: 1.2299172062967623 | validation: 1.617525460126636]
+	TIME [epoch: 12.8 sec]
+EPOCH 541/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 1.3414817876788439		[learning rate: 0.0013828]
+	Learning Rate: 0.00138283
+	LOSS [training: 1.3414817876788439 | validation: 1.34931810963749]
+	TIME [epoch: 12.9 sec]
+EPOCH 542/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.7666933488742411		[learning rate: 0.0013773]
+	Learning Rate: 0.00137733
+	LOSS [training: 0.7666933488742411 | validation: 0.5888446284182061]
+	TIME [epoch: 12.8 sec]
+EPOCH 543/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.510639579849368		[learning rate: 0.0013719]
+	Learning Rate: 0.00137185
+	LOSS [training: 0.510639579849368 | validation: 0.8722154591266035]
+	TIME [epoch: 12.9 sec]
+EPOCH 544/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.5694577414521251		[learning rate: 0.0013664]
+	Learning Rate: 0.0013664
+	LOSS [training: 0.5694577414521251 | validation: 0.724962823314063]
+	TIME [epoch: 12.9 sec]
+EPOCH 545/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6166064636685219		[learning rate: 0.001361]
+	Learning Rate: 0.00136096
+	LOSS [training: 0.6166064636685219 | validation: 0.5289665211649186]
+	TIME [epoch: 12.9 sec]
+EPOCH 546/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4760073823160292		[learning rate: 0.0013555]
+	Learning Rate: 0.00135555
+	LOSS [training: 0.4760073823160292 | validation: 0.9623939456818615]
+	TIME [epoch: 12.9 sec]
+EPOCH 547/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.9810004322586549		[learning rate: 0.0013502]
+	Learning Rate: 0.00135016
+	LOSS [training: 0.9810004322586549 | validation: 1.0895345963130723]
+	TIME [epoch: 12.9 sec]
+EPOCH 548/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6900378825259121		[learning rate: 0.0013448]
+	Learning Rate: 0.00134479
+	LOSS [training: 0.6900378825259121 | validation: 0.6791695853629587]
+	TIME [epoch: 12.9 sec]
+EPOCH 549/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.43973074812724017		[learning rate: 0.0013394]
+	Learning Rate: 0.00133944
+	LOSS [training: 0.43973074812724017 | validation: 0.4056090494034688]
+	TIME [epoch: 12.9 sec]
+EPOCH 550/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4929764938312535		[learning rate: 0.0013341]
+	Learning Rate: 0.00133411
+	LOSS [training: 0.4929764938312535 | validation: 0.44522392861261756]
+	TIME [epoch: 12.8 sec]
+EPOCH 551/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4220742998246418		[learning rate: 0.0013288]
+	Learning Rate: 0.00132881
+	LOSS [training: 0.4220742998246418 | validation: 0.34318649862728334]
+	TIME [epoch: 12.8 sec]
+EPOCH 552/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.33827156021464855		[learning rate: 0.0013235]
+	Learning Rate: 0.00132352
+	LOSS [training: 0.33827156021464855 | validation: 0.6577464071849787]
+	TIME [epoch: 12.9 sec]
+EPOCH 553/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6251380145986828		[learning rate: 0.0013183]
+	Learning Rate: 0.00131826
+	LOSS [training: 0.6251380145986828 | validation: 0.6462797605922697]
+	TIME [epoch: 12.9 sec]
+EPOCH 554/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6063701807436203		[learning rate: 0.001313]
+	Learning Rate: 0.00131301
+	LOSS [training: 0.6063701807436203 | validation: 0.703398103474079]
+	TIME [epoch: 12.9 sec]
+EPOCH 555/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.847678216844531		[learning rate: 0.0013078]
+	Learning Rate: 0.00130779
+	LOSS [training: 0.847678216844531 | validation: 1.016903818050674]
+	TIME [epoch: 12.9 sec]
+EPOCH 556/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.6124972775119776		[learning rate: 0.0013026]
+	Learning Rate: 0.00130259
+	LOSS [training: 0.6124972775119776 | validation: 0.5833876186761008]
+	TIME [epoch: 12.9 sec]
+EPOCH 557/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.45945016049444615		[learning rate: 0.0012974]
+	Learning Rate: 0.00129741
+	LOSS [training: 0.45945016049444615 | validation: 0.4396332485793889]
+	TIME [epoch: 12.9 sec]
+EPOCH 558/2000:
+	Training over batches...
+		[batch 9/9] avg loss: 0.4533532721339216		[learning rate: 0.0012922]
+	Learning Rate: 0.00129225
+	LOSS [training: 0.4533532721339216 | validation: 0.3727545260364874]
+	TIME [epoch: 12.9 sec]
+	Saving model to: out/model_training/model_facs_v2_dec1b_2dpca_v5_20240711_145314/states/model_facs_v2_dec1b_2dpca_v5_558.pth
+Halted early. No improvement in validation loss for 200 epochs.
+Finished training in 4206.416 seconds.
