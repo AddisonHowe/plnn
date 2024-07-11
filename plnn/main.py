@@ -33,7 +33,7 @@ def parse_args(args):
     parser.add_argument('-v', '--validation_data', type=str, required=True)
     parser.add_argument('--model_type', type=str, default="deep_phi",
                         choices=['deep_phi', 'gmm_phi', 
-                                 'binary_choice', 'binary_flip'])
+                                 'binary_choice', 'binary_flip', 'quadratic'])
     parser.add_argument('-nt', '--nsims_training', type=int, default=None)
     parser.add_argument('-nv', '--nsims_validation', type=int, default=None)
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
@@ -46,6 +46,9 @@ def parse_args(args):
     parser.add_argument('--reduce_cf_on_nan', action="store_true")
     parser.add_argument('--cf_reduction_factor', type=float, default=0.1)
     parser.add_argument('--nan_max_attempts', type=int, default=1)
+    
+    parser.add_argument('--quadratic_a', type=float, default=1.)
+    parser.add_argument('--quadratic_b', type=float, default=1.)
 
 
     # Model simulation
@@ -302,7 +305,7 @@ def main(args):
         model_class = NEDeepPhiPLNN
     elif model_type == 'ne_gmm_phi':
         model_class = NEGMMPhiPLNN
-    elif model_type == 'binary_choice' or model_type == 'binary_flip':
+    elif model_type in ['binary_choice', 'binary_flip', 'quadratic']:
         model_class = AlgebraicPL
     else:
         msg = f"Unknown model type specification: {model_type}."
@@ -511,7 +514,14 @@ def get_model_args(model_type, args):
     
     if model_type == 'quadratic':
         # NOTE: Needs to handle `phi_args` parameter.
-        raise NotImplementedError()
+        args_make.update({
+            'algebraic_phi_id' : "quadratic",
+            'phi_args' : {
+                'a': args.quadratic_a,
+                'b': args.quadratic_b,
+            },
+        })
+        args_init.update({})
     
     
     # Add extra args for non euclidean PLNN
