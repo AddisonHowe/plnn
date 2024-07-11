@@ -108,6 +108,18 @@ class LandscapeSimulationDataset(Dataset):
         outputs = x1
         return inputs, outputs
     
+    def get_unsampled_item(self, idx):
+        if self.is_homogeneous:
+            return self[idx]  # NOTE: untested
+        data = self.dataset[idx]
+        t0, x0, t1, x1, sigparams = data
+        inputs = t0, x0, t1, sigparams
+        outputs = x1
+        return inputs, outputs
+        
+    def get_baselength(self):
+        return len(self.dataset)
+    
     def is_loadable(self):
         return self._is_loadable
 
