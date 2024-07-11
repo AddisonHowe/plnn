@@ -65,7 +65,10 @@ def estimate_minima(
         x0 = np.concatenate([x0, extra_x0], axis=0)
         n = len(x0)
     
-    f = lambda x: model.eval_phi_with_tilts(0, jnp.array(x), jnp.array(tilt))
+    # f = lambda x: model.eval_phi_with_tilts(0, jnp.array(x), jnp.array(tilt))
+    @jax.jit
+    def f(x):
+        return model.eval_phi_with_tilts(0, jnp.array(x), jnp.array(tilt))
     
     results = []
     for x in x0:

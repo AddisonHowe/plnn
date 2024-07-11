@@ -87,8 +87,8 @@ def train_model(
     tilt_bias = []
     dt_hist = []
 
-    def sigint_handler(signal, frame):
-        logprint('Interrupted execution!')
+    def sigterm_handler(signalnum, handler):
+        logprint('*** RECEIVED SIGTERM *** Raising KeyboardInterrupt!')
         np.save(f"{outdir}/training_loss_history.npy", loss_hist_train)
         np.save(f"{outdir}/validation_loss_history.npy", loss_hist_valid)
         np.save(f"{outdir}/learning_rate_history.npy", learn_rate_hist)
@@ -96,9 +96,8 @@ def train_model(
         np.save(f"{outdir}/tilt_weights_history.npy", tilt_weights)
         np.save(f"{outdir}/tilt_bias_history.npy", tilt_bias)
         np.save(f"{outdir}/dt_hist.npy", dt_hist)
-        sys.exit(0)
-    
-    signal.signal(signal.SIGINT, sigint_handler)
+        raise KeyboardInterrupt
+    signal.signal(signal.SIGTERM, sigterm_handler)
 
     if fix_noise:
         filter_spec = jtu.tree_map(lambda _: True, model)

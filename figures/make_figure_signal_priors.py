@@ -2,7 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-plt.style.use('figures/fig_standard.mplstyle')
+plt.style.use('figures/styles/fig_standard.mplstyle')
 
 from cont.binary_choice import get_binary_choice_curves
 from cont.binary_flip import get_binary_flip_curves

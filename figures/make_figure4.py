@@ -7,7 +7,7 @@ import os
 from glob import glob
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use('figures/fig4.mplstyle')
+plt.style.use('figures/styles/fig4.mplstyle')
 
 from plnn.models import DeepPhiPLNN
 from plnn.pl import plot_loss_history, plot_sigma_history
