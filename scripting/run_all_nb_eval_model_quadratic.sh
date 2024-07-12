@@ -1,15 +1,15 @@
 #!/bin/bash
 
 rundir=notebooks
-argfile=scripting/arglist_nb_eval_model_plnn_synbindec.tsv
+argfile=scripting/arglist_nb_eval_model_quadratic.tsv
 
-logoutfile=scripting/logs/log_nb_eval_model_plnn_synbindec.o
+logoutfile=scripting/logs/log_nb_eval_model_quadratic.o
 
 echo STDOUT LOG: > $logoutfile
 
 jupyter nbconvert --RegexRemovePreprocessor.patterns="^%" \
-    --to script $rundir/nb_eval_model_plnn_synbindec.ipynb \
-    --output tmp_script_nb_eval_model_plnn_synbindec
+    --to script $rundir/nb_eval_model_quadratic.ipynb \
+    --output tmp_script_nb_eval_model_quadratic
 
 eval "$(conda shell.bash hook)"
 conda activate env
@@ -24,7 +24,7 @@ while IFS=$'\t' read -r fields; do
         nargs=${#argnames[@]}
     elif [[ ! ${field_arr[0]} =~ ^# ]]; then
         # Process each field in the line
-        cmd="python -u $rundir/tmp_script_nb_eval_model_plnn_synbindec.py"
+        cmd="python -u $rundir/tmp_script_nb_eval_model_quadratic.py"
         for ((i=0; i<$nargs; i++)); do
             argname=${argnames[$i]}
             argval=${field_arr[$i]}
@@ -40,5 +40,5 @@ while IFS=$'\t' read -r fields; do
     ((linecount++))
 done < "$argfile"
 
-rm $rundir/tmp_script.py
+rm $rundir/tmp_script_nb_eval_model_facs.py
 echo "Done!"
