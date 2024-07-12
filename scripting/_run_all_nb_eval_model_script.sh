@@ -11,9 +11,14 @@ logstatusfile=scripting/logs/log_${nb_basename}.status
 echo STDOUT LOG: > $logoutfile
 echo "OUTPUT STATUS LOG (directory exitcode):" > $logstatusfile
 
+tmp_script_dir=scripting/tmp
+tmp_script_fname=tmp_script_${nb_basename}
+tmp_script_fpath=$tmp_script_dir/$tmp_script_fname.py
+
+mkdir -p $tmp_script_dir
 jupyter nbconvert --RegexRemovePreprocessor.patterns="^%" \
     --to script $rundir/${nb_basename}.ipynb \
-    --output tmp_script_${nb_basename}
+    --output-dir $tmp_script_dir --output $tmp_script_fname
 
 eval "$(conda shell.bash hook)"
 conda activate env
@@ -28,7 +33,7 @@ while IFS=$'\t' read -r fields; do
         nargs=${#argnames[@]}
     elif [[ ! ${field_arr[0]} =~ ^# ]]; then
         # Process each field in the line
-        cmd="python -u $rundir/tmp_script_${nb_basename}.py"
+        cmd="python -u $tmp_script_fpath"
         for ((i=0; i<$nargs; i++)); do
             argname=${argnames[$i]}
             argval=${field_arr[$i]}
@@ -52,5 +57,5 @@ while IFS=$'\t' read -r fields; do
     ((linecount++))
 done < "$argfile"
 
-rm $rundir/tmp_script_${nb_basename}.py
+rm $tmp_script_fpath
 echo "Done!"
