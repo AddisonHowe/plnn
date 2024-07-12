@@ -33,5 +33,14 @@ for (var i = 0; i < idxsToRemove.length; i++) {
     link.remove();
 }
 
+// Save ai file and pdf version
 doc.save();
+var pdfFileName = String(doc.fullName).slice(0, -3) + ".pdf";
+var pdfFile = new File(pdfFileName);
+
+var PDFopts = new PDFSaveOptions();
+// PDFopts.pDFPreset = "[Smallest File Size]";
+PDFopts.pDFPreset = "[Illustrator Default]";
+doc.saveAs(pdfFile, PDFopts);
+
 doc.close();

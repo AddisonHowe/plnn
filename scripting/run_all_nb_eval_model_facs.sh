@@ -1,44 +1,56 @@
 #!/bin/bash
 
-rundir=notebooks
-argfile=scripting/arglist_nb_eval_model_facs.tsv
+sh scripting/_run_all_nb_eval_model_script.sh nb_eval_model_facs
 
-logoutfile=scripting/logs/log_nb_eval_model_facs.o
+# rundir=notebooks
+# argfile=scripting/arglist_nb_eval_model_facs.tsv
 
-echo STDOUT LOG: > $logoutfile
+# logoutfile=scripting/logs/log_nb_eval_model_facs.o
+# logstatusfile=scripting/logs/log_nb_eval_model_facs.status
 
-jupyter nbconvert --RegexRemovePreprocessor.patterns="^%" \
-    --to script $rundir/nb_eval_model_facs.ipynb \
-    --output tmp_script_nb_eval_model_facs
+# echo STDOUT LOG: > $logoutfile
+# echo "OUTPUT STATUS LOG (directory exitcode):" > $logstatusfile
 
-eval "$(conda shell.bash hook)"
-conda activate env
+# jupyter nbconvert --RegexRemovePreprocessor.patterns="^%" \
+#     --to script $rundir/nb_eval_model_facs.ipynb \
+#     --output tmp_script_nb_eval_model_facs
 
-linecount=0
-while IFS=$'\t' read -r fields; do
-    read -a field_arr <<< "$fields"
-    # Check if the line starts with a #
-    if [[ $linecount -eq 0 ]]; then
-        # Header row
-        read -a argnames <<< "$fields"
-        nargs=${#argnames[@]}
-    elif [[ ! ${field_arr[0]} =~ ^# ]]; then
-        # Process each field in the line
-        cmd="python -u $rundir/tmp_script_nb_eval_model_facs.py"
-        for ((i=0; i<$nargs; i++)); do
-            argname=${argnames[$i]}
-            argval=${field_arr[$i]}
-            if [[ "$argval" == "True" ]]; then
-                argval=""
-            fi
-            cmd="$cmd --$argname $argval"
-        done
-        echo $cmd
-        echo \\n$cmd\\n >> $logoutfile
-        eval $cmd 2>&1 | tee -a $logoutfile
-    fi
-    ((linecount++))
-done < "$argfile"
+# eval "$(conda shell.bash hook)"
+# conda activate env
 
-rm $rundir/tmp_script_nb_eval_model_facs.py
-echo "Done!"
+# linecount=0
+# while IFS=$'\t' read -r fields; do
+#     read -a field_arr <<< "$fields"
+#     # Check if the line starts with a #
+#     if [[ $linecount -eq 0 ]]; then
+#         # Header row
+#         read -a argnames <<< "$fields"
+#         nargs=${#argnames[@]}
+#     elif [[ ! ${field_arr[0]} =~ ^# ]]; then
+#         # Process each field in the line
+#         cmd="python -u $rundir/tmp_script_nb_eval_model_facs.py"
+#         for ((i=0; i<$nargs; i++)); do
+#             argname=${argnames[$i]}
+#             argval=${field_arr[$i]}
+#             if [[ "$argname" == "modeldir" ]]; then
+#                 modeldir=$argval
+#             elif [[ "$argname" == "basedir" ]]; then
+#                 basedir=$argval
+#             fi
+#             if [[ "$argval" == "True" ]]; then
+#                 argval=""
+#             fi
+#             if [[ "$argval" != "False" ]]; then
+#                 cmd="$cmd --$argname $argval"
+#             fi
+#         done
+#         echo $cmd
+#         echo \\n$cmd\\n >> $logoutfile
+#         $cmd 2>&1 | tee -a $logoutfile
+#         echo $basedir/$modeldir ${PIPESTATUS[0]} >> $logstatusfile
+#     fi
+#     ((linecount++))
+# done < "$argfile"
+
+# rm $rundir/tmp_script_nb_eval_model_facs.py
+# echo "Done!"
