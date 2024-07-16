@@ -26,17 +26,18 @@ tmp_script_fpath=$PROJ_DIR/scripting/autofig/algbindec/_tmp_modify_links.jsx
 
 # Directories containing images corresponding to trained models.
 rundirs=(
-    # out/eval_models_algbindec/model_algphi1_1a_v_kl_20240703_161109
-    out/eval_models_algbindec/model_algphi1_1a_v_kl_20240705_010809
-    # out/eval_models_algbindec/model_algphi1_1a_v_klv2_20240703_153539
-    out/eval_models_algbindec/model_algphi1_1a_v_klv2_20240705_010809
-    # out/eval_models_algbindec/model_algphi1_1a_v_mmd1_20240703_143343
-    out/eval_models_algbindec/model_algphi1_1a_v_mmd1_20240705_010809
-    # out/eval_models_algbindec/model_algphi2_1a_v_kl_20240703_150155
-    out/eval_models_algbindec/model_algphi2_1a_v_kl_20240705_010809
-    # out/eval_models_algbindec/model_algphi2_1a_v_klv2_20240703_152313
-    out/eval_models_algbindec/model_algphi2_1a_v_klv2_20240705_015512
-    # out/eval_models_algbindec/model_algphi2_1a_v_mmd1_20240703_144728
+    # # out/eval_models_algbindec/model_algphi1_1a_v_kl_20240703_161109
+    # out/eval_models_algbindec/model_algphi1_1a_v_kl_20240705_010809
+    # # out/eval_models_algbindec/model_algphi1_1a_v_klv2_20240703_153539
+    # out/eval_models_algbindec/model_algphi1_1a_v_klv2_20240705_010809
+    # # out/eval_models_algbindec/model_algphi1_1a_v_mmd1_20240703_143343
+    # out/eval_models_algbindec/model_algphi1_1a_v_mmd1_20240705_010809
+    # # out/eval_models_algbindec/model_algphi2_1a_v_kl_20240703_150155
+    # out/eval_models_algbindec/model_algphi2_1a_v_kl_20240705_010809
+    # # out/eval_models_algbindec/model_algphi2_1a_v_klv2_20240703_152313
+    # out/eval_models_algbindec/model_algphi2_1a_v_klv2_20240705_015512
+    # # out/eval_models_algbindec/model_algphi2_1a_v_mmd1_20240703_144728
+    out/eval_models_algbindec/model_algphi2_1a_v_mmd1_20240705_020924
 )
 
 # Main Loop

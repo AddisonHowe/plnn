@@ -26,26 +26,60 @@ tmp_script_fpath=$PROJ_DIR/scripting/autofig/synbindec/_tmp_modify_links.jsx
 
 # Directories containing images corresponding to trained models.
 rundirs=(
+    out/eval_models_plnn_synbindec/model_phi1_1a_v_kl1_20240702_111150
     out/eval_models_plnn_synbindec/model_phi1_1a_v_kl1_20240705_024039
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_kl2_20240702_111150
     out/eval_models_plnn_synbindec/model_phi1_1a_v_kl2_20240705_042608
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_kl3_20240702_111438
     out/eval_models_plnn_synbindec/model_phi1_1a_v_kl3_20240705_050801
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_kl4_20240702_111815
     out/eval_models_plnn_synbindec/model_phi1_1a_v_kl4_20240705_054948
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_kl5_20240702_111815
     out/eval_models_plnn_synbindec/model_phi1_1a_v_kl5_20240705_085735
-    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_20240627_193208
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_20240522_185135
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_20240627_143649
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_20240627_143655
+    out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_20240627_193208
     out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_20240704_134102
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_fix_noise_large_20240523_102345
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_fix_noise_large_20240627_193159
     out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_fix_noise_large_20240704_134101
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_fix_noise_small_20240523_102345
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_fix_noise_small_20240627_193206
     out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_fix_noise_small_20240704_134102
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_largenet_20240703_142931
     out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_largenet_20240704_134101
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_presample_20240627_143609
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_presample_20240627_193236
     out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_presample_20240704_134101
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_smallnet_20240627_193240
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_smallnet_20240703_142931
     out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd1_smallnet_20240704_134101
     out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd2_20240704_134547
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd3_20240701_180837
     out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd3_20240704_134627
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd4_20240702_103225
     out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd4_20240704_140023
+    # out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd5_20240702_103225
     out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd5_20240704_142037
     out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd6_20240705_132548
     out/eval_models_plnn_synbindec/model_phi1_1a_v_mmd7_20240708_191953
+    # out/eval_models_plnn_synbindec/model_phi2_1a_v_mmd1_20240523_093008
+    # out/eval_models_plnn_synbindec/model_phi2_1a_v_mmd1_20240627_143944
+    # out/eval_models_plnn_synbindec/model_phi2_1a_v_mmd1_20240627_193208
     out/eval_models_plnn_synbindec/model_phi2_1a_v_mmd1_20240704_142345
+    out/eval_models_plnn_synbindec/model_phi2_1a_v_mmd2_20240707_125342
+    out/eval_models_plnn_synbindec/model_phi2_1a_v_mmd4_20240707_125500
+    out/eval_models_plnn_synbindec/model_phi2_1a_v_mmd5_20240707_125538
+    out/eval_models_plnn_synbindec/model_phiq_1a_v_mmd1_20240523_142927
+    out/eval_models_plnn_synbindec/model_phiq_1a_v_mmd1_20240627_193243
     out/eval_models_plnn_synbindec/model_phiq_1a_v_mmd1_20240704_143517
+    out/eval_models_plnn_synbindec/model_phiq_1a_v_mmd2_20240713_103448
+    out/eval_models_plnn_synbindec/model_phiq_1a_v_mmd3_20240713_103448
+    out/eval_models_plnn_synbindec/model_phiq_1a_v_mmd4_20240713_103448
+    out/eval_models_plnn_synbindec/model_phiq_1a_v_mmd5_20240713_103448
+    out/eval_models_plnn_synbindec/model_phiq_1a_v_mmd6_20240713_103448
+    out/eval_models_plnn_synbindec/model_phiq_1a_v_mmd7_20240713_103448
 )
 
 # Main Loop
