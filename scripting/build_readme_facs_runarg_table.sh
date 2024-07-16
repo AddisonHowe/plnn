@@ -6,25 +6,100 @@
 datdir=data/model_training_args
 
 fnames=(
+    # run_facs_dec1a_2dnmf_v1
     run_facs_dec1a_2dpca_v1
     run_facs_dec1a_2dpca_v2
+    # run_facs_dec1b_2dnmf_v1
     run_facs_dec1b_2dpca_v1
     run_facs_dec1b_2dpca_v2
     run_facs_dec1b_2dpca_v3
+    run_facs_dec1b_2dpca_v4
+    run_facs_dec1b_2dpca_v5
+    run_facs_dec1b_2dpca_v6
+    run_facs_dec1b_2dpca_v7
+    run_facs_dec1b_2dpca_v8
+    run_facs_dec1b_2dpca_v9
+    run_facs_dec1b_2dpca_v10
+    run_facs_dec1b_2dpca_v11
+    # run_facs_dec1c_2dnmf_v1
     run_facs_dec1c_2dpca_v1
     run_facs_dec1c_2dpca_v2
+    # run_facs_dec2a_2dnmf_v1
     run_facs_dec2a_2dpca_v1
     run_facs_dec2a_2dpca_v2
+    # run_facs_dec2b_2dnmf_v1
     run_facs_dec2b_2dpca_v1
     run_facs_dec2b_2dpca_v2
+    run_facs_dec2b_2dpca_v4
+    run_facs_dec2b_2dpca_v5
+    run_facs_dec2b_2dpca_v6
+    run_facs_dec2b_2dpca_v7
+    run_facs_dec2b_2dpca_v8
+    # run_facs_dec2c_2dnmf_v1
     run_facs_dec2c_2dpca_v1
     run_facs_dec2c_2dpca_v2
-    run_facs_dec1a_2dnmf_v1
-    run_facs_dec1b_2dnmf_v1
-    run_facs_dec1c_2dnmf_v1
-    run_facs_dec2a_2dnmf_v1
-    run_facs_dec2b_2dnmf_v1
-    run_facs_dec2c_2dnmf_v1
+    # run_facs_v2_dec1a_2dnmf_v1
+    run_facs_v2_dec1a_2dpca_v1
+    run_facs_v2_dec1a_2dpca_v2
+    # run_facs_v2_dec1b_2dnmf_v1
+    run_facs_v2_dec1b_2dpca_v1
+    run_facs_v2_dec1b_2dpca_v2
+    run_facs_v2_dec1b_2dpca_v3
+    run_facs_v2_dec1b_2dpca_v4
+    run_facs_v2_dec1b_2dpca_v5
+    run_facs_v2_dec1b_2dpca_v6
+    run_facs_v2_dec1b_2dpca_v7
+    run_facs_v2_dec1b_2dpca_v8
+    run_facs_v2_dec1b_2dpca_v9
+    run_facs_v2_dec1b_2dpca_v10
+    run_facs_v2_dec1b_2dpca_v11
+    # run_facs_v2_dec1c_2dnmf_v1
+    run_facs_v2_dec1c_2dpca_v1
+    run_facs_v2_dec1c_2dpca_v2
+    # run_facs_v2_dec2a_2dnmf_v1
+    run_facs_v2_dec2a_2dpca_v1
+    run_facs_v2_dec2a_2dpca_v2
+    # run_facs_v2_dec2b_2dnmf_v1
+    run_facs_v2_dec2b_2dpca_v1
+    run_facs_v2_dec2b_2dpca_v2
+    run_facs_v2_dec2b_2dpca_v3
+    run_facs_v2_dec2b_2dpca_v4
+    run_facs_v2_dec2b_2dpca_v5
+    run_facs_v2_dec2b_2dpca_v6
+    run_facs_v2_dec2b_2dpca_v7
+    run_facs_v2_dec2b_2dpca_v8
+    run_facs_v2_dec2b_2dpca_v9
+    run_facs_v2_dec2b_2dpca_v10
+    run_facs_v2_dec2b_2dpca_v11
+    # run_facs_v2_dec2c_2dnmf_v1
+    run_facs_v2_dec2c_2dpca_v1
+    run_facs_v2_dec2c_2dpca_v2
+    run_facs_v3_dec1a_2dpca_v1
+    run_facs_v3_dec1a_2dpca_v2
+    run_facs_v3_dec1b_2dpca_v1
+    run_facs_v3_dec1b_2dpca_v2
+    run_facs_v3_dec1b_2dpca_v3
+    run_facs_v3_dec1b_2dpca_v4
+    run_facs_v3_dec1b_2dpca_v5
+    run_facs_v3_dec1b_2dpca_v6
+    run_facs_v3_dec1b_2dpca_v7
+    run_facs_v3_dec1b_2dpca_v8
+    run_facs_v3_dec1b_2dpca_v9
+    run_facs_v3_dec1b_2dpca_v10
+    run_facs_v3_dec1b_2dpca_v11
+    run_facs_v3_dec2a_2dpca_v1
+    run_facs_v3_dec2a_2dpca_v2
+    run_facs_v3_dec2b_2dpca_v1
+    run_facs_v3_dec2b_2dpca_v2
+    run_facs_v3_dec2b_2dpca_v3
+    run_facs_v3_dec2b_2dpca_v4
+    run_facs_v3_dec2b_2dpca_v5
+    run_facs_v3_dec2b_2dpca_v6
+    run_facs_v3_dec2b_2dpca_v7
+    run_facs_v3_dec2b_2dpca_v8
+    run_facs_v3_dec2b_2dpca_v9
+    run_facs_v3_dec2b_2dpca_v10
+    run_facs_v3_dec2b_2dpca_v11
 )
 
 cols=(
