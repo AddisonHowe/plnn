@@ -6,6 +6,7 @@ import warnings
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
+from scipy.spatial import Delaunay
 import jax.numpy as jnp
 
 from .config import DEFAULT_CMAP
@@ -55,6 +56,7 @@ def plot_phi(
         tight_layout=True,
         saveas=None,
         show=False,
+        hull=None,
 ):
     """Plot the scalar function phi defined by a given model.
 
@@ -103,22 +105,32 @@ def plot_phi(
     # Convert phi to a numpy array
     phi = np.array(phi)
     
+    # Hull Restriction
+    within_hull = np.ones(z.shape[0], dtype=bool)
+    if hull is not None:
+        if not isinstance(hull, Delaunay):
+            hull = Delaunay(hull)
+        within_hull = hull.find_simplex(z)>=0  # screen for xy inside given hull
+    phi_within_hull = phi[within_hull]
+
     # Normalization
     if lognormalize:
-        phi = np.log(1 + phi - phi.min())
+        phi = np.log(1 + phi - phi_within_hull.min())
     elif normalize:
-        phi = 1 + phi - phi.min()  # set minimum to 1
+        phi = 1 + phi - phi_within_hull.min()  # set minimum to 1
     if minimum is not None:
-        phi = phi - (phi.min() - minimum)  # set minimum to given value
+        phi = phi - (phi_within_hull.min() - minimum)  # set minimum to given value
 
     # Clipping
-    clip = 1 + phi.max() if clip is None else clip
-    if clip < phi.min():
+    clip = 1 + phi_within_hull.max() if clip is None else clip
+    if clip < phi_within_hull.min():
         warnings.warn(f"Clip value {clip} is below minimum value to plot.")
-        clip = phi.max()
+        clip = phi_within_hull.max()
     under_cutoff = phi <= clip
+
     plot_screen = np.ones(under_cutoff.shape)
     plot_screen[~under_cutoff] = np.nan
+    plot_screen[~within_hull] = np.nan
     phi_plot = phi * plot_screen
     phi_plot = phi_plot.reshape(xs.shape)
 
@@ -137,8 +149,8 @@ def plot_phi(
     if plot3d:
         sc = ax.plot_surface(
             xs, ys, phi_plot, 
-            vmin=phi[under_cutoff].min(),
-            vmax=phi[under_cutoff].max(),
+            vmin=phi[under_cutoff & within_hull].min(),
+            vmax=phi[under_cutoff & within_hull].max(),
             cmap=cmap,
             alpha=alpha,
         )
@@ -146,8 +158,8 @@ def plot_phi(
             ax.contour(
                 xs, ys, phi_plot,
                 levels=levels, 
-                vmin=phi[under_cutoff].min(),
-                vmax=phi[under_cutoff].max(),
+                vmin=phi[under_cutoff & within_hull].min(),
+                vmax=phi[under_cutoff & within_hull].max(),
                 cmap=cmap,
                 linewidths=contour_linewidth,
                 linestyles=contour_linestyle, 
@@ -156,8 +168,8 @@ def plot_phi(
     else:
         sc = ax.pcolormesh(
             xs, ys, phi_plot,
-            vmin=phi[under_cutoff].min(),
-            vmax=phi[under_cutoff].max(),
+            vmin=phi[under_cutoff & within_hull].min(),
+            vmax=phi[under_cutoff & within_hull].max(),
             cmap=cmap, 
             shading="gouraud",
         )
@@ -165,8 +177,8 @@ def plot_phi(
             ax.contour(
                 xs, ys, phi_plot,
                 levels=levels, 
-                vmin=phi[under_cutoff].min(),
-                vmax=phi[under_cutoff].max(),
+                vmin=phi[under_cutoff & within_hull].min(),
+                vmax=phi[under_cutoff & within_hull].max(),
                 alpha=contour_linealpha,
                 colors=contour_linecolor,
                 linewidths=contour_linewidth,

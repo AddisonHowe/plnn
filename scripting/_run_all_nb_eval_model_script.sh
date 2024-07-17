@@ -26,7 +26,6 @@ conda activate env
 linecount=0
 while IFS=$'\t' read -r fields; do
     read -a field_arr <<< "$fields"
-    # Check if the line starts with a #
     if [[ $linecount -eq 0 ]]; then
         # Header row
         read -a argnames <<< "$fields"
