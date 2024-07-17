@@ -34,7 +34,7 @@ def plot_training_loss_history(
 def plot_validation_loss_history(
         loss_hist_valid, startidx=0, 
         log=False, title="Validation Loss", 
-        saveas=None, ax=None, 
+        saveas=None, ax=None, optidx=None,
         **kwargs
 ):
     if ax is None:
@@ -47,6 +47,8 @@ def plot_validation_loss_history(
         marker=kwargs.get('marker'),
         color=kwargs.get('color')
     )
+    if optidx:
+        ax.axvline(optidx, color='k', linestyle='--', alpha=0.7)
     ax.set_xlabel(f"epoch")
     ax.set_ylabel(f"loss")
     ax.set_title(title)

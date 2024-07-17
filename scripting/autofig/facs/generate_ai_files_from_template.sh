@@ -25,74 +25,7 @@ scriptfpath=$PROJ_DIR/scripting/autofig/modify_links.jsx
 tmp_script_fpath=$PROJ_DIR/scripting/autofig/facs/_tmp_modify_links.jsx
 
 # Directories containing images corresponding to trained models.
-rundirs=(
-    out/eval_models_facs/model_facs_dec1a_2dnmf_v1_20240624_135342
-    out/eval_models_facs/model_facs_dec1a_2dpca_v1_20240624_133245
-    out/eval_models_facs/model_facs_dec1a_2dpca_v1_20240627_133353
-    out/eval_models_facs/model_facs_dec1a_2dpca_v1_20240627_163619
-    out/eval_models_facs/model_facs_dec1a_2dpca_v1_20240627_165606
-    out/eval_models_facs/model_facs_dec1a_2dpca_v1_20240627_193058
-    out/eval_models_facs/model_facs_dec1a_2dpca_v2_20240627_193058
-    out/eval_models_facs/model_facs_dec1b_2dnmf_v1_20240624_135122
-    out/eval_models_facs/model_facs_dec1b_2dpca_v10_20240711_153302
-    out/eval_models_facs/model_facs_dec1b_2dpca_v11_20240711_141418
-    out/eval_models_facs/model_facs_dec1b_2dpca_v1_20240624_133245
-    out/eval_models_facs/model_facs_dec1b_2dpca_v1_20240627_193058
-    out/eval_models_facs/model_facs_dec1b_2dpca_v2_20240627_193058
-    out/eval_models_facs/model_facs_dec1b_2dpca_v3_20240705_153205
-    out/eval_models_facs/model_facs_dec1b_2dpca_v4_20240708_200112
-    out/eval_models_facs/model_facs_dec1b_2dpca_v5_20240710_202109
-    out/eval_models_facs/model_facs_dec1b_2dpca_v6_20240710_202109
-    out/eval_models_facs/model_facs_dec1b_2dpca_v7_20240710_201912
-    out/eval_models_facs/model_facs_dec1b_2dpca_v8_20240711_131335
-    out/eval_models_facs/model_facs_dec1b_2dpca_v9_20240711_141418
-    out/eval_models_facs/model_facs_dec2a_2dnmf_v1_20240624_135342
-    out/eval_models_facs/model_facs_dec2a_2dpca_v1_20240624_133245
-    out/eval_models_facs/model_facs_dec2a_2dpca_v1_20240627_193025
-    out/eval_models_facs/model_facs_dec2a_2dpca_v2_20240627_193037
-    out/eval_models_facs/model_facs_dec2b_2dnmf_v1_20240624_135140
-    out/eval_models_facs/model_facs_dec2b_2dpca_v1_20240624_133245
-    out/eval_models_facs/model_facs_dec2b_2dpca_v1_20240627_193159
-    out/eval_models_facs/model_facs_dec2b_2dpca_v2_20240627_193216
-    out/eval_models_facs/model_facs_dec2b_2dpca_v4_20240708_192532
-    out/eval_models_facs/model_facs_dec2b_2dpca_v5_20240710_222319
-    out/eval_models_facs/model_facs_dec2b_2dpca_v6_20240710_222319
-    out/eval_models_facs/model_facs_dec2b_2dpca_v7_20240710_222319
-    out/eval_models_facs/model_facs_dec2b_2dpca_v8_20240710_205933
-    out/eval_models_facs/model_facs_dec2b_2dpca_v8_20240710_215556
-    out/eval_models_facs/model_facs_v2_dec1b_2dpca_v10_20240711_164605
-    out/eval_models_facs/model_facs_v2_dec1b_2dpca_v11_20240711_165139
-    out/eval_models_facs/model_facs_v2_dec1b_2dpca_v1_20240711_143632
-    out/eval_models_facs/model_facs_v2_dec1b_2dpca_v2_20240711_143632
-    out/eval_models_facs/model_facs_v2_dec1b_2dpca_v3_20240711_144144
-    out/eval_models_facs/model_facs_v2_dec1b_2dpca_v4_20240711_145314
-    out/eval_models_facs/model_facs_v2_dec1b_2dpca_v5_20240711_145314
-    out/eval_models_facs/model_facs_v2_dec1b_2dpca_v6_20240711_160523
-    out/eval_models_facs/model_facs_v2_dec1b_2dpca_v7_20240711_163535
-    out/eval_models_facs/model_facs_v2_dec1b_2dpca_v8_20240711_163446
-    out/eval_models_facs/model_facs_v2_dec1b_2dpca_v9_20240711_163446
-    out/eval_models_facs/model_facs_v2_dec2b_2dpca_v10_20240712_145225
-    out/eval_models_facs/model_facs_v2_dec2b_2dpca_v11_20240712_140902
-    out/eval_models_facs/model_facs_v2_dec2b_2dpca_v1_20240712_121611
-    out/eval_models_facs/model_facs_v2_dec2b_2dpca_v2_20240712_121611
-    out/eval_models_facs/model_facs_v2_dec2b_2dpca_v3_20240712_121716
-    out/eval_models_facs/model_facs_v2_dec2b_2dpca_v4_20240712_121719
-    out/eval_models_facs/model_facs_v2_dec2b_2dpca_v5_20240712_121934
-    out/eval_models_facs/model_facs_v2_dec2b_2dpca_v6_20240712_121955
-    out/eval_models_facs/model_facs_v2_dec2b_2dpca_v7_20240712_122158
-    out/eval_models_facs/model_facs_v2_dec2b_2dpca_v8_20240712_121611
-    out/eval_models_facs/model_facs_v2_dec2b_2dpca_v9_20240712_133637
-    out/eval_models_facs/model_facs_v3_dec1b_2dpca_v5_20240715_175905
-    out/eval_models_facs/model_facs_v3_dec1b_2dpca_v6_20240715_175905
-    out/eval_models_facs/model_facs_v3_dec1b_2dpca_v7_20240715_180006
-    out/eval_models_facs/model_facs_v3_dec1b_2dpca_v8_20240715_180006
-    out/eval_models_facs/model_facs_v3_dec1b_2dpca_v9_20240715_180312
-    out/eval_models_facs/model_facs_v3_dec2b_2dpca_v5_20240715_175905
-    out/eval_models_facs/model_facs_v3_dec2b_2dpca_v6_20240715_175905
-    out/eval_models_facs/model_facs_v3_dec2b_2dpca_v7_20240715_175905
-    out/eval_models_facs/model_facs_v3_dec2b_2dpca_v8_20240715_175905
-    out/eval_models_facs/model_facs_v3_dec2b_2dpca_v9_20240715_175905
-)
+rundirs=$(ls out/eval_models_facs/)
 
 # Main Loop
 for rd in ${rundirs[@]}; do
