@@ -118,8 +118,7 @@ def parse_args(args):
     grp_ma.add_argument('--metric_final_act', type=str, default=None)
     grp_ma.add_argument('--metric_layer_normalize', action='store_true')
 
-    grp_ma.add_argument('--fix_noise', action="store_true",
-                        help="NOT IMPLEMENTED! Fix the model noise parameter.")
+    grp_ma.add_argument('--fix_noise', action="store_true")
     grp_ma.add_argument('--sigma', type=float, default=1e-3,
                         help="Noise level if not inferring sigma. Otherwise, \
                             the initial value for the sigma parameter.")    
