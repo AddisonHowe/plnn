@@ -62,6 +62,7 @@ def load_model_from_directory(
 
 def load_model_training_metadata(
         modeldir, 
+        load_all=False,
 ) -> Tuple[dict, dict]:
     """Load metadata from the model training process, including loss history.
 
@@ -91,7 +92,9 @@ def load_model_training_metadata(
               f"{modeldir}/dt_hist.npy. File not found"
         f"{modeldir}/dt_hist.npy"
         warnings.warn(msg)
-    logged_args = _load_args_from_log(f"{modeldir}/log_args.txt")
+    logged_args = _load_args_from_log(
+        f"{modeldir}/log_args.txt", load_all=load_all,
+    )
     return_dict = {
         "loss_hist_train" : loss_hist_train,
         "loss_hist_valid" : loss_hist_valid,
@@ -116,12 +119,17 @@ _ARGS_TO_LOAD = {
     'init_phi_weights_args', 'init_phi_weights_method', 
     'init_tilt_bias_args', 'init_tilt_bias_method', 
     'init_tilt_weights_args', 'init_tilt_weights_method',
-    'loss', 'learning_rate', 'optimizer',
+    'loss', 'tol'
+    'learning_rate', 'optimizer',
     'dt', 'dt_schedule', 'dt_schedule_bounds', 'dt_schedule_scales',
     'ncells_sample', 'model_do_sample', 'passes_per_epoch',
 }
 
-def _load_args_from_log(logfilepath, args_to_load=_ARGS_TO_LOAD) -> dict:
+def _load_args_from_log(
+        logfilepath, 
+        args_to_load=_ARGS_TO_LOAD,
+        load_all=False,
+) -> dict:
     """Load key/value arguments logged in the logfile.
 
     Args:
@@ -138,6 +146,6 @@ def _load_args_from_log(logfilepath, args_to_load=_ARGS_TO_LOAD) -> dict:
             line = line.split(" : ")  # try to split into key, val pair
             if len(line) == 2:
                 key, val = line
-                if key in args_to_load:
+                if key in args_to_load or load_all:
                     args[key] = eval(val)
     return args

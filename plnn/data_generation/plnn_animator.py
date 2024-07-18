@@ -91,6 +91,8 @@ class PLNNSimulationAnimator:
             sig_names=None,
             param_names=None,
             view_init=(40, -45),  # elevation, azimuthal
+            observed_data=None,
+            losses=None,
     ):
         """
         model      : PLNN
@@ -152,6 +154,10 @@ class PLNNSimulationAnimator:
 
         self.grads = grads
         self.grad_func = grad_func
+
+        self.observed_data = observed_data
+        self.show_sim_vs_obs = observed_data is not None
+        self.losses = losses
         
         self.nframes = len(self.ts)
         self.nsaves = len(self.ts_saved)
@@ -451,30 +457,41 @@ class PLNNSimulationAnimator:
     def _setup_clst(self):
         ax = self.ax_clst
         ax.set_aspect('equal')
+        if self.show_sim_vs_obs:
+            label1 = "observed"
+            label2 = "simulated"
+        else:
+            label1 = "previous"
+            label2 = "current"
         self.scat_clst1, = ax.plot(
             [], [], marker='.', markersize=self._main_scatter_size, 
             color=self._clst_scatter_color1, 
-            alpha=0.5, linestyle='None', 
+            alpha=0.25, linestyle='None', 
             animated=True,
-            label='previous'
+            label=label1
         )
         self.scat_clst2, = ax.plot(
             [], [], marker='.', markersize=self._main_scatter_size, 
             color=self._clst_scatter_color2, 
-            alpha=0.5, linestyle='None', 
+            alpha=0.25, linestyle='None', 
             animated=True,
-            label='current'
+            label=label2
         )
         self.clst_index = 0
         ax.legend([self.scat_clst1, self.scat_clst2], 
-                  ['previous', 'current'], prop={'size': self._legendsize})
+                  [label1, label2], prop={'size': self._legendsize})
         ax.axis([*self.xlims, *self.ylims])
         # Text
-        pos = [self.xlims[0] + (self.xlims[1]-self.xlims[0])*.5, 
-               self.ylims[0] + (self.ylims[1]-self.ylims[0])*.95]
-        self.clsttext = ax.text(*pos, "", fontsize='small')
+        pos = [0.05, 0.01]
+        self.clsttext = ax.text(
+            *pos, "",
+            fontsize='small', 
+            ha='left', 
+            va='bottom', 
+            transform=ax.transAxes,
+        )
         # Format
-        ax.set_title("samples", size=self._titlesize)
+        ax.set_title("snapshots", size=self._titlesize)
         ax.set_xlabel(f"$x$", size=self._axlabelsize)
         ax.set_ylabel(f"$y$", size=self._axlabelsize)
 
@@ -695,9 +712,16 @@ class PLNNSimulationAnimator:
         clst_t = self.ts_saved[self.clst_index]
         if t >= clst_t:
             xy_saved = self.get_xy_saved(self.clst_index)
-            self.clst_index += 1
-            self.scat_clst1.set_data(self.scat_clst2.get_data())
+            if self.show_sim_vs_obs:
+                xy_observed = self.get_observed_data(self.clst_index)
+                self.scat_clst1.set_data(xy_observed)
+                if self.losses is not None:
+                    loss = self.losses[self.clst_index]
+                    self.clsttext.set_text(f"loss: {loss:.3g}")
+            else:
+                self.scat_clst1.set_data(self.scat_clst2.get_data())
             self.scat_clst2.set_data(xy_saved)
+            self.clst_index += 1
 
     def _update_sigs(self, i):
         t = self.get_t(i)
@@ -746,6 +770,9 @@ class PLNNSimulationAnimator:
 
     def get_xy_saved(self, i):
         return self.xys_saved[i, :].T
+    
+    def get_observed_data(self, i):
+        return self.observed_data[i].T
     
     def get_sigs_saved(self, i):
         return self.sigs_saved[i,:]
@@ -822,12 +849,16 @@ class PLNNSimulationAnimator:
         tau = self.get_ps(i)
         tau_str = ", ".join([f"{x:.4f}" for x in tau])
         dt0 = self.model.get_dt0()
+        sigma = self.model.get_sigma()
+        ncells = self.model.get_ncells()
         s = f"$t={t:.3f}$" 
-        s += f"\nModel $\\mathtt{{dt0}}: {dt0:.3g}$"
         s += f"\n$\\boldsymbol{{s}}=({sig_str})^T$"
-        s += f"\n$\\boldsymbol{{\\tau}}=({tau_str})^T$"
+        s += f"\n$\\boldsymbol{{\\tau}}=({tau_str})^T$\n"
+        s += f"\nModel $\sigma: {sigma:.3g}$"
+        s += f"\nModel $\\mathtt{{dt0}}: {dt0:.3g}$"
+        s += f"\nModel $\\mathtt{{ncells}}: {ncells}$"
         if self.sigparams_str:
-            s += "\n" + self.sigparams_str
+            s += "\n\n" + self.sigparams_str
         return s
     
     def _build_btext(self, i):
