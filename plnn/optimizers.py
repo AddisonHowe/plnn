@@ -171,11 +171,11 @@ def _get_warmup_cosine_decay_schedule(
 
 def get_dt_schedule(dt_schedule_name, args) -> optax.Schedule:
     dt = args['dt']
-    bounds = args['dt_schedule_bounds']
-    scales = args['dt_schedule_scales']
     if dt_schedule_name == 'constant':
         return optax.constant_schedule(dt)
     elif dt_schedule_name == 'stepped':
+        bounds = args['dt_schedule_bounds']
+        scales = args['dt_schedule_scales']
         bounds_and_scales = {b: s for b, s in zip(bounds, scales)}
         scheduler = optax.piecewise_constant_schedule(dt, bounds_and_scales)
         return lambda epoch: scheduler(epoch).item()
