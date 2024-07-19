@@ -1,14 +1,14 @@
 #!/bin/bash
 
+# Output filename suffix, to append to the model name
+IMAGE_SUFFIX=image1
+
 # Location of Adobe Illustrator
 ILLUSTRATOR_PATH="/Applications/Adobe Illustrator 2023/Adobe Illustrator.app"
 
 # Base project directory, using tilde without expansion as explained below.
 PROJ_DIR_TILDE="~/Documents/Projects/plnn"
 PROJ_DIR="${PROJ_DIR_TILDE/#\~/$HOME}"
-
-# Output filename suffix, to append to the model name
-IMAGE_SUFFIX=image1
 
 # Template .ai file, and the folder containing images linked in the template.
 # Note that the folder name will be replaced, and therefore needs to use the
@@ -25,17 +25,18 @@ scriptfpath=$PROJ_DIR/scripting/autofig/modify_links.jsx
 tmp_script_fpath=$PROJ_DIR/scripting/autofig/facs/_tmp_modify_links.jsx
 
 # Directories containing images corresponding to trained models.
-rundirs=$(ls out/eval_models_facs/)
+RUNDIRBASE=out/eval_models_facs
+rundirs=$(ls $RUNDIRBASE)
 
 # Main Loop
-for rd in ${rundirs[@]}; do
-    modelname=$(basename $rd)
+for modelname in ${rundirs[@]}; do
+    rd=$PROJ_DIR/$RUNDIRBASE/$modelname
     echo $modelname
     fname=${modelname}_${IMAGE_SUFFIX}
     cp $template_fpath $aioutdir/$fname.ai
     open -a "$ILLUSTRATOR_PATH" $aioutdir/$fname.ai
     sed -e "s|<OLD_FOLDER_PATH>|$template_linkdir|" \
-        -e "s|<NEW_FOLDER_PATH>|$PROJ_DIR/$rd|" $scriptfpath > $tmp_script_fpath
+        -e "s|<NEW_FOLDER_PATH>|$rd|" $scriptfpath > $tmp_script_fpath
     osascript -e 'tell application "Adobe Illustrator" to do javascript file "'"$tmp_script_fpath"'"';
     rm $tmp_script_fpath
     rm $aioutdir/$fname.ai  # remove .ai file, keeping only the pdf
