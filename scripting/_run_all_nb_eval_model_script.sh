@@ -48,13 +48,15 @@ jupyter nbconvert --RegexRemovePreprocessor.patterns="^%" \
 eval "$(conda shell.bash hook)"
 conda activate env
 
+mapfile -t lines < "$argfile"
 linecount=0
 nprocessed=0
-while IFS=$'\t' read -r fields; do
-    read -a field_arr <<< "$fields"
+for line in "${lines[@]}"; do
+    # Split the line into fields using tab as the delimiter
+    IFS=$'\t' read -r -a field_arr <<< "$line"
     if [[ $linecount -eq 0 ]]; then
         # Header row
-        read -a argnames <<< "$fields"
+        read -a argnames <<< "$line"
         nargs=${#argnames[@]}
     elif [[ ! ${field_arr[0]} =~ ^# ]]; then
         if [ $nprocessed -ge "$start_idx" ] && [ $nprocessed -lt "$stop_idx" ]; then
@@ -83,7 +85,7 @@ while IFS=$'\t' read -r fields; do
         ((nprocessed++));
     fi
     ((linecount++))
-done < "$argfile"
+done
 
 rm $tmp_script_fpath
 echo "Done!"
