@@ -154,7 +154,7 @@ def plot_sigma_history(
         xlims = ax.get_xlim()
         ax.hlines(
             sigma_true, *xlims, 
-            label=f'$\\sigma={sigma_true:.3g}$',
+            label=f'True $\\sigma={sigma_true:.3g}$',
             color='k', linestyle=':', alpha=0.5
         )          
         ax.set_xlim(*xlims)
