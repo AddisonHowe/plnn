@@ -36,7 +36,7 @@ FIGNAME2 = "phi1_landscape_untilted"
 FIGSIZE2 = (6*sf, 6*sf)
 
 r = 4       # box radius
-res = 200   # resolution
+res = 100   # resolution
 lognormalize = True
 clip = None
 
@@ -52,7 +52,7 @@ ax = plot_landscape(
     contour_linewidth=0.5,
     contour_linealpha=0.5,
     include_cbar=True,
-    cbar_title="$\log\phi$" if lognormalize else "$\phi$",
+    cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
     equal_axes=True,
     figsize=FIGSIZE1,
     show=True
@@ -127,7 +127,7 @@ PARAMS_PHI1 = [
     [ 1.00,  1.00],
 ]
 r = 4       # box radius
-res = 200   # resolution
+res = 100   # resolution
 lognormalize = True
 clip = None
 
@@ -139,7 +139,7 @@ for i, p in enumerate(PARAMS_PHI1):
         lognormalize=lognormalize,
         clip=clip,
         title=title,
-        cbar_title="$\log\phi$",
+        cbar_title="$\ln\phi$",
         include_cbar=False,
         ncontours=10,
         contour_linewidth=0.5,

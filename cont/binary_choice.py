@@ -62,6 +62,7 @@ def get_binary_choice_curves(
         p1lims=P1LIMS, 
         p2lims=P2LIMS, 
         xstarts=XSTARTS,
+        return_aux_info=False,
         rng=None,
         seed=None,
 ):
@@ -74,7 +75,7 @@ def get_binary_choice_curves(
     p2lims[0] = min(p2lims[0], P2LIMS[0])
     p2lims[1] = max(p2lims[1], P2LIMS[1])
 
-    curves_p, colors = get_fold_curves(
+    return get_fold_curves(
         F, J, dxFxPhi, Fp,
         xstarts, 
         P1, 
@@ -87,9 +88,9 @@ def get_binary_choice_curves(
         max_ds=MAX_DS,
         max_delta_p=MAX_DELTA_P,
         rho=RHO,
+        return_aux_info=return_aux_info,
         rng=rng,
     )
-    return curves_p, colors
 
 
 def plot_binary_choice_bifurcation_diagram(

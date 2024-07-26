@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 plt.style.use('figures/styles/fig1.mplstyle')
 
 from plnn.pl import plot_landscape
+from plnn.helpers import get_phi1_fixed_points, get_phi2_fixed_points
 
 
 OUTDIR = "figures/out/fig1_out"
@@ -23,6 +24,12 @@ def func_phi2_star(x, y, p1=0, p2=0):
 
 sf = 1/2.54  # scale factor from [cm] to inches
 
+FP_MARKERS = {
+    'saddle': 'x',
+    'minimum': '*',
+    'maximum': 'o',
+}
+
 ##############################################################################
 ##############################################################################
 ##  Untilted binary choice landscape.
@@ -33,26 +40,39 @@ FIGNAME2 = "phi1_landscape_untilted"
 FIGSIZE2 = (5*sf, 5*sf)
 
 r = 4       # box radius
-res = 200   # resolution
+res = 100   # resolution
 lognormalize = True
 clip = None
 
-plot_landscape(
+fps, fp_types, fp_colors = get_phi1_fixed_points([[0, 0]])
+
+ax = plot_landscape(
     func_phi1_star, r=r, res=res, params=[0, 0], 
     lognormalize=lognormalize,
     clip=clip,
-    title=f"$\phi$ untilted",
+    title=f"$\\boldsymbol{{\\tau}}=\langle 0, 0\\rangle$",
     title_fontsize=8,
     ncontours=10,
     contour_linewidth=0.5,
+    contour_linealpha=0.5,
     include_cbar=True,
-    cbar_title="$\log\phi$" if lognormalize else "$\phi$",
+    cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
     equal_axes=True,
-    saveas=f"{OUTDIR}/{FIGNAME1}" if SAVEPLOTS else None,
     figsize=FIGSIZE1,
+    show=True
 );
+for fp, fp_type, fp_color in zip(fps[0], fp_types[0], fp_colors[0]):
+    ax.plot(
+        fp[0], fp[1],
+        color=fp_color, 
+        marker=FP_MARKERS[fp_type],
+        markersize=2,
+    )
+if SAVEPLOTS:
+    plt.savefig(f"{OUTDIR}/{FIGNAME1}")
+plt.close()
 
-plot_landscape(
+ax = plot_landscape(
     func_phi1_star, r=r, res=res, params=[0, 0], 
     plot3d=True,
     lognormalize=False,
@@ -60,8 +80,9 @@ plot_landscape(
     minimum=50,
     clip=100,
     include_cbar=False,
-    title=f"$\phi$ untilted",
+    title=f"",
     title_fontsize=9,
+    cbar_title="$\ln\phi$",
     alpha=0.75,
     xlims=[-3.5, 3.5],
     ylims=[-3.5, 3.5],
@@ -70,11 +91,28 @@ plot_landscape(
     view_init=[35, -45],  # elevation, aximuthal 
     ncontours=10,
     contour_linewidth=0.5,
+    contour_linealpha=0.5,
     equal_axes=True,
     tight_layout=True,
-    saveas=f"{OUTDIR}/{FIGNAME2}" if SAVEPLOTS else None,
     figsize=FIGSIZE2,
+    show=True,
 );
+for fp, fp_type, fp_color in zip(fps[0], fp_types[0], fp_colors[0]):
+    ax.plot(
+        fp[0], fp[1], 0,
+        color=fp_color, 
+        marker=FP_MARKERS[fp_type],
+        markersize=2,
+    )
+ax.tick_params(axis='x', which='both', pad=-5)
+ax.tick_params(axis='y', which='both', pad=-5)
+ax.tick_params(axis='z', which='both', pad=0)
+ax.xaxis.labelpad = -10
+ax.yaxis.labelpad = -10
+ax.zaxis.labelpad = 0
+if SAVEPLOTS:
+    plt.savefig(f"{OUTDIR}/{FIGNAME2}", bbox_inches='tight')
+plt.close()
 
 ##############################################################################
 ##############################################################################
@@ -86,33 +124,45 @@ FIGNAME2 = "phi2_landscape_untilted"
 FIGSIZE2 = (6*sf, 6*sf)
 
 r = 4       # box radius
-res = 200   # resolution
+res = 100   # resolution
 lognormalize = True
 clip = None
 
-plot_landscape(
+fps, fp_types, fp_colors = get_phi2_fixed_points([[0, 0]])
+
+ax = plot_landscape(
     func_phi2_star, r=r, res=res, params=[0, 0], 
     lognormalize=lognormalize,
     clip=clip,
-    title=f"$\phi_2^*$ (untilted)",
+    title=f"$\\boldsymbol{{\\tau}}=\langle 0, 0\\rangle$",
     title_fontsize=8,
     ncontours=10,
     contour_linewidth=0.5,
     include_cbar=True,
-    cbar_title="$\log\phi$" if lognormalize else "$\phi$",
+    cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
     equal_axes=True,
-    saveas=f"{OUTDIR}/{FIGNAME1}" if SAVEPLOTS else None,
     figsize=FIGSIZE1,
+    show=True,
 );
+for fp, fp_type, fp_color in zip(fps[0], fp_types[0], fp_colors[0]):
+    ax.plot(
+        fp[0], fp[1],
+        color=fp_color, 
+        marker=FP_MARKERS[fp_type],
+        markersize=2,
+    )
+if SAVEPLOTS:
+    plt.savefig(f"{OUTDIR}/{FIGNAME1}")
+plt.close()
 
-plot_landscape(
+ax = plot_landscape(
     func_phi2_star, r=r, res=res, params=[0, 0], 
     plot3d=True,
     lognormalize=False,
     normalize=False,
     minimum=50,
     clip=100,
-    title=f"$\phi_2^*$ (untilted)",
+    title=f"$\phi_{{bf}}$",
     title_fontsize=9,
     include_cbar=False,
     cbar_title="$\phi$",
@@ -124,9 +174,19 @@ plot_landscape(
     view_init=[35, -80],  # elevation, aximuthal 
     ncontours=10,
     contour_linewidth=0.5,
-    saveas=f"{OUTDIR}/{FIGNAME2}" if SAVEPLOTS else None,
     figsize=FIGSIZE2,
+    show=True,
 );
+for fp, fp_type, fp_color in zip(fps[0], fp_types[0], fp_colors[0]):
+    ax.plot(
+        fp[0], fp[1],
+        color=fp_color, 
+        marker=FP_MARKERS[fp_type],
+        markersize=2,
+    )
+if SAVEPLOTS:
+    plt.savefig(f"{OUTDIR}/{FIGNAME2}")
+plt.close()
 
 ##############################################################################
 ##############################################################################
@@ -136,37 +196,58 @@ FIGNAME = "phi1_heatmap_tilted"  # appended with index i
 FIGSIZE = (4*sf, 4*sf)
 
 PARAMS_PHI1 = [
-    [ 0,  0],
-    [-0.25,  1.00],
-    [ 0.25,  1.00],
-    [-0.50,  0.00],
-    [ 0.50,  0.00],
+    ([ 0,  0.5], 0),
+    ([-1.00,  1.00], 1),
+    ([ 1.00,  1.00], 2),
+    ([-0.50,  0.00], 3),
+    ([ 0.50,  0.00], 4),
 ]
 r = 4       # box radius
-res = 200   # resolution
+res = 100   # resolution
 lognormalize = True
 clip = None
 
-for i, signal in enumerate(PARAMS_PHI1):
+for i, (p, label_number) in enumerate(PARAMS_PHI1):
     title = f"$\\boldsymbol{{\\tau}}=" + \
-                f"\langle{-signal[0]:.2g},{signal[1]:.2g}\\rangle$"
-    plot_landscape(
-        func_phi1_star, r=r, res=res, params=signal, 
+                f"\langle{p[0]:.2g},{p[1]:.2g}\\rangle$"
+    ax = plot_landscape(
+        func_phi1_star, r=r, res=res, params=p, 
         lognormalize=lognormalize,
         clip=clip,
         title=title,
-        cbar_title="$\log\phi$",
+        cbar_title="$\ln\phi$",
         include_cbar=False,
         ncontours=10,
         contour_linewidth=0.5,
+        contour_linealpha=0.5,
         xlabel=None,
         ylabel=None,
         xticks=False,
         yticks=False,
         equal_axes=True,
-        saveas=f"{OUTDIR}/{FIGNAME}_{i}" if SAVEPLOTS else None,
         figsize=FIGSIZE,
+        show=True,
     );
+    ax.text(
+        0.99, 0, str(label_number), 
+        color='k',
+        fontsize='small', 
+        ha='right', 
+        va='bottom', 
+        transform=ax.transAxes
+    )
+    fps, fp_types, fp_colors = get_phi1_fixed_points([p])
+    for fp, fp_type, fp_color in zip(fps[0], fp_types[0], fp_colors[0]):
+        ax.plot(
+            fp[0], fp[1],
+            color=fp_color, 
+            marker=FP_MARKERS[fp_type],
+            markersize=2,
+        )
+    if SAVEPLOTS:
+        plt.tight_layout()
+        plt.savefig(f"{OUTDIR}/{FIGNAME}_{i}", bbox_inches='tight')
+    plt.close()
 
 ##############################################################################
 ##############################################################################
@@ -182,20 +263,20 @@ PARAMS_PHI2 = [
     [-1.0, -1.0],
 ]
 r = 4       # box radius
-res = 200   # resolution
+res = 100   # resolution
 lognormalize = True
 clip = None
 
-for i, signal in enumerate(PARAMS_PHI2):
+for i, p in enumerate(PARAMS_PHI2):
     title = f"$\\boldsymbol{{\\tau}}=" + \
-                f"\langle{signal[0]:.2g},{signal[1]:.2g}\\rangle$"
-    plot_landscape(
-        func_phi2_star, r=r, res=res, params=signal, 
+                f"\langle{p[0]:.2g},{p[1]:.2g}\\rangle$"
+    ax = plot_landscape(
+        func_phi2_star, r=r, res=res, params=p, 
         lognormalize=lognormalize,
         clip=clip,
         title=title,
         include_cbar=False,
-        cbar_title="$\log\phi$",
+        cbar_title="$\ln\phi$",
         ncontours=10,
         contour_linewidth=0.5,
         xlabel=None,
@@ -203,9 +284,20 @@ for i, signal in enumerate(PARAMS_PHI2):
         xticks=False,
         yticks=False,
         equal_axes=True,
-        saveas=f"{OUTDIR}/{FIGNAME}_{i}" if SAVEPLOTS else None,
         figsize=FIGSIZE,
+        show=True,
     );
+    fps, fp_types, fp_colors = get_phi2_fixed_points([p])
+    for fp, fp_type, fp_color in zip(fps[0], fp_types[0], fp_colors[0]):
+        ax.plot(
+            fp[0], fp[1],
+            color=fp_color, 
+            marker=FP_MARKERS[fp_type],
+            markersize=2,
+        )
+    if SAVEPLOTS:
+        plt.savefig(f"{OUTDIR}/{FIGNAME}_{i}")
+    plt.close()
 
 ##############################################################################
 ##############################################################################
@@ -223,11 +315,12 @@ plot_binary_choice_bifurcation_diagram(
     ylabel="$\\tau_2$",
 )
 
-for p in PARAMS_PHI1:
-    ax.plot(*p, '.k', alpha=0.8, markersize=1)
+for p, label_number in PARAMS_PHI1:
+    ax.plot(*p, '.k', alpha=0.8, markersize=2)
+    ax.text(*p, label_number, fontsize='small')
 
 if SAVEPLOTS:
-    plt.savefig(f"{OUTDIR}/phi1_bifdiagram")
+    plt.savefig(f"{OUTDIR}/phi1_bifdiagram", bbox_inches='tight')
 
 plt.close()
 
@@ -246,7 +339,7 @@ plot_binary_flip_bifurcation_diagram(
 )
 
 for p in PARAMS_PHI2:
-    ax.plot(*p, '.k', alpha=0.8)
+    ax.plot(*p, '.k', alpha=0.8, markersize=2)
 
 if SAVEPLOTS:
     plt.savefig(f"{OUTDIR}/phi2_bifdiagram")

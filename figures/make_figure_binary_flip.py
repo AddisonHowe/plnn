@@ -36,7 +36,7 @@ FIGNAME2 = "phi2_landscape_untilted"
 FIGSIZE2 = (6*sf, 6*sf)
 
 r = 4       # box radius
-res = 200   # resolution
+res = 100   # resolution
 lognormalize = True
 clip = None
 
@@ -127,7 +127,7 @@ PARAMS_PHI2 = [
     [-1.5, -0.5],
 ]
 r = 4       # box radius
-res = 200   # resolution
+res = 100   # resolution
 lognormalize = True
 clip = None
 
