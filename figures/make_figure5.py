@@ -1,7 +1,7 @@
-"""Figure 5a Script
+"""Figure 5 Script
 
-Generate plots used in Figure 5 of the accompanying manuscript, involving the
-first binary decision captured in FACS data.
+Generate plots used in Figure 5 of the accompanying manuscript, the results of
+the first binary decision captured in the FACS data.
 """
 
 import os
@@ -25,7 +25,7 @@ SEED = 123
 rng = np.random.default_rng(seed=SEED)
 
 
-OUTDIR = "figures/out/fig5a_out"
+OUTDIR = "figures/out/fig5_out"
 SAVEPLOTS = True
 
 os.makedirs(OUTDIR, exist_ok=True)

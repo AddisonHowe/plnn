@@ -3,6 +3,8 @@
 # Output filename suffix, to append to the model name
 IMAGE_SUFFIX=image1
 
+sleeptime=5
+
 # Location of Adobe Illustrator
 ILLUSTRATOR_PATH="/Applications/Adobe Illustrator 2023/Adobe Illustrator.app"
 
@@ -35,6 +37,7 @@ for modelname in ${rundirs[@]}; do
     fname=${modelname}_${IMAGE_SUFFIX}
     cp $template_fpath $aioutdir/$fname.ai
     open -a "$ILLUSTRATOR_PATH" $aioutdir/$fname.ai
+    sleep $sleeptime
     sed -e "s|<OLD_FOLDER_PATH>|$template_linkdir|" \
         -e "s|<NEW_FOLDER_PATH>|$rd|" $scriptfpath > $tmp_script_fpath
     osascript -e 'tell application "Adobe Illustrator" to do javascript file "'"$tmp_script_fpath"'"';
