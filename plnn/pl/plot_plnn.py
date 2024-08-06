@@ -135,7 +135,8 @@ def plot_phi(
     phi_plot = phi_plot.reshape(xs.shape)
 
     # Get levelsets
-    if ncontours:
+    if isinstance(ncontours, int) and ncontours > 0:
+        plot_contours = True
         yidx = int(len(phi_plot[0]) // 2)
         idxs = np.linspace(
             0, len(phi_plot[0]), 
@@ -144,6 +145,11 @@ def plot_phi(
             dtype=int, 
         )
         levels = np.sort(phi_plot[yidx, idxs])
+    elif isinstance(ncontours, list):
+        plot_contours = True
+        raise NotImplementedError()
+    else:
+        plot_contours = False
 
     # Plot landscape or heatmap of phi
     if plot3d:
@@ -154,7 +160,7 @@ def plot_phi(
             cmap=cmap,
             alpha=alpha,
         )
-        if ncontours:
+        if plot_contours:
             ax.contour(
                 xs, ys, phi_plot,
                 levels=levels, 
@@ -173,7 +179,7 @@ def plot_phi(
             cmap=cmap, 
             shading="gouraud",
         )
-        if ncontours:
+        if plot_contours:
             ax.contour(
                 xs, ys, phi_plot,
                 levels=levels, 
