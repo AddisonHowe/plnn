@@ -30,6 +30,9 @@ FP_MARKERS = {
     'maximum': 'o',
 }
 
+ANNOTATION_FONTSIZE = 8
+PARAM_MARKERSIZE = 4
+
 ##############################################################################
 ##############################################################################
 ##  Untilted binary choice landscape.
@@ -37,7 +40,7 @@ FP_MARKERS = {
 FIGNAME1 = "phi1_heatmap_untilted"
 FIGSIZE1 = (5*sf, 5*sf)
 FIGNAME2 = "phi1_landscape_untilted"
-FIGSIZE2 = (5*sf, 5*sf)
+FIGSIZE2 = (6*sf, 6*sf)
 
 r = 4       # box radius
 res = 100   # resolution
@@ -51,7 +54,6 @@ ax = plot_landscape(
     lognormalize=lognormalize,
     clip=clip,
     title=f"$\\boldsymbol{{\\tau}}=\langle 0, 0\\rangle$",
-    title_fontsize=8,
     ncontours=10,
     contour_linewidth=0.5,
     contour_linealpha=0.5,
@@ -81,7 +83,6 @@ ax = plot_landscape(
     clip=100,
     include_cbar=False,
     title=f"",
-    title_fontsize=9,
     cbar_title="$\ln\phi$",
     alpha=0.75,
     xlims=[-3.5, 3.5],
@@ -135,7 +136,6 @@ ax = plot_landscape(
     lognormalize=lognormalize,
     clip=clip,
     title=f"$\\boldsymbol{{\\tau}}=\langle 0, 0\\rangle$",
-    title_fontsize=8,
     ncontours=10,
     contour_linewidth=0.5,
     include_cbar=True,
@@ -163,7 +163,6 @@ ax = plot_landscape(
     minimum=50,
     clip=100,
     title=f"$\phi_{{bf}}$",
-    title_fontsize=9,
     include_cbar=False,
     cbar_title="$\phi$",
     alpha=0.75,
@@ -231,7 +230,7 @@ for i, (p, label_number) in enumerate(PARAMS_PHI1):
     ax.text(
         0.99, 0, str(label_number), 
         color='k',
-        fontsize='small', 
+        fontsize=ANNOTATION_FONTSIZE, 
         ha='right', 
         va='bottom', 
         transform=ax.transAxes
@@ -305,7 +304,7 @@ for i, p in enumerate(PARAMS_PHI2):
 
 from cont.binary_choice import plot_binary_choice_bifurcation_diagram
 
-FIGSIZE = (4*sf, 4*sf)
+FIGSIZE = (5*sf, 5*sf)
 
 fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
 
@@ -316,8 +315,8 @@ plot_binary_choice_bifurcation_diagram(
 )
 
 for p, label_number in PARAMS_PHI1:
-    ax.plot(*p, '.k', alpha=0.8, markersize=2)
-    ax.text(*p, label_number, fontsize='small')
+    ax.plot(*p, '.k', alpha=1.0, markersize=PARAM_MARKERSIZE)
+    ax.text(*p, label_number, fontsize=ANNOTATION_FONTSIZE)
 
 if SAVEPLOTS:
     plt.savefig(f"{OUTDIR}/phi1_bifdiagram", bbox_inches='tight')
@@ -339,7 +338,7 @@ plot_binary_flip_bifurcation_diagram(
 )
 
 for p in PARAMS_PHI2:
-    ax.plot(*p, '.k', alpha=0.8, markersize=2)
+    ax.plot(*p, '.k', alpha=1.0, markersize=PARAM_MARKERSIZE)
 
 if SAVEPLOTS:
     plt.savefig(f"{OUTDIR}/phi2_bifdiagram")

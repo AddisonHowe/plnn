@@ -11,6 +11,8 @@ jax.config.update("jax_enable_x64", True)
 
 import matplotlib.pyplot as plt
 plt.style.use('figures/styles/fig3.mplstyle')
+import matplotlib.patches as patches
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 from plnn.io import load_model_from_directory, load_model_training_metadata
 from plnn.pl import plot_landscape, plot_phi, plot_sigma_history
@@ -44,6 +46,38 @@ FP_MARKERS = {
     'maximum': 'o',
 }
 
+LEGEND_FONTSIZE = 6
+INSET_SCALE = "30%"
+
+##############################################################################
+##############################################################################
+##  Load the inferred landscape
+
+model, hps, idx, name, fpath = load_model_from_directory(MODELDIR)
+logged_args, training_info = load_model_training_metadata(MODELDIR)
+
+tilt_weights = model.get_parameters()['tilt.w'][0]
+tilt_bias = model.get_parameters()['tilt.b'][0]
+noise_parameter = model.get_sigma()
+
+if tilt_bias is None:
+    tilt_bias = np.zeros(tilt_weights.shape[0])
+else:
+    tilt_bias = tilt_bias[0]
+
+def signal_to_tilts(signal):
+    return np.dot(tilt_weights, signal) + tilt_bias
+
+def tilts_to_signals(tilts):
+    assert tilts.shape[0] == 2
+    y = tilts - tilt_bias[:,None]
+    return np.linalg.solve(tilt_weights, y)
+
+print("tilt weights:\n", tilt_weights)
+print("tilt bias:\n", tilt_bias)
+print("inferred noise:\n", noise_parameter)
+
+
 ##############################################################################
 ##############################################################################
 ##  Binary Choice Landscape
@@ -52,7 +86,7 @@ TILT_TO_PLOT = [0., 0.5]
 
 #################################  Heatmap of true landscape
 FIGNAME = "phi1_heatmap"
-FIGSIZE = (5*sf, 5*sf)
+FIGSIZE = (5.5*sf, 5.5*sf)
 
 r = 4       # box radius
 res = 100   # resolution
@@ -66,7 +100,6 @@ ax = plot_landscape(
     lognormalize=lognormalize,
     clip=clip,
     title="True landscape",
-    title_fontsize=8,
     ncontours=10,
     contour_linewidth=0.5,
     contour_linealpha=0.5,
@@ -85,8 +118,33 @@ for fp, fp_type, fp_color in zip(fps[0], fp_types[0], fp_colors[0]):
         markersize=2,
     )
 
-plt.tight_layout()
-plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight', transparent=True)
+# Plot signal effect inset
+subax = inset_axes(ax,
+    width=INSET_SCALE,
+    height=INSET_SCALE,
+    loc=3,
+    # bbox_to_anchor=(0, 0, 1, 1),
+    # bbox_transform=ax.transAxes,
+)
+subax.set_aspect('equal')
+subax.axis('off')
+scale = 1.0
+subax.arrow(
+    0, 0, -1, 0, 
+    width=0.01*scale, 
+    fc=CHIR_COLOR, ec=CHIR_COLOR,
+    label="$s_1$"
+)
+subax.arrow(
+    0, 0, 0, -1, 
+    width=0.01*scale, 
+    fc=FGF_COLOR, ec=FGF_COLOR,
+    label="$s_2$"
+)
+subax.set_xlim([-scale*1.2, scale*1.2])
+subax.set_ylim([-scale*1.2, scale*1.2])
+
+plt.savefig(f"{OUTDIR}/{FIGNAME}", transparent=True)
 plt.close()
 
 #################################  Bifurcation diagram of true landscape
@@ -127,36 +185,10 @@ ax.set_ylabel("$s_2$")
 plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
 
 
-#################################  Load the inferred landscape
-
-model, hps, idx, name, fpath = load_model_from_directory(MODELDIR)
-logged_args, training_info = load_model_training_metadata(MODELDIR)
-
-tilt_weights = model.get_parameters()['tilt.w'][0]
-tilt_bias = model.get_parameters()['tilt.b'][0]
-noise_parameter = model.get_sigma()
-
-if tilt_bias is None:
-    tilt_bias = np.zeros(tilt_weights.shape[0])
-else:
-    tilt_bias = tilt_bias[0]
-
-def signal_to_tilts(signal):
-    return np.dot(tilt_weights, signal) + tilt_bias
-
-def tilts_to_signals(tilts):
-    assert tilts.shape[0] == 2
-    y = tilts - tilt_bias[:,None]
-    return np.linalg.solve(tilt_weights, y)
-
-print("tilt weights:\n", tilt_weights)
-print("tilt bias:\n", tilt_bias)
-print("inferred noise:\n", noise_parameter)
-
 #################################  Heatmap of inferred landscape
 
 FIGNAME = "phi1_inferred"
-FIGSIZE = (5*sf, 5*sf)
+FIGSIZE = (5.5*sf, 5.5*sf)
 
 r = 4       # box radius
 res = 100   # resolution
@@ -169,7 +201,6 @@ ax = plot_phi(
     lognormalize=lognormalize,
     clip=clip,
     title="Inferred",
-    title_fontsize=8,
     ncontours=10,
     contour_linewidth=0.5,
     contour_linealpha=0.5,
@@ -188,13 +219,36 @@ mins = estimate_minima(
     x0_range=[[-3, 3],[-3, 3]], 
     rng=rng,
 )
-print(mins)
-
 for m in mins:
     ax.plot(m[0], m[1], marker='.', color='y', markersize=3)
 
-plt.tight_layout()
-plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight', transparent=True)
+# Plot signal effect inset
+subax = inset_axes(ax,
+    width=INSET_SCALE,
+    height=INSET_SCALE,
+    loc=3,
+    # bbox_to_anchor=(0, 0, 1, 1),
+    # bbox_transform=ax.transAxes,
+)
+subax.set_aspect('equal')
+subax.axis('off')
+scale = np.max(np.abs(tilt_weights))
+subax.arrow(
+    0, 0, -tilt_weights[0,0], -tilt_weights[1,0], 
+    width=0.01*scale, 
+    fc=CHIR_COLOR, ec=CHIR_COLOR,
+    label="$s_1$"
+)
+subax.arrow(
+    0, 0, -tilt_weights[0,1], -tilt_weights[1,1], 
+    width=0.01*scale, 
+    fc=FGF_COLOR, ec=FGF_COLOR,
+    label="$s_2$"
+)
+subax.set_xlim([-scale*1.2, scale*1.2])
+subax.set_ylim([-scale*1.2, scale*1.2])
+
+plt.savefig(f"{OUTDIR}/{FIGNAME}", transparent=True)
 plt.close()
 
 #################################  Bifurcation diagram of inferred landscape
@@ -264,7 +318,7 @@ for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
 ax.legend(
     [true_line, inf_line], ['true', 'inferred'], 
     # bbox_to_anchor=(1.05, 1), loc='upper left',
-    fontsize='x-small'
+    fontsize=LEGEND_FONTSIZE
 )
 
 ax.set_xlabel("$\\tau_1$")
@@ -295,7 +349,7 @@ for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
 ax.legend(
     [true_line, inf_line], ['true', 'inferred'], 
     # bbox_to_anchor=(1.05, 1), loc='upper left',
-    fontsize='x-small'
+    fontsize=LEGEND_FONTSIZE
 )
 
 ax.set_xlabel("$s_1$")
@@ -321,12 +375,14 @@ ax = plot_sigma_history(
     color='k', marker=None, linestyle='-',
     figsize=FIGSIZE,
 )
-ax.axvline(
-    idx, 0, 1,
-    linestyle='--', 
+ylims = ax.get_ylim()
+ax.vlines(
+    idx, ylims[0], sigma_hist[idx],
+    linestyles='-', colors='grey', linewidth=1, zorder=1, 
     label=f"Inferred $\sigma={model.get_sigma():.3g}$"
 )
-ax.legend(fontsize='xx-small')
+ax.set_ylim(*ylims)
+ax.legend(fontsize=LEGEND_FONTSIZE)
 plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight', transparent=True)
 
 
@@ -359,11 +415,72 @@ ax.set_ylabel("$y$")
 ax.set_xlim([-scale*1.1, scale*1.1])
 ax.set_ylim([-scale*1.1, scale*1.1])
 
-ax.legend(fontsize='xx-small')
+ax.legend(fontsize=LEGEND_FONTSIZE)
 
 plt.tight_layout()
 plt.savefig(f"{OUTDIR}/{FIGNAME}", transparent=True)
 
+
+##################################  Signal prior
+FIGNAME = "signal_prior"
+FIGSIZE = (5*sf, 5*sf)
+
+ALPHA = 0.5
+COL0 = 'orange'
+COL1 = 'purple'
+
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+
+for curve, color in zip(bifcurves_true, bifcolors_true):
+    true_line, = ax.plot(curve[:,0], curve[:,1], '--', color=color)
+
+
+info_dict = {
+    's10': [-0.50, 0.50],
+    's20': [ 0.50, 1.50],
+    's11': [-1.00, 1.00],
+    's21': [-0.50, 0.50],
+}
+
+# Plot the prior for initial signal values
+x0 = info_dict['s10'][0]
+y0 = info_dict['s20'][0]
+w = info_dict['s10'][1] - info_dict['s10'][0]
+h = info_dict['s20'][1] - info_dict['s20'][0]
+# Create the rectangle patch with transparency (alpha)
+rectangle = patches.Rectangle(
+    (x0, y0), w, h, 
+    alpha=ALPHA, color=COL0, fill=None, hatch=4*'/',
+)
+p1 = ax.add_patch(rectangle)
+
+# Plot the prior for final signal values
+x0 = info_dict['s11'][0]
+y0 = info_dict['s21'][0]
+w = info_dict['s11'][1] - info_dict['s11'][0]
+h = info_dict['s21'][1] - info_dict['s21'][0]
+# Create the rectangle patch with transparency (alpha)
+rectangle = patches.Rectangle(
+    (x0, y0), w, h, 
+    alpha=ALPHA, color=COL1, fill=None, hatch=4*'\\',
+)
+p2 = ax.add_patch(rectangle)
+
+ax.legend(
+    [p1, p2], ['initial', 'final'], 
+    # bbox_to_anchor=(1.05, 1), loc='upper left',
+    fontsize=LEGEND_FONTSIZE,
+)
+
+ax.set_xlabel("$s_1$")
+ax.set_ylabel("$s_2$")
+
+ax.set_xlim([-2, 2])
+ax.set_ylim([-1, 5])
+
+ax.set_title("Signal Prior")
+
+plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight', transparent=True)
 
 ##############################################################################
 ##############################################################################

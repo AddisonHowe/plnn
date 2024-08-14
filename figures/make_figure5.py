@@ -335,7 +335,7 @@ print("y range:", YMIN, YMAX)
 
 #################################  Simulation snapshots
 FIGNAME = "simulation_snapshot"
-FIGSIZE = (4*sf, 4*sf)
+FIGSIZE = (2.6*sf, 2.6*sf)
 
 XLIMS = [-8.461315377018, 10.01259687722186]
 YLIMS = [-3.8205954067127337, 8.523846462122545]
@@ -367,7 +367,7 @@ for cond_name in CONDITIONS:
     np.save(f"{OUTDIR}/simdata_{cond_name}_xs.npy", sim_xs)
 
     for i, t in enumerate(sim_ts):
-        fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+        fig, ax = plt.subplots(1, 1, figsize=FIGSIZE, layout='constrained')
         xs = sim_xs[i]
         sig = sim_sigs[i]
 
@@ -386,6 +386,7 @@ for cond_name in CONDITIONS:
             xlabel=None,
             ylabel=None,
             equal_axes=False,
+            tight_layout=False,
             saveas=None,
             show=True,
             ax=ax
@@ -396,15 +397,16 @@ for cond_name in CONDITIONS:
             color='k',
             markersize=1,
             rasterized=False,
-            alpha=0.7
+            alpha=0.3
         )
         ax.set_xlim(*XLIMS)
         ax.set_ylim(*YLIMS)
-        ax.set_xticks([-5, 0, 5, 10])
-        ax.set_yticks([-2, 0, 2, 4, 6, 8])
-        plt.tight_layout()
+        ax.set_xticks([0, 10])
+        ax.set_yticks([0, 5])
+        # plt.tight_layout()
         plt.savefig(
             f"{OUTDIR}/{FIGNAME}_{cond_name}_d{t}.pdf", 
+            transparent=True,
         )
         plt.close()
 
