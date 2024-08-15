@@ -12,6 +12,7 @@ import jax.random as jrandom
 
 import matplotlib.pyplot as plt
 plt.style.use('figures/styles/fig5.mplstyle')
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 from plnn.models import DeepPhiPLNN
 from plnn.dataset import get_dataloaders
@@ -39,6 +40,9 @@ sf = 1/2.54  # scale factor from [cm] to inches
 MINMARKERSIZE = 1
 MINMARKER = '.'
 MINCOLOR = 'y'
+
+INSET_SCALE = "40%"
+N_EST_MIN = 100
 
 ##############################################################################
 ##############################################################################
@@ -121,216 +125,255 @@ print("y range:", YMIN, YMAX)
 
 
 # #################################  Main Heatmap Diagram
-# FIGNAME = "phi_inferred_main"
-# FIGSIZE = (8*sf, 4*sf)
+FIGNAME = "phi_inferred_main"
+FIGSIZE = (8*sf, 4*sf)
 
-# SIG_TO_PLOT = [0.0, 1.0]
-# PLOT_XLIMS = [-6, 5]
-# PLOT_YLIMS = [-3, 5]
+SIG_TO_PLOT = [0.0, 1.0]
+PLOT_XLIMS = [-6, 5]
+PLOT_YLIMS = [-3, 5]
 
-# res = 100   # resolution
-# lognormalize = True
-# clip = None
+res = 100   # resolution
+lognormalize = True
+clip = None
 
-# ax = plot_phi(
-#     model, signal=SIG_TO_PLOT, 
-#     xrange=PLOT_XLIMS,
-#     yrange=PLOT_YLIMS,
-#     res=res,
-#     lognormalize=lognormalize,
-#     clip=clip,
-#     title=f"CHIR: {SIG_TO_PLOT[0]:.1f}, FGF: {SIG_TO_PLOT[1]:.1f}",
-#     ncontours=10,
-#     contour_linewidth=0.5,
-#     contour_linealpha=0.5,
-#     include_cbar=True,
-#     cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
-#     xlabel=None,
-#     ylabel=None,
-#     equal_axes=True,
-#     saveas=None,
-#     show=True,
-#     figsize=FIGSIZE,
-# )
+ax = plot_phi(
+    model, signal=SIG_TO_PLOT, 
+    xrange=PLOT_XLIMS,
+    yrange=PLOT_YLIMS,
+    res=res,
+    lognormalize=lognormalize,
+    clip=clip,
+    title=f"CHIR: {SIG_TO_PLOT[0]:.1f}, FGF: {SIG_TO_PLOT[1]:.1f}",
+    ncontours=10,
+    contour_linewidth=0.5,
+    contour_linealpha=0.5,
+    include_cbar=True,
+    cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
+    xlabel=None,
+    ylabel=None,
+    equal_axes=True,
+    saveas=None,
+    show=True,
+    figsize=FIGSIZE,
+)
 
-# mins = estimate_minima(
-#     model, model.tilt_module(np.array(SIG_TO_PLOT)), 
-#     n=100, 
-#     tol=1e-3,
-#     x0_range=[[XMIN, XMAX],[YMIN, YMAX]], 
-#     rng=rng,
-# )
+mins = estimate_minima(
+    model, model.tilt_module(np.array(SIG_TO_PLOT)), 
+    n=N_EST_MIN, 
+    tol=1e-3,
+    x0_range=[[XMIN, XMAX],[YMIN, YMAX]], 
+    rng=rng,
+)
 
-# for m in mins:
-#     ax.plot(
-#         m[0], m[1], 
-#         marker=MINMARKER,  
-#         markersize=MINMARKERSIZE,
-#         color=MINCOLOR, 
-#     )
+for m in mins:
+    ax.plot(
+        m[0], m[1], 
+        marker=MINMARKER,  
+        markersize=MINMARKERSIZE,
+        color=MINCOLOR, 
+    )
 
-# plt.savefig(
-#     f"{OUTDIR}/{FIGNAME}", bbox_inches="tight", 
-#     transparent=True
-# )
-# plt.close()
-
-
-
-# #################################  Heatmaps of inferred landscape
-
-# FIGNAME = "phi_inferred"
-# FIGSIZE = (5*sf, 5*sf)
-
-# SIGNALS_TO_PLOT = [
-#     [0., 0.],
-#     [0., 1.],
-#     [0., 0.9],
-#     [1., 0.],
-#     [1., 1.],
-#     [1., 0.9],
-# ]
-
-# r = 8       # box radius
-# res = 100   # resolution
-# lognormalize = True
-# clip = None
-
-# for i, sig_to_plot in enumerate(SIGNALS_TO_PLOT):
-#     ax = plot_phi(
-#         model, signal=sig_to_plot, 
-#         xrange=PLOT_XLIMS,  #[XMIN, XMAX]
-#         yrange=PLOT_YLIMS,  #[YMIN, YMAX]
-#         res=res,
-#         lognormalize=lognormalize,
-#         clip=clip,
-#         title=f"CHIR: {sig_to_plot[0]:.1f}, FGF: {sig_to_plot[1]:.1f}",
-#         ncontours=10,
-#         contour_linewidth=0.5,
-#         contour_linealpha=0.5,
-#         include_cbar=True,
-#         cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
-#         xlabel=None,
-#         ylabel=None,
-#         equal_axes=True,
-#         saveas=None,
-#         show=True,
-#         figsize=FIGSIZE,
-#     )
-
-#     mins = estimate_minima(
-#         model, model.tilt_module(np.array(sig_to_plot)), 
-#         n=100, 
-#         tol=1e-3,
-#         x0_range=[[XMIN, XMAX],[YMIN, YMAX]], 
-#         rng=rng,
-#     )
-
-#     for m in mins:
-#         ax.plot(
-#             m[0], m[1], 
-#             marker=MINMARKER,  
-#             markersize=MINMARKERSIZE,
-#             color=MINCOLOR, 
-#         )
-
-#     plt.tight_layout()
-#     plt.savefig(
-#         f"{OUTDIR}/{FIGNAME}_{i}", bbox_inches='tight', 
-#         transparent=True
-#     )
-#     plt.close()
-
-# #################################  Bifurcation diagram of inferred landscape
-# FIGNAME = "phi_bifs_inferred"
-# FIGSIZE = (5*sf, 5*sf)
-
-# fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
-
-# bifcurves_inferred, bifcolors_inferred = get_plnn_bifurcation_curves(
-#     model, 
-#     xlims=[XMIN, XMAX],
-#     ylims=[YMIN, YMAX],
-#     p1lims=P1LIMS,
-#     p2lims=P2LIMS,
-#     num_starts=100, 
-#     maxiter=1000,
-#     ds=1e-3,
-#     min_ds=1e-8,
-#     max_ds=1e-2,
-#     max_delta_p=1e-2,
-#     rho=1e-1,
-#     rng=rng,
-#     verbosity=0
-# )
-# for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
-#     if len(curve) > 1:
-#         ax.plot(
-#             curve[:,0], curve[:,1], '-', color=color, linewidth=1,
-#         )
-
-# # ax.set_xlim(-8, 8)
-# # ax.set_ylim(-8, 8)
-# ax.set_xlabel("$\\tau_1$")
-# ax.set_ylabel("$\\tau_2$")
-
-# plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
+plt.savefig(
+    f"{OUTDIR}/{FIGNAME}", bbox_inches="tight", 
+    transparent=True
+)
+plt.close()
 
 
-# #################################  Bif diagram of inferred landscape in signals
-# FIGNAME = "phi_bifs_signals_inferred"
-# FIGSIZE = (5*sf, 5*sf)
 
-# fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+#################################  Heatmaps of inferred landscape
 
-# for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
-#     if len(curve) > 1:
-#         curve_signal = tilts_to_signals(curve.T).T
-#         ax.plot(
-#             curve_signal[:,0], curve_signal[:,1], '-', color=color, linewidth=1,
-#         )
+FIGNAME = "phi_inferred"
+FIGSIZE = (5*sf, 5*sf)
 
-# ax.set_xlabel("$s_1$")
-# ax.set_ylabel("$s_2$")
+SIGNALS_TO_PLOT = [
+    [0., 0.],
+    [0., 1.],
+    [0., 0.9],
+    [1., 0.],
+    [1., 1.],
+    [1., 0.9],
+]
 
-# ax.set_xlim(*SIG1LIMS)
-# ax.set_ylim(*SIG2LIMS)
+r = 8       # box radius
+res = 100   # resolution
+lognormalize = True
+clip = None
 
-# plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
+for i, sig_to_plot in enumerate(SIGNALS_TO_PLOT):
+    ax = plot_phi(
+        model, signal=sig_to_plot, 
+        xrange=PLOT_XLIMS,  #[XMIN, XMAX]
+        yrange=PLOT_YLIMS,  #[YMIN, YMAX]
+        res=res,
+        lognormalize=lognormalize,
+        clip=clip,
+        title=f"CHIR: {sig_to_plot[0]:.1f}, FGF: {sig_to_plot[1]:.1f}",
+        ncontours=10,
+        contour_linewidth=0.5,
+        contour_linealpha=0.5,
+        include_cbar=True,
+        cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
+        xlabel=None,
+        ylabel=None,
+        equal_axes=True,
+        saveas=None,
+        show=True,
+        figsize=FIGSIZE,
+    )
+
+    # Plot signal effect inset
+    subax = inset_axes(ax,
+        width=INSET_SCALE,
+        height=INSET_SCALE,
+        loc='lower right',
+        bbox_to_anchor=(0.07, -0.1, 1, 1),
+        bbox_transform=ax.transAxes,
+    )
+    subax.set_aspect('equal')
+    subax.axis('off')
+    scale = np.max(np.abs(tilt_weights))
+    arr1 = subax.arrow(
+        0, 0, -tilt_weights[0,0], -tilt_weights[1,0], 
+        width=0.01*scale, 
+        fc=CHIR_COLOR, ec=CHIR_COLOR,
+        label="CHIR"
+    )
+    # subax.annotate(
+    #     "CHIR", (-tilt_weights[0,0], -tilt_weights[1,0]), 
+    #     ha='right', va='bottom', 
+    #     fontsize=6, 
+    # )
+     
+    arr2 = subax.arrow(
+        0, 0, -tilt_weights[0,1], -tilt_weights[1,1], 
+        width=0.01*scale, 
+        fc=FGF_COLOR, ec=FGF_COLOR,
+        label="FGF"
+    )
+    # subax.annotate(
+    #     "FGF", (-tilt_weights[0,1], -tilt_weights[1,1]), 
+    #     ha='right', va='bottom', 
+    #     fontsize=6, 
+    # )
+    
+    subax.set_xlim([-scale*1.2, scale*1.2])
+    subax.set_ylim([-scale*1.2, scale*1.2])
+
+    # Find and plot minima
+    mins = estimate_minima(
+        model, model.tilt_module(np.array(sig_to_plot)), 
+        n=N_EST_MIN, 
+        tol=1e-3,
+        x0_range=[[XMIN, XMAX],[YMIN, YMAX]], 
+        rng=rng,
+    )
+
+    for m in mins:
+        ax.plot(
+            m[0], m[1], 
+            marker=MINMARKER,  
+            markersize=MINMARKERSIZE,
+            color=MINCOLOR, 
+        )
+
+    # plt.tight_layout()
+    plt.savefig(
+        f"{OUTDIR}/{FIGNAME}_{i}", #bbox_inches='tight', 
+        transparent=True
+    )
+    plt.close()
+
+#################################  Bifurcation diagram of inferred landscape
+FIGNAME = "phi_bifs_inferred"
+FIGSIZE = (5*sf, 5*sf)
+
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+
+bifcurves_inferred, bifcolors_inferred = get_plnn_bifurcation_curves(
+    model, 
+    xlims=[XMIN, XMAX],
+    ylims=[YMIN, YMAX],
+    p1lims=P1LIMS,
+    p2lims=P2LIMS,
+    num_starts=100, 
+    maxiter=1000,
+    ds=1e-3,
+    min_ds=1e-8,
+    max_ds=1e-2,
+    max_delta_p=1e-2,
+    rho=1e-1,
+    rng=rng,
+    verbosity=0
+)
+for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
+    if len(curve) > 1:
+        ax.plot(
+            curve[:,0], curve[:,1], '-', color=color, linewidth=1,
+        )
+
+# ax.set_xlim(-8, 8)
+# ax.set_ylim(-8, 8)
+ax.set_xlabel("$\\tau_1$")
+ax.set_ylabel("$\\tau_2$")
+
+plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
 
 
-# #################################  Bif diagram of inferred landscape in signals
-# FIGNAME = "signal_direction"
-# FIGSIZE = (3*sf, 3*sf)
+#################################  Bif diagram of inferred landscape in signals
+FIGNAME = "phi_bifs_signals_inferred"
+FIGSIZE = (5*sf, 5*sf)
 
-# fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
-# ax.set_aspect('equal')
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
 
-# scale = np.max(np.abs(tilt_weights))
+for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
+    if len(curve) > 1:
+        curve_signal = tilts_to_signals(curve.T).T
+        ax.plot(
+            curve_signal[:,0], curve_signal[:,1], '-', color=color, linewidth=1,
+        )
 
-# ax.arrow(
-#     0, 0, -tilt_weights[0,0], -tilt_weights[1,0], 
-#     width=0.01*scale, 
-#     fc=CHIR_COLOR, ec=CHIR_COLOR,
-#     label="CHIR"
-# )
+ax.set_xlabel("$s_1$")
+ax.set_ylabel("$s_2$")
 
-# ax.arrow(
-#     0, 0, -tilt_weights[0,1], -tilt_weights[1,1], 
-#     width=0.01*scale, 
-#     fc=FGF_COLOR, ec=FGF_COLOR,
-#     label="FGF"
-# )
+ax.set_xlim(*SIG1LIMS)
+ax.set_ylim(*SIG2LIMS)
 
-# # ax.set_xlabel("$x$")
-# # ax.set_ylabel("$y$")
-# ax.set_xlim([-scale*1.1, scale*1.1])
-# ax.set_ylim([-scale*1.1, scale*1.1])
+plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
 
-# ax.legend(fontsize='xx-small');
 
-# plt.tight_layout()
-# plt.savefig(f"{OUTDIR}/{FIGNAME}", transparent=True)
+#################################  Bif diagram of inferred landscape in signals
+FIGNAME = "signal_direction"
+FIGSIZE = (3*sf, 3*sf)
+
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+ax.set_aspect('equal')
+
+scale = np.max(np.abs(tilt_weights))
+
+ax.arrow(
+    0, 0, -tilt_weights[0,0], -tilt_weights[1,0], 
+    width=0.01*scale, 
+    fc=CHIR_COLOR, ec=CHIR_COLOR,
+    label="CHIR"
+)
+
+ax.arrow(
+    0, 0, -tilt_weights[0,1], -tilt_weights[1,1], 
+    width=0.01*scale, 
+    fc=FGF_COLOR, ec=FGF_COLOR,
+    label="FGF"
+)
+
+# ax.set_xlabel("$x$")
+# ax.set_ylabel("$y$")
+ax.set_xlim([-scale*1.1, scale*1.1])
+ax.set_ylim([-scale*1.1, scale*1.1])
+
+ax.legend(fontsize='xx-small');
+
+plt.tight_layout()
+plt.savefig(f"{OUTDIR}/{FIGNAME}", transparent=True)
 
 
 #################################  Simulation snapshots
