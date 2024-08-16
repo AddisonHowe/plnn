@@ -7,6 +7,7 @@ setup(
     entry_points={
         "console_scripts": [
             "plnn = plnn.__main__:main",
+            "model_eval = plnn.eval.__main__:main",
         ]
     },
 )
