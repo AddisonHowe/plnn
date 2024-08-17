@@ -118,10 +118,11 @@ def run_model_on_evaluation_data(
         results = step_ntimes_vectorized(
             n_reps, model, partial_inputs_array, partial_y1_array, loss_fn, key
         )
-        print(f"  steptime: {time.time() - time00:.5f}")
+        results.block_until_ready()
+        # print(f"  steptime: {time.time() - time00:.5f}")
         losses[idx0:idx1] = results
         count += len(results)
-        print(f"  time: {time.time() - time0:.5f}")
+        # print(f"  time: {time.time() - time0:.5f}")
 
     return losses, times, conditions
 
@@ -158,6 +159,7 @@ def parse_args(args):
 
 def main(args):
     print(f"Handled args: {args}")
+    time0 = time.time()
     
     dataset_key = args.dataset
 
@@ -268,13 +270,15 @@ def main(args):
     #~~~~~ Reshape losses and save results to output directory ~~~~~#
     ndata_per_cond = len(np.unique(times))
     nconds = int(len(losses) // ndata_per_cond // nresamp)
-    print(nconds)
+    
     losses = losses.reshape([nresamp, nconds, ndata_per_cond, nreps])
     losses = losses.transpose(1, 2, 0, 3)    
 
     np.save(f"{outdir}/losses_{dataset_key}_dt_{dt0}.npy", losses)
     np.save(f"{outdir}/times_{dataset_key}_dt_{dt0}.npy", times)
     np.save(f"{outdir}/conditions_{dataset_key}_dt_{dt0}.npy", conditions)
+    
+    print(f"Done! Finished in {time.time() - time0:.5f} seconds")
 
 
 if __name__ == "__main__":
