@@ -225,10 +225,14 @@ def main(args):
         ncells_sample = logged_args['ncells_sample']
 
     loss_id = logged_args['loss']
+    kernel = logged_args.get('kernel', 'multiscale')
+    bw_range = logged_args.get('bw_range')
+    print('kernel:', kernel)
+    print('bw_range:', bw_range)
     loss_fn = select_loss_function(
         loss_id, 
-        kernel=logged_args.get('kernel'),
-        bw_range=logged_args.get('bw_range'),
+        kernel=kernel,
+        bw_range=bw_range,
     )
 
     print(f"Loaded model `{model_name}` at epoch {idx} from {model_fpath}.")
@@ -248,7 +252,7 @@ def main(args):
         seed=rng.integers(2**32),
     )
 
-    if dt0 is not None:
+    if dt0 and dt0 > 0:
         model = eqx.tree_at(lambda m: m.dt0, model, dt0)
     else:
         dt0 = model.get_dt0()
