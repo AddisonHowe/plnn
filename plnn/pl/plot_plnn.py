@@ -116,16 +116,19 @@ def plot_phi(
     # Normalization
     if lognormalize:
         phi = np.log(1 + phi - phi_within_hull.min())
+        phi_within_hull = np.log(1 + phi_within_hull - phi_within_hull.min())
     elif normalize:
         phi = 1 + phi - phi_within_hull.min()  # set minimum to 1
+        phi_within_hull = 1 + phi_within_hull - phi_within_hull.min()
     if minimum is not None:
         phi = phi - (phi_within_hull.min() - minimum)  # set minimum to given value
+        phi_within_hull = phi_within_hull - (phi_within_hull.min() - minimum)
 
     # Clipping
     clip = 1 + phi_within_hull.max() if clip is None else clip
     if clip < phi_within_hull.min():
         warnings.warn(f"Clip value {clip} is below minimum value to plot.")
-        clip = phi_within_hull.max()
+        clip = 1 + phi_within_hull.max()
     under_cutoff = phi <= clip
 
     plot_screen = np.ones(under_cutoff.shape)
