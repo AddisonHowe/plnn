@@ -25,6 +25,7 @@ def train_model(
     num_epochs=50,
     batch_size=1,
     patience=100,
+    min_epochs=0,
     dt_schedule=None,
     fix_noise=False,
     hyperparams={},
@@ -206,7 +207,7 @@ def train_model(
         np.save(f"{outdir}/tilt_bias_history.npy", tilt_bias)
 
         model_improved = avg_vloss < best_vloss
-        exceeded_patience = epoch - best_epoch + 1 > patience
+        exceeded_patience = (epoch - best_epoch + 1 > patience) and epoch > min_epochs
 
         # Save the model's state
         if model_improved or save_all or exceeded_patience:
