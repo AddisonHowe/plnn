@@ -154,6 +154,10 @@ def parse_args(args):
     
     parser.add_argument('--seed', type=int, default=None)
     parser.add_argument('--pbar', action="store_true")
+    parser.add_argument('--nosuboutdir', action="store_true",
+                        help="If given, save output directly in `outdir`." \
+                        "Otherwise, save in subdirectory with model name.")
+    
     return parser.parse_args(args)
 
 
@@ -186,8 +190,11 @@ def main(args):
     #~~~~~ Directory structure and housekeeping ~~~~~#
     model_name = modeldir_name_with_timestamp[0:-16]
     modeldir = f"{basedir}/{modeldir_name_with_timestamp}"
-    outdir = f"{baseoutdir}/{modeldir_name_with_timestamp}"
     datdir = f"{datdirbase}/{datdir}"
+    if args.nosuboutdir:
+        outdir = baseoutdir
+    else:
+        outdir = f"{baseoutdir}/{modeldir_name_with_timestamp}"
 
     datdir_train = f"{datdir}/training"
     datdir_valid = f"{datdir}/validation"
@@ -276,7 +283,7 @@ def main(args):
     nconds = int(len(losses) // ndata_per_cond // nresamp)
     
     losses = losses.reshape([nresamp, nconds, ndata_per_cond, nreps])
-    losses = losses.transpose(1, 2, 0, 3)    
+    losses = losses.transpose(1, 2, 0, 3)
 
     np.save(f"{outdir}/losses_{dataset_key}_dt_{dt0}.npy", losses)
     np.save(f"{outdir}/times_{dataset_key}_dt_{dt0}.npy", times)

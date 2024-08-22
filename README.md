@@ -30,6 +30,43 @@ Then, to install the project,
 pip install -e .
 ```
 
+# Data
+
+## Synthetic Binary Choice Data
+
+- `data_phi1_1[abc]`
+    $t\in[0,100]$, $\Delta T=[10,50,100]$, $\sigma=0.1$, 
+    $N_{cells}=500$, $N_{train}=[100,500,1000]$, $N_{valid}=N_{test}=0.3N_{train}$, signal switch range: $[0.1t_{fin}, 0.9t_{fin}]$
+
+    - [model_phi1_1a_v_mmd1_20240522_185135](data/trained_models/plnn_synbindec/model_phi1_1a_v_mmd1_20240522_185135)
+    - [model_phi1_1a_v_mmd1_20240627_143649](data/trained_models/plnn_synbindec/model_phi1_1a_v_mmd1_20240627_143649)
+    - [model_phi1_1a_v_mmd1_20240627_143655](data/trained_models/plnn_synbindec/model_phi1_1a_v_mmd1_20240627_143655)
+    - [model_phi1_1a_v_mmd1_20240627_193208](data/trained_models/plnn_synbindec/model_phi1_1a_v_mmd1_20240627_193208)
+    - [model_phi1_1a_v_mmd1_20240704_134102](data/trained_models/plnn_synbindec/model_phi1_1a_v_mmd1_20240704_134102)
+    - [model_phi1_1b_v_mmd1_20240802_132858](data/trained_models/plnn_synbindec/model_phi1_1b_v_mmd1_20240802_132858) 
+    - [model_phi1_1c_v_mmd1_20240802_132858](data/trained_models/plnn_synbindec/model_phi1_1c_v_mmd1_20240802_132858)
+    
+- `data_phi1_2[abc]`
+    $t\in[0,20]$, $\Delta T=[5,10,20]$, $\sigma=0.1$, 
+    $N_{cells}=500$, $N_{train}=[100,200,400]$, $N_{valid}=N_{test}=0.2N_{train}$, signal switch range: $[0.1t_{fin}, 0.9t_{fin}]$
+
+    - [model_phi1_2a_v_mmd1_20240807_171303](data/trained_models/plnn_synbindec/model_phi1_2a_v_mmd1_20240807_171303) 
+    - [model_phi1_2a_v_mmd1_20240813_193424](data/trained_models/plnn_synbindec/model_phi1_2a_v_mmd1_20240813_193424) 
+    - [model_phi1_2a_v_mmd1_20240813_194028](data/trained_models/plnn_synbindec/model_phi1_2a_v_mmd1_20240813_194028) 
+    - [model_phi1_2a_v_mmd1_20240813_194433](data/trained_models/plnn_synbindec/model_phi1_2a_v_mmd1_20240813_194433)
+    - [model_phi1_2b_v_mmd1_20240807_171303](data/trained_models/plnn_synbindec/model_phi1_2b_v_mmd1_20240807_171303) 
+    - [model_phi1_2b_v_mmd1_20240813_193441](data/trained_models/plnn_synbindec/model_phi1_2b_v_mmd1_20240813_193441) 
+    - [model_phi1_2b_v_mmd1_20240813_193832](data/trained_models/plnn_synbindec/model_phi1_2b_v_mmd1_20240813_193832) 
+    - [model_phi1_2b_v_mmd1_20240813_194359](data/trained_models/plnn_synbindec/model_phi1_2b_v_mmd1_20240813_194359) 
+    - [model_phi1_2c_v_mmd1_20240807_171303](data/trained_models/plnn_synbindec/model_phi1_2c_v_mmd1_20240807_171303) 
+    - [model_phi1_2c_v_mmd1_20240813_193441](data/trained_models/plnn_synbindec/model_phi1_2c_v_mmd1_20240813_193441) 
+    - [model_phi1_2c_v_mmd1_20240813_193755](data/trained_models/plnn_synbindec/model_phi1_2c_v_mmd1_20240813_193755) 
+    - [model_phi1_2c_v_mmd1_20240813_194114](data/trained_models/plnn_synbindec/model_phi1_2c_v_mmd1_20240813_194114)
+
+- `data_phi1_3[abc]`
+    $t\in[0,20]$, $\Delta T=[5,10,20]$, $\sigma=0.1$, 
+    $N_{cells}=50$, $N_{train}=[50,100,200]$, $N_{valid}=N_{test}=0.2N_{train}$, signal switch range: $[0.1t_{fin}, 0.15t_{fin}]$
+
 # Usage
 
 ### Main training script

@@ -34,6 +34,8 @@ def parse_args(args):
     parser.add_argument('--s21_range', type=float, nargs=2, default=[-1, 1])
     parser.add_argument('--logr1_range', type=float, nargs=2, default=[-3, 2])
     parser.add_argument('--logr2_range', type=float, nargs=2, default=[-3, 2])
+    parser.add_argument('--tcrit_buffer0', type=float, default=0.1)
+    parser.add_argument('--tcrit_buffer1', type=float, default=0.1)
 
     parser.add_argument('--param_func', type=str,
                         choices=['identity'])
@@ -68,8 +70,17 @@ def get_sigparams_binary(
 ):
     if rng is None:
         rng = np.random.default_rng(seed=seed)
-    tcrit1 = rng.uniform(tcrit_buffer*tfin, (1-tcrit_buffer)*tfin)
-    tcrit2 = rng.uniform(tcrit_buffer*tfin, (1-tcrit_buffer)*tfin)
+    
+    if isinstance(tcrit_buffer, (float, int)):
+        tcrit_buffer0 = tcrit_buffer
+        tcrit_buffer1 = tcrit_buffer
+    elif len(tcrit_buffer) == 2:
+        tcrit_buffer0, tcrit_buffer1 = tcrit_buffer
+    else:
+        raise RuntimeError(f"Cannot handle tcrit_buffer: {tcrit_buffer}")
+    
+    tcrit1 = rng.uniform(tcrit_buffer0*tfin, (1-tcrit_buffer1)*tfin)
+    tcrit2 = rng.uniform(tcrit_buffer0*tfin, (1-tcrit_buffer1)*tfin)
     s10 = rng.uniform(*s10_range)
     s20 = rng.uniform(*s20_range)
     s11 = rng.uniform(*s11_range)
@@ -94,8 +105,17 @@ def get_sigparams_sigmoid(
 ):
     if rng is None:
         rng = np.random.default_rng(seed=seed)
-    tcrit1 = rng.uniform(tcrit_buffer*tfin, (1-tcrit_buffer)*tfin)
-    tcrit2 = rng.uniform(tcrit_buffer*tfin, (1-tcrit_buffer)*tfin)
+
+    if isinstance(tcrit_buffer, (float, int)):
+        tcrit_buffer0 = tcrit_buffer
+        tcrit_buffer1 = tcrit_buffer
+    elif len(tcrit_buffer) == 2:
+        tcrit_buffer0, tcrit_buffer1 = tcrit_buffer
+    else:
+        raise RuntimeError(f"Cannot handle tcrit_buffer: {tcrit_buffer}")
+    
+    tcrit1 = rng.uniform(tcrit_buffer0*tfin, (1-tcrit_buffer1)*tfin)
+    tcrit2 = rng.uniform(tcrit_buffer0*tfin, (1-tcrit_buffer1)*tfin)
     s10 = rng.uniform(*s10_range)
     s20 = rng.uniform(*s20_range)
     s11 = rng.uniform(*s11_range)
@@ -127,6 +147,8 @@ def main(args):
     s21_range = args.s21_range
     logr1_range = args.logr1_range
     logr2_range = args.logr2_range
+    tcrit_buffer0 = args.tcrit_buffer0
+    tcrit_buffer1 = args.tcrit_buffer1
     param_func_name = args.param_func
     noise_schedule = args.noise_schedule
     noise_args = args.noise_args
@@ -194,8 +216,8 @@ def main(args):
                 s21_range=s21_range, 
                 logr1_range=logr1_range, 
                 logr2_range=logr2_range, 
-                tcrit_buffer=0.1,
-                rng=sim_rng
+                tcrit_buffer=(tcrit_buffer0, tcrit_buffer1),
+                rng=sim_rng,
             )
         else:
             raise RuntimeError(f"Unknown signal schedule {signal_schedule}")
