@@ -1,7 +1,8 @@
 # plnn: A Machine Learning approach to Parameterized Landscapes
 
-## TODO
+## ToDo's
 * Implement heteroclinic orbit algorithm minimizing orthogonal component of path connecting saddles.
+* Finer resolution for generating phi1_2* data videos
 
 ## Ideas
 * Precompute summary stat for $x_1$ data
@@ -66,6 +67,10 @@ pip install -e .
 - `data_phi1_3[abc]`
     $t\in[0,20]$, $\Delta T=[5,10,20]$, $\sigma=0.1$, 
     $N_{cells}=50$, $N_{train}=[50,100,200]$, $N_{valid}=N_{test}=0.2N_{train}$, signal switch range: $[0.1t_{fin}, 0.15t_{fin}]$
+
+- `data_phi1_4[abc]`
+    $t\in[0,20]$, $\Delta T=[5,10,20]$, $\sigma=0.1$, 
+    $N_{cells}=200$, $N_{train}=[50,100,200]$, $N_{valid}=N_{test}=0.2N_{train}$, signal switch range: $[0.1t_{fin}, 0.15t_{fin}]$
 
 # Usage
 
