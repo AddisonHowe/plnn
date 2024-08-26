@@ -2,6 +2,7 @@
 
 """
 
+import numpy as np
 import sympy
 from plnn.pl.config import PHI1_COLOR_DICT, PHI2_COLOR_DICT
 
@@ -139,3 +140,27 @@ def get_phi2_fixed_point_type(fp):
         return 'maximum'
     else:
         return 'minimum'
+
+
+def get_hist2d(data, edges_x, edges_y):
+    """Bin data in two-dimensional histogram
+
+    Args:
+        data (np.ndarray): 2-dimensional array containing data in rows.
+        edges_x (array like): bin edges in the x direction.
+        edges_y (array like): bin edges in the y direction.
+
+    Returns:
+        np.ndarray[int]: array of shape (len(edges_x) - 1, len(edged_x) - 1)) 
+            with counts as the entries.
+
+    """
+    x_bins = np.digitize(data[:, 0], edges_x)  # bin indices for x
+    y_bins = np.digitize(data[:, 1], edges_y)  # bin indices for y
+    hist2d = np.zeros([len(edges_y) - 1, len(edges_x) - 1])
+    for xb, yb in zip(x_bins, y_bins):
+        if xb == 0 or yb == 0 or xb == len(edges_x) or yb == len(edges_y):
+            pass
+        else:
+            hist2d[yb-1, xb-1] += 1
+    return hist2d

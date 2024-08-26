@@ -116,6 +116,9 @@ class LandscapeSimulationDataset(Dataset):
         inputs = t0, x0, t1, sigparams
         outputs = x1
         return inputs, outputs
+    
+    def get_all_cells(self):
+        return np.array(self.xs_all)
         
     def get_baselength(self):
         return len(self.dataset)
