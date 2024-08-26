@@ -7,6 +7,8 @@ import warnings
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+plt.style.use('figures/styles/fig6.mplstyle')
+
 import tqdm.notebook as tqdm
 import jax
 jax.config.update("jax_enable_x64", True)
@@ -24,6 +26,7 @@ OUTDIR = "figures/out/fig6_out"
 
 os.makedirs(OUTDIR, exist_ok=True)
 
+sf = 1/2.54
 
 filelist = [f.removesuffix('.npy') for f in os.listdir(DATDIR) if f.endswith(".npy")]
 filelist = [s.split('_') for s in filelist]
@@ -137,6 +140,8 @@ for dataset_key in KEY_LIST:
         }
 
 
+
+figsize = (7*sf, 4*sf)
 for dataset_key in KEY_LIST:
 
     for dt0 in DT0_LIST:
@@ -149,7 +154,7 @@ for dataset_key in KEY_LIST:
         timepoints += 2 + (timepoints[1] - timepoints[0]) / 2
 
         for condidx in range(nconds):
-            fig, ax = plt.subplots(1, 1, figsize=(4, 2))
+            fig, ax = plt.subplots(1, 1, figsize=figsize)
             cond_name = CONDITION_NAMES[train_valid_test_conds[dataset_key][condidx]]
             for sampidx in range(nresamps):
                 vals = losses[condidx, :, sampidx, :].mean(1)
@@ -167,6 +172,7 @@ print("Each line is the mean loss of a condition, " \
       f"averaged over all {nresamps} resamplings.")
 print("Error bars show 2 standard deviations.")
 
+figsize = (7*sf, 4*sf)
 for dataset_key in KEY_LIST:
     for dt0 in DT0_LIST:
         dataset = DATASETS[dataset_key, dt0]
@@ -174,7 +180,7 @@ for dataset_key in KEY_LIST:
         times = dataset['times']
         nconds, ndata_per_cond, nresamps, nreps = losses.shape
 
-        fig, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
         for condidx in range(nconds):
             cond_name = CONDITION_NAMES[train_valid_test_conds[dataset_key][condidx]]
             avg_losses_over_reps = losses[condidx].mean(-1)
@@ -189,10 +195,10 @@ for dataset_key in KEY_LIST:
             )
 
         ax.set_xlim(2, 5)
-        ax.legend()
-        ax.set_xlabel("timepoint")
-        ax.set_ylabel("Loss")
-        ax.set_title(f"{dataset_key} set (dt={dt0})")
+        ax.legend(fontsize=6)
+        # ax.set_xlabel("timepoint")
+        # ax.set_ylabel("Loss")
+        # ax.set_title(f"{dataset_key} set (dt={dt0})")
         
         figname = f"loss_comparison_{dataset_key}_dt_{dt0}"
         plt.savefig(f"{OUTDIR}/{figname}.pdf")
@@ -200,7 +206,7 @@ for dataset_key in KEY_LIST:
             
 
 
-
+figsize = (4, 2)
 for dataset_key in KEY_LIST:
     dataset = DATASETS[dataset_key, DT0_LIST[0]]
     losses = dataset['losses']
@@ -208,7 +214,7 @@ for dataset_key in KEY_LIST:
     nconds, ndata_per_cond, nresamps, nreps = losses.shape    
 
     for condidx in range(nconds):
-        fig, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
         cond_name = CONDITION_NAMES[train_valid_test_conds[dataset_key][condidx]]
         for dt0 in DT0_LIST:
             dataset = DATASETS[dataset_key, dt0]

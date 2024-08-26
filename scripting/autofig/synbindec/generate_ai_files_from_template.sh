@@ -28,7 +28,21 @@ tmp_script_fpath=$PROJ_DIR/scripting/autofig/synbindec/_tmp_modify_links.jsx
 
 # Directories containing images corresponding to trained models.
 RUNDIRBASE=out/eval_models_plnn_synbindec
-rundirs=$(ls $RUNDIRBASE)
+# rundirs=$(ls $RUNDIRBASE)
+rundirs=(
+    "model_phi1_2a_v_mmd1_20240807_171303"
+    "model_phi1_2a_v_mmd1_20240813_193424"
+    "model_phi1_2a_v_mmd1_20240813_194028"
+    "model_phi1_2a_v_mmd1_20240813_194433"
+    "model_phi1_2b_v_mmd1_20240807_171303"
+    "model_phi1_2b_v_mmd1_20240813_193441"
+    "model_phi1_2b_v_mmd1_20240813_193832"
+    "model_phi1_2b_v_mmd1_20240813_194359"
+    "model_phi1_2c_v_mmd1_20240807_171303"
+    "model_phi1_2c_v_mmd1_20240813_193441"
+    "model_phi1_2c_v_mmd1_20240813_193755"
+    "model_phi1_2c_v_mmd1_20240813_194114"
+)
 
 # Main Loop
 for modelname in ${rundirs[@]}; do

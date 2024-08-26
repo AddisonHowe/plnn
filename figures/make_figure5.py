@@ -126,7 +126,7 @@ print("y range:", YMIN, YMAX)
 
 # #################################  Main Heatmap Diagram
 FIGNAME = "phi_inferred_main"
-FIGSIZE = (8*sf, 4*sf)
+FIGSIZE = (4.2*sf, 4*sf)
 
 SIG_TO_PLOT = [0.0, 1.0]
 PLOT_XLIMS = [-6, 5]
@@ -148,10 +148,11 @@ ax = plot_phi(
     contour_linewidth=0.5,
     contour_linealpha=0.5,
     include_cbar=True,
-    cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
+    cbar_title="",
+    # cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
     xlabel=None,
     ylabel=None,
-    equal_axes=True,
+    equal_axes=False,
     saveas=None,
     show=True,
     figsize=FIGSIZE,
@@ -213,10 +214,11 @@ for i, sig_to_plot in enumerate(SIGNALS_TO_PLOT):
         contour_linewidth=0.5,
         contour_linealpha=0.5,
         include_cbar=True,
-        cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
+        cbar_title="",
+        # cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
         xlabel=None,
         ylabel=None,
-        equal_axes=True,
+        equal_axes=False,
         saveas=None,
         show=True,
         figsize=FIGSIZE,
