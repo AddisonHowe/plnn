@@ -1,7 +1,9 @@
 #!/bin/bash
 
 basedir=/Users/addisonhowe/Documents/Projects/facs_explore/out
-outdir=figures/out/fig5_out/facs
+outdir=figures/manuscript/out/fig6_facs_training/facs
+
+mkdir -p $outdir
 
 # Copy images from facs_v3 pca1b
 datdir=$basedir/4a_dimred_pca/facs_v3/dec1_fitonsubset/images/pc1pc2
@@ -29,8 +31,6 @@ done
 cp $basedir/4a_dimred_pca/facs_v3/dec1_fitonsubset/images/"pca_dec1_NO CHIR_sig_hist".pdf $outdir
 cp $basedir/4a_dimred_pca/facs_v3/dec1_fitonsubset/images/"pca_dec1_CHIR 2-3_sig_hist".pdf $outdir
 cp $basedir/4a_dimred_pca/facs_v3/dec1_fitonsubset/images/"pca_dec1_CHIR 2-5_sig_hist".pdf $outdir
-
-
 
 cp $basedir/1b_signal_plots/"eff_signal_cond_NO CHIR.pdf" $outdir
 cp $basedir/1b_signal_plots/"eff_signal_cond_CHIR 2-3.pdf" $outdir

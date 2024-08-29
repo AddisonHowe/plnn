@@ -17,7 +17,7 @@ template_fpath=$PROJ_DIR/scripting/autofig/quadratic/quadratic_template1.ai
 template_linkdir=$PROJ_DIR_TILDE/scripting/autofig/quadratic/template1_images
 
 # This is where all generated ai files will be stored, one for every run below.
-aioutdir=${PROJ_DIR}/figures/out/autofig/quadratic
+aioutdir=${PROJ_DIR}/figures/autofig/out/quadratic
 
 # Script to modify the links in an .ai file, with placeholder in/out files,
 # and temporary generated script, with placeholder in/out files replaced

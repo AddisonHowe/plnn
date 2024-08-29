@@ -1,21 +1,19 @@
-"""Figure 3a Script
+"""Figure 3 Script (Synthetic Training)
 
-Generate plots used in Figure 3 of the accompanying manuscript, corresponding
-to the binary choice landscape.
+Generate plots used in Figure 3 of the accompanying manuscript.
 """
 
 import os
 import numpy as np
 import jax
 jax.config.update("jax_enable_x64", True)
-
 import matplotlib.pyplot as plt
-plt.style.use('figures/styles/fig3.mplstyle')
+plt.style.use('figures/manuscript/styles/fig_standard.mplstyle')
 import matplotlib.patches as patches
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 from plnn.io import load_model_from_directory, load_model_training_metadata
-from plnn.pl import plot_landscape, plot_phi, plot_sigma_history
+from plnn.pl import plot_landscape, plot_phi, plot_sigma_history, plot_loss_history
 from plnn.pl import CHIR_COLOR, FGF_COLOR
 from plnn.vectorfields import estimate_minima
 from plnn.helpers import get_phi1_fixed_points
@@ -23,17 +21,20 @@ from plnn.helpers import get_phi1_fixed_points
 from cont.binary_choice import get_binary_choice_curves
 from cont.plnn_bifurcations import get_plnn_bifurcation_curves 
 
-SEED = 123
 
-rng = np.random.default_rng(seed=SEED)
-
+OUTDIR = "figures/manuscript/out/fig3_synthetic_training"
+SAVEPLOTS = True
 MODELDIR = "data/trained_models/plnn_synbindec/model_phi1_1a_v_mmd1_20240704_134102"
 SIGMA_TRUE = 0.1
+SEED = 123
 
-OUTDIR = "figures/out/fig3a_out"
-SAVEPLOTS = True
+LEGEND_FONTSIZE = 6
+INSET_SCALE = "30%"
+
 
 os.makedirs(OUTDIR, exist_ok=True)
+
+rng = np.random.default_rng(seed=SEED)
 
 def func_phi1_star(x, y, p1=0, p2=0):
     return x**4 + y**4 + y**3 - 4*x*x*y + y*y + p1*x + p2*y
@@ -46,8 +47,6 @@ FP_MARKERS = {
     'maximum': 'o',
 }
 
-LEGEND_FONTSIZE = 6
-INSET_SCALE = "30%"
 
 ##############################################################################
 ##############################################################################
@@ -99,7 +98,7 @@ ax = plot_landscape(
     func_phi1_star, r=r, res=res, params=TILT_TO_PLOT, 
     lognormalize=lognormalize,
     clip=clip,
-    title="True landscape",
+    title="Ground truth",
     ncontours=10,
     contour_linewidth=0.5,
     contour_linealpha=0.5,
@@ -117,6 +116,9 @@ for fp, fp_type, fp_color in zip(fps[0], fp_types[0], fp_colors[0]):
         marker=FP_MARKERS[fp_type],
         markersize=2,
     )
+
+# ax.set_xticks([])
+# ax.set_yticks([])
 
 # Plot signal effect inset
 subax = inset_axes(ax,
@@ -316,7 +318,7 @@ for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
     inf_line, = ax.plot(curve[:,0], curve[:,1], '-', color=color, alpha=0.9)
 
 ax.legend(
-    [true_line, inf_line], ['true', 'inferred'], 
+    [true_line, inf_line], ['ground truth', 'inferred'], 
     # bbox_to_anchor=(1.05, 1), loc='upper left',
     fontsize=LEGEND_FONTSIZE
 )
@@ -327,7 +329,7 @@ ax.set_ylabel("$\\tau_2$")
 ax.set_xlim([-2, 2])
 ax.set_ylim([-1, 3])
 
-ax.set_title("Bifurcations (tilt space)")
+ax.set_title("Bifurcation diagram")
 
 plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight', transparent=True)
 
@@ -347,7 +349,7 @@ for curve, color in zip(bifcurves_inferred, bifcolors_inferred):
                         color=color, alpha=0.9)
 
 ax.legend(
-    [true_line, inf_line], ['true', 'inferred'], 
+    [true_line, inf_line], ['ground truth', 'inferred'], 
     # bbox_to_anchor=(1.05, 1), loc='upper left',
     fontsize=LEGEND_FONTSIZE
 )
@@ -358,33 +360,67 @@ ax.set_ylabel("$s_2$")
 ax.set_xlim([-2, 2])
 ax.set_ylim([-1, 5])
 
-ax.set_title("Bifurcations (signal space)")
+ax.set_title("Bifurcation diagram")
 
 plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight', transparent=True)
 
 
 ##################################  Noise History
 FIGNAME = "noise_history"
-FIGSIZE = (5*sf, 3*sf)
+FIGSIZE = (5.5*sf, 3.5*sf)
+
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE, layout='constrained')
 
 logged_args, run_dict = load_model_training_metadata(MODELDIR)
 sigma_hist = run_dict['sigma_hist']
 
-ax = plot_sigma_history(
+plot_sigma_history(
     sigma_hist, log=False, sigma_true=SIGMA_TRUE,
     color='k', marker=None, linestyle='-',
+    title="", sigma_true_legend_label=f'ground truth $\\sigma^*={SIGMA_TRUE:.3g}$',
     figsize=FIGSIZE,
+    ax=ax,
 )
 ylims = ax.get_ylim()
 ax.vlines(
     idx, ylims[0], sigma_hist[idx],
-    linestyles='-', colors='grey', linewidth=1, zorder=1, 
-    label=f"Inferred $\sigma={model.get_sigma():.3g}$"
+    linestyles='--', colors='grey', linewidth=1, zorder=1, 
+    label=f"inferred $\sigma={model.get_sigma():.3g}$"
 )
+ax.set_ylabel("noise $\sigma$")
 ax.set_ylim(*ylims)
 ax.legend(fontsize=LEGEND_FONTSIZE)
-plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight', transparent=True)
+plt.savefig(f"{OUTDIR}/{FIGNAME}", transparent=True)
+plt.close()
 
+
+##################################  Loss History
+FIGNAME = "loss_history"
+FIGSIZE = (5.5*sf, 3.5*sf)
+
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE, layout='constrained')
+plot_loss_history(
+    training_info['loss_hist_train'],
+    training_info['loss_hist_valid'],
+    log=True,
+    color_train='r', color_valid='b',
+    marker_train=None, marker_valid=None,
+    linestyle_train='-', linestyle_valid='-',
+    linewidth_train=1, linewidth_valid=1,
+    alpha_train=0.7, alpha_valid=0.6,
+    ax=ax
+)
+ax.set_xlabel("epoch")
+ax.set_ylabel("error")
+ax.set_title("")
+
+ax.axvline(
+    idx, 0, 1,
+    linestyle='--', color='grey', linewidth=1, zorder=1,
+)
+ax.legend(fontsize=LEGEND_FONTSIZE)
+plt.savefig(f"{OUTDIR}/{FIGNAME}", transparent=True)
+plt.close()
 
 ##################################  Signal mapping
 FIGNAME = "signal_mapping"

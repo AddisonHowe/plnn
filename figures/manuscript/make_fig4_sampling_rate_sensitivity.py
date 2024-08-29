@@ -1,5 +1,6 @@
-"""Figure for model sensitivity to sampling rate
+"""Figure 4 Script (Sampling Rate Sensitivity)
 
+Generate plots used in Figure 4 of the accompanying manuscript.
 """
 
 import argparse
@@ -7,26 +8,14 @@ import os
 import numpy as np
 import jax
 jax.config.update("jax_enable_x64", True)
-import jax.random as jrandom
-
-from cycler import cycler
-import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
-plt.style.use('figures/styles/fig6.mplstyle')
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-
+plt.style.use('figures/manuscript/styles/fig_standard.mplstyle')
 from sklearn.neighbors import NearestNeighbors
 
-from plnn.models import DeepPhiPLNN
 from plnn.dataset import get_dataloaders
-from plnn.io import load_model_from_directory, load_model_training_metadata
-from plnn.vectorfields import estimate_minima
-from plnn.pl import plot_landscape, plot_phi, plot_sigma_history 
-from plnn.pl import plot_loss_history
-from plnn.pl import CHIR_COLOR, FGF_COLOR
+from plnn.io import load_model_from_directory
 from plnn.helpers import get_hist2d
 
-from cont.plnn_bifurcations import get_plnn_bifurcation_curves 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-v', '--version', type=str, required=True, 
@@ -37,20 +26,28 @@ args = parser.parse_args()
 
 
 VERSION = args.version
-SEED = args.seed
 THRESHOLD = args.threshold
+SEED = args.seed
 
-if args.seed == 0:
-    SEED = {'phi1_2': 12314, 'phi1_3': 34847, 'phi1_4': 78378}[VERSION]
+OUTDIR = f"figures/manuscript/out/fig4_sampling_rate_sensitivity/{VERSION}"
+SAVEPLOTS = True
 
 if args.threshold is None:
-    THRESHOLD = {'phi1_2': 1.0, 'phi1_3':1.0, 'phi1_4':1.0}[VERSION]
+    THRESHOLD = {
+        'phi1_2': 1.0, 
+        'phi1_3': 1.0, 
+        'phi1_4': 1.0
+    }[VERSION]
+
+if args.seed == 0:
+    SEED = {
+        'phi1_2': 12314, 
+        'phi1_3': 34847, 
+        'phi1_4': 78378
+    }[VERSION]
 
 rng = np.random.default_rng(seed=SEED)
 
-
-OUTDIR = f"figures/out/fig_sampling_rate/{VERSION}"
-SAVEPLOTS = True
 
 os.makedirs(OUTDIR, exist_ok=True)
 
@@ -229,7 +226,7 @@ plt.savefig(f"{OUTDIR}/{FIGNAME}.pdf")
 ##############################################################################
 ####  Box and whisker plot of loss per trained model
 FIGNAME = "sampling_rate_box_whisker"
-FIGSIZE = (8*sf, 5*sf)
+FIGSIZE = (11*sf, 5*sf)
 
 show_outliers = False
 markers = ['^', 'v', '<', '>']
@@ -290,17 +287,17 @@ for dt_idx, dt in enumerate(dt_list):
             patch.set_facecolor(colors[dt_idx])
 
 
-ax.text(
-    0.01, 0.99, f"outliers included" if show_outliers else "outliers excluded", 
-    fontsize=6,
-    ha='left', va='top', 
-    transform=ax.transAxes
-)
+# ax.text(
+#     0.01, 0.99, f"outliers included" if show_outliers else "outliers excluded", 
+#     fontsize=6,
+#     ha='left', va='top', 
+#     transform=ax.transAxes
+# )
 ax.set_xlim(ax.get_xlim()[0] - offset, ax.get_xlim()[1] + offset)
 ax.set_xticks(range(1, len(dt_list) + 1), dt_list)
 ax.set_xlabel("sampling interval $\Delta T$")
-ax.set_ylabel("loss")
-ax.set_title("Evaluation loss vs sampling interval")
+ax.set_ylabel("error")
+ax.set_title("Generalization error")
 
 plt.savefig(f"{OUTDIR}/{FIGNAME}.pdf")
 
@@ -492,12 +489,12 @@ for dt_idx, dt in enumerate(dt_list):
             xticks=False, yticks=False,
             ax=ax,
         )
-        ax.text(
-            0.99, 0.01, f"epoch: {epoch_loaded}\n$\mathtt{{dt}}$: {model.get_dt0()}", 
-            fontsize=6,
-            ha='right', va='bottom', 
-            transform=ax.transAxes
-        )
+        # ax.text(
+        #     0.99, 0.01, f"epoch: {epoch_loaded}\n$\mathtt{{dt}}$: {model.get_dt0()}", 
+        #     fontsize=6,
+        #     ha='right', va='bottom', 
+        #     transform=ax.transAxes
+        # )
 
         plt.savefig(
             f"{OUTDIR}/model_dt_{dt}_{i}.pdf", 
@@ -588,14 +585,14 @@ for dt_idx, dt in enumerate(dt_list):
                 rasterized=False,
             )
 
-        string = f"$N_{{\\text{{exps}}}}$: {nconds}"
-        string += f"\n$|\mathcal{{D}}_i|$: {ndata_per_cond}"
-        ax.text(
-            0.5, 0.99, string, 
-            fontsize=6,
-            ha='center', va='top', 
-            transform=ax.transAxes
-        )
+        # string = f"$N_{{\\text{{exps}}}}$: {nconds}"
+        # string += f"\n$|\mathcal{{D}}_i|$: {ndata_per_cond}"
+        # ax.text(
+        #     0.5, 0.99, string, 
+        #     fontsize=6,
+        #     ha='center', va='top', 
+        #     transform=ax.transAxes
+        # )
         # ax.set_xlabel("$x$")
         # ax.set_ylabel("$y$")
         ax.set_title("");

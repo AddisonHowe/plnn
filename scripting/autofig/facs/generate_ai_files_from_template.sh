@@ -19,7 +19,7 @@ template_fpath=$PROJ_DIR/scripting/autofig/facs/facs_template1.ai
 template_linkdir=$PROJ_DIR_TILDE/scripting/autofig/facs/template1_images
 
 # This is where all generated ai files will be stored, one for every run below.
-aioutdir=${PROJ_DIR}/figures/out/autofig/facs
+aioutdir=${PROJ_DIR}/figures/autofig/out/facs
 
 # Script to modify the links in an .ai file, with placeholder in/out files,
 # and temporary generated script, with placeholder in/out files replaced

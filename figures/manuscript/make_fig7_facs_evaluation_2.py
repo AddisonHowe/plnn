@@ -1,7 +1,6 @@
-"""Figure 5 Script
+"""Figure 7 Script (FACS Evaluation)
 
-Generate plots used in Figure 5 of the accompanying manuscript, the results of
-the first binary decision captured in the FACS data.
+Generate plots used in Figure 7 of the accompanying manuscript.
 """
 
 import os
@@ -10,27 +9,29 @@ import jax
 jax.config.update("jax_enable_x64", True)
 import jax.random as jrandom
 
+import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
-plt.style.use('figures/styles/fig5.mplstyle')
+plt.style.use('figures/manuscript/styles/fig_standard.mplstyle')
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 from plnn.models import DeepPhiPLNN
 from plnn.dataset import get_dataloaders
 from plnn.io import load_model_from_directory, load_model_training_metadata
 from plnn.vectorfields import estimate_minima
-from plnn.pl import plot_landscape, plot_phi, plot_sigma_history
+from plnn.pl import plot_landscape, plot_phi, plot_sigma_history 
+from plnn.pl import plot_loss_history
 from plnn.pl import CHIR_COLOR, FGF_COLOR
 
 from cont.plnn_bifurcations import get_plnn_bifurcation_curves 
 
-SEED = 123816453
+SEED = 12482582
 
 rng = np.random.default_rng(seed=SEED)
 
 MODELDIR = "data/trained_models/facs/model_facs_v3_dec1b_2dpca_v12b_20240719_005108"
 DATDIR = "data/training_data/facs_v3/pca/dec1_fitonsubset/transition1_subset_epi_tr_ce_an_pc12"
 
-OUTDIR = "figures/out/fig5_out"
+OUTDIR = "figures/manuscript/out/fig7_facs_evaluation"
 SAVEPLOTS = True
 
 os.makedirs(OUTDIR, exist_ok=True)
@@ -124,9 +125,40 @@ print("x range:", XMIN, XMAX)
 print("y range:", YMIN, YMAX)
 
 
-# #################################  Main Heatmap Diagram
+#################################  Loss history
+FIGNAME = "loss_history"
+FIGSIZE = (7*sf, 4*sf)
+
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+plot_loss_history(
+    training_info['loss_hist_train'],
+    training_info['loss_hist_valid'],
+    log=True,
+    color_train='r', color_valid='b',
+    marker_train=None, marker_valid=None,
+    linestyle_train='-', linestyle_valid='-',
+    linewidth_train=1, linewidth_valid=1,
+    alpha_train=0.7, alpha_valid=0.6,
+    ax=ax
+)
+ax.set_xlabel("")
+ax.set_ylabel("")
+ax.set_title("")
+
+ax.get_yaxis().get_major_formatter().labelOnlyBase = False
+ax.set_yticks([0.2, 0.4, 0.6, 0.8], minor=True)
+ax.get_yaxis().set_major_formatter(ticker.ScalarFormatter())
+ax.get_yaxis().set_minor_formatter(ticker.ScalarFormatter())
+
+plt.savefig(
+    f"{OUTDIR}/{FIGNAME}", transparent=True
+)
+plt.close()
+
+
+#################################  Main Heatmap Diagram
 FIGNAME = "phi_inferred_main"
-FIGSIZE = (4.2*sf, 4*sf)
+FIGSIZE = (8*sf, 4*sf)
 
 SIG_TO_PLOT = [0.0, 1.0]
 PLOT_XLIMS = [-6, 5]
@@ -148,11 +180,10 @@ ax = plot_phi(
     contour_linewidth=0.5,
     contour_linealpha=0.5,
     include_cbar=True,
-    cbar_title="",
-    # cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
+    cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
     xlabel=None,
     ylabel=None,
-    equal_axes=False,
+    equal_axes=True,
     saveas=None,
     show=True,
     figsize=FIGSIZE,
@@ -214,11 +245,10 @@ for i, sig_to_plot in enumerate(SIGNALS_TO_PLOT):
         contour_linewidth=0.5,
         contour_linealpha=0.5,
         include_cbar=True,
-        cbar_title="",
-        # cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
+        cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
         xlabel=None,
         ylabel=None,
-        equal_axes=False,
+        equal_axes=True,
         saveas=None,
         show=True,
         figsize=FIGSIZE,
@@ -389,8 +419,8 @@ YLIMS = [-3.8205954067127337, 8.523846462122545]
 rate = train_dset[0][0][3][0,-1]
 print("rate:", rate)
 CONDITIONS = {
-    'NO CHIR'  : [[0.0, 0.0, 0.0, rate], [1.0, 1.0, 0.9, rate]],
-    'CHIR 2-3' : [[1.0, 1.0, 0.0, rate], [1.0, 1.0, 0.9, rate]],
+    'CHIR 2-4' : [[2.0, 1.0, 0.0, rate], [1.0, 1.0, 0.9, rate]],
+    'CHIR 2-5 FGF 2-4' : [[5.0, 1.0, 0.0, rate], [2.0, 1.0, 0.0, rate]],
 }
 
 x0 = test_dset[0][0][1]

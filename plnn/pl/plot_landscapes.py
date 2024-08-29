@@ -173,6 +173,8 @@ def plot_landscape(
     if xlims is not None: ax.set_xlim(*xlims)
     if ylims is not None: ax.set_ylim(*ylims)
     if zlims is not None: ax.set_zlim(*zlims)
+    if title_fontsize is None:
+        title_fontsize = plt.rcParams['axes.titlesize']
     if title: ax.set_title(title, size=title_fontsize)
     if xlabel: ax.set_xlabel(xlabel)
     if ylabel: ax.set_ylabel(ylabel)

@@ -138,6 +138,7 @@ def plot_sigma_history(
         saveas=None,
         ax=None,
         sigma_true=None,
+        sigma_true_legend_label=None,
         figsize=None,
 ):
     if ax is None:
@@ -151,10 +152,12 @@ def plot_sigma_history(
         linewidth=linewidth,
     )
     if sigma_true is not None:
+        if sigma_true_legend_label is None:
+            sigma_true_legend_label = f'True $\\sigma={sigma_true:.3g}$'
         xlims = ax.get_xlim()
         ax.hlines(
             sigma_true, *xlims, 
-            label=f'True $\\sigma={sigma_true:.3g}$',
+            label=sigma_true_legend_label, 
             color='k', linestyle=':', alpha=0.5
         )          
         ax.set_xlim(*xlims)

@@ -1,18 +1,19 @@
-"""Figure 1 Script
+"""Figure 1 Script (Landscape Models)
 
 Generate plots used in Figure 1 of the accompanying manuscript.
 """
 
 import os
 import matplotlib.pyplot as plt
-plt.style.use('figures/styles/fig1.mplstyle')
+plt.style.use('figures/manuscript/styles/fig_standard.mplstyle')
 
 from plnn.pl import plot_landscape
 from plnn.helpers import get_phi1_fixed_points, get_phi2_fixed_points
 
 
-OUTDIR = "figures/out/fig1_out"
+OUTDIR = "figures/manuscript/out/fig1_landscape_models"
 SAVEPLOTS = True
+
 
 os.makedirs(OUTDIR, exist_ok=True)
 

@@ -1,5 +1,6 @@
-"""
+"""Figure 7 Script (FACS Evaluation)
 
+Generate plots used in Figure 7 of the accompanying manuscript.
 """
 
 import os
@@ -7,7 +8,7 @@ import warnings
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use('figures/styles/fig6.mplstyle')
+plt.style.use('figures/manuscript/styles/fig_standard.mplstyle')
 
 import tqdm.notebook as tqdm
 import jax
@@ -22,7 +23,7 @@ MODELDIR = "model_facs_v3_dec1b_2dpca_v12b_20240719_005108"
 
 DATDIR = f"data/trained_models/facs/{MODELDIR}/eval"
 
-OUTDIR = "figures/out/fig6_out"
+OUTDIR = "figures/manuscript/out/fig7_facs_evaluation"
 
 os.makedirs(OUTDIR, exist_ok=True)
 
