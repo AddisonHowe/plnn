@@ -212,6 +212,8 @@ def plot_phi(
     if xlims is not None: ax.set_xlim(*xlims)
     if ylims is not None: ax.set_ylim(*ylims)
     if zlims is not None: ax.set_zlim(*zlims)
+    if title_fontsize is None:
+        title_fontsize = plt.rcParams['axes.titlesize']
     if title is not None: ax.set_title(title, size=title_fontsize)
     if xlabel is not None: ax.set_xlabel(xlabel)
     if ylabel is not None: ax.set_ylabel(ylabel)
@@ -325,6 +327,8 @@ def plot_f(
     # Format plot
     if xlims is not None: ax.set_xlim(*xlims)
     if ylims is not None: ax.set_ylim(*ylims)
+    if title_fontsize is None:
+        title_fontsize = plt.rcParams['axes.titlesize']
     if title is not None: ax.set_title(title, size=title_fontsize)
     if xlabel: ax.set_xlabel(xlabel)
     if ylabel: ax.set_ylabel(ylabel)
