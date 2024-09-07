@@ -9,8 +9,6 @@ s11_range="-1 1"
 s21_range="-0.5 0.5"
 logr1_range="3 4"
 logr2_range="3 4"
-logr1_range="3 4"
-logr2_range="3 4"
 tcrit_buffer0=0.1
 tcrit_buffer1=0.85
 

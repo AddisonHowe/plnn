@@ -7,8 +7,8 @@ s10_range="-0.5 0.5"
 s20_range="0.5 1.5"
 s11_range="-1 1"
 s21_range="-0.5 0.5"
-logr1_range="1.5 2"
-logr2_range="1.5 2"
+logr1_range="-3 2"
+logr2_range="-3 2"
 
 nsims_train=1000
 nsims_valid=300
