@@ -31,9 +31,13 @@ Then, to install the project,
 pip install -e .
 ```
 
-# Data
+# Training datasets
 
-## Synthetic Binary Choice Data
+The following datasets are located in the directory `data/training_data`. Listed below each are the models trained on that particular dataset.
+
+## Synthetic landscape data
+
+### Binary choice landscape
 
 - `data_phi1_1[abc]`
     $t\in[0,100]$, $\Delta T=[10,50,100]$, $\sigma=0.1$, 
@@ -71,6 +75,54 @@ pip install -e .
 - `data_phi1_4[abc]`
     $t\in[0,20]$, $\Delta T=[5,10,20]$, $\sigma=0.1$, 
     $N_{cells}=200$, $N_{train}=[50,100,200]$, $N_{valid}=N_{test}=0.2N_{train}$, signal switch range: $[0.1t_{fin}, 0.15t_{fin}]$
+
+
+### Binary flip landscape
+
+- `data_phi2_1[abc]`
+    $t\in[0,100]$, 
+    $\Delta T=[10,50,100]$, 
+    $\sigma=0.3$, 
+    $N_{cells}=500$, 
+    $N_{train}=[100,500,1000]$, 
+    $N_{valid}=N_{test}=0.3N_{train}$, 
+    signal switch range: $[0.1t_{fin}, 0.9t_{fin}]$, 
+    $T_{burn}=0.05T$, 
+    $s_{burn}=(-0.25, 0)$, 
+    $x_0=(-1, 0)$
+
+### Quadratic potentials
+
+- `data_phiq_1a`
+    $t\in[0,100]$, 
+    $\Delta T=10$, 
+    $\sigma=0.5$, 
+    $N_{cells}=500$, 
+    $N_{train}=100$, 
+    $N_{valid}=N_{test}=0.3N_{train}$, 
+    signal switch range: $[0.1t_{fin}, 0.9t_{fin}]$, 
+    $T_{burn}=0.1T$, 
+    $x_0=(0, -0.5)$
+
+- `data_phiq_2a`
+    $t\in[0,100]$, 
+    $\Delta T=10$, 
+    $\sigma=0.1$, 
+    $N_{cells}=500$, 
+    $N_{train}=100$, 
+    $N_{valid}=N_{test}=0.3N_{train}$, 
+    signal switch range: $[0.1t_{fin}, 0.9t_{fin}]$, 
+    $T_{burn}=0.1T$, 
+    $x_0=(0, -0.5)$
+
+
+## Dimensionally reduced FACS data
+
+- `facs_v1_dec1b`
+- `facs_v2_dec1b`
+- `facs_v3_dec1b`
+- `facs_v4_dec1b`
+
 
 # Usage
 
