@@ -1,6 +1,6 @@
 #!/bin/bash
 
-basedir=/Users/addisonhowe/Documents/Projects/facs_explore/out
+basedir=/Users/addisonhowe/Documents/Projects/mescs-invitro-facs/out
 outdir=figures/manuscript/out/fig6_facs_training/facs
 
 mkdir -p $outdir

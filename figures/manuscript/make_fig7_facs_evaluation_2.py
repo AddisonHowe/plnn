@@ -9,16 +9,15 @@ import jax
 jax.config.update("jax_enable_x64", True)
 import jax.random as jrandom
 
-import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 plt.style.use('figures/manuscript/styles/fig_standard.mplstyle')
+import matplotlib.ticker as ticker
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
-from plnn.models import DeepPhiPLNN
 from plnn.dataset import get_dataloaders
 from plnn.io import load_model_from_directory, load_model_training_metadata
 from plnn.vectorfields import estimate_minima
-from plnn.pl import plot_landscape, plot_phi, plot_sigma_history 
+from plnn.pl import plot_phi 
 from plnn.pl import plot_loss_history
 from plnn.pl import CHIR_COLOR, FGF_COLOR
 
@@ -309,6 +308,9 @@ for i, sig_to_plot in enumerate(SIGNALS_TO_PLOT):
             color=MINCOLOR, 
         )
 
+    ax.set_xticks([])
+    ax.set_yticks([])
+
     # plt.tight_layout()
     plt.savefig(
         f"{OUTDIR}/{FIGNAME}_{i}", #bbox_inches='tight', 
@@ -476,8 +478,10 @@ for cond_name in CONDITIONS:
         )
         ax.set_xlim(*XLIMS)
         ax.set_ylim(*YLIMS)
-        ax.set_xticks([0, 10])
-        ax.set_yticks([0, 5])
+        # ax.set_xticks([0, 10])
+        # ax.set_yticks([0, 5])
+        ax.set_xticks([])
+        ax.set_yticks([])
         # plt.tight_layout()
         plt.savefig(
             f"{OUTDIR}/{FIGNAME}_{cond_name}_d{t}.pdf", 

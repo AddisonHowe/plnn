@@ -7,6 +7,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('figures/manuscript/styles/fig_standard.mplstyle')
+import matplotlib.ticker as ticker
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import jax
 jax.config.update("jax_enable_x64", True)
@@ -15,7 +16,7 @@ import jax.random as jrandom
 from plnn.dataset import get_dataloaders
 from plnn.io import load_model_from_directory, load_model_training_metadata
 from plnn.vectorfields import estimate_minima
-from plnn.pl import plot_phi
+from plnn.pl import plot_phi, plot_loss_history
 from plnn.pl import CHIR_COLOR, FGF_COLOR
 
 from cont.plnn_bifurcations import get_plnn_bifurcation_curves 
@@ -121,6 +122,38 @@ print("x range:", XMIN, XMAX)
 print("y range:", YMIN, YMAX)
 
 
+#################################  Loss history
+FIGNAME = "loss_history"
+FIGSIZE = (7*sf, 4*sf)
+
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+plot_loss_history(
+    training_info['loss_hist_train'],
+    training_info['loss_hist_valid'],
+    log=True,
+    color_train='r', color_valid='b',
+    marker_train=None, marker_valid=None,
+    linestyle_train='-', linestyle_valid='-',
+    linewidth_train=1, linewidth_valid=1,
+    alpha_train=0.7, alpha_valid=0.6,
+    ax=ax
+)
+ax.set_xlabel("")
+ax.set_ylabel("")
+ax.set_title("")
+
+ax.get_yaxis().get_major_formatter().labelOnlyBase = False
+ax.set_yticks([0.2, 0.4, 0.6, 0.8], minor=True)
+ax.get_yaxis().set_major_formatter(ticker.ScalarFormatter())
+ax.get_yaxis().set_minor_formatter(ticker.ScalarFormatter())
+
+plt.savefig(
+    f"{OUTDIR}/{FIGNAME}", transparent=True
+)
+plt.close()
+
+
+
 # #################################  Main Heatmap Diagram
 FIGNAME = "phi_inferred_main"
 FIGSIZE = (4.2*sf, 4*sf)
@@ -170,6 +203,9 @@ for m in mins:
         markersize=MINMARKERSIZE,
         color=MINCOLOR, 
     )
+
+ax.set_xticks([])
+ax.set_yticks([])
 
 plt.savefig(
     f"{OUTDIR}/{FIGNAME}", bbox_inches="tight", 
@@ -275,6 +311,9 @@ for i, sig_to_plot in enumerate(SIGNALS_TO_PLOT):
             markersize=MINMARKERSIZE,
             color=MINCOLOR, 
         )
+
+    ax.set_xticks([])
+    ax.set_yticks([])
 
     # plt.tight_layout()
     plt.savefig(
@@ -443,8 +482,10 @@ for cond_name in CONDITIONS:
         )
         ax.set_xlim(*XLIMS)
         ax.set_ylim(*YLIMS)
-        ax.set_xticks([0, 10])
-        ax.set_yticks([0, 5])
+        # ax.set_xticks([0, 10])
+        # ax.set_yticks([0, 5])
+        ax.set_xticks([])
+        ax.set_yticks([])
         # plt.tight_layout()
         plt.savefig(
             f"{OUTDIR}/{FIGNAME}_{cond_name}_d{t}.pdf", 
