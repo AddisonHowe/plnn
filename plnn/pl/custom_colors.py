@@ -10,7 +10,13 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 
 
-CHIR_COLOR = (0.57, 0.26, 0.98)
+# CHIR_COLOR = (0.57, 0.26, 0.98)  # Signal colors used in Sáez et al.
+# FGF_COLOR  = (0.70, 0.09, 0.32)
+
+# CHIR_COLOR = (0.56, 0.96, 1.00)  # Plasma Blue
+# FGF_COLOR  = (0.87, 0.26, 0.77)  # Plasma Pink
+
+CHIR_COLOR = (0.18, 0.22, 0.73)  # Dark Plasma Blue
 FGF_COLOR  = (0.70, 0.09, 0.32)
 
 
