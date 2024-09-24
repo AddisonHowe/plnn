@@ -43,8 +43,8 @@ sf = 1/2.54  # scale factor from [cm] to inches
 
 FP_MARKERS = {
     'saddle': 'x',
-    'minimum': '*',
-    'maximum': 'o',
+    'minimum': 'o',
+    'maximum': '^',
 }
 
 
@@ -87,8 +87,8 @@ TILT_TO_PLOT = [0., 0.5]
 FIGNAME = "phi1_heatmap"
 FIGSIZE = (5.5*sf, 5.5*sf)
 
-r = 4       # box radius
-res = 100   # resolution
+r = 2.5       # box radius
+res = 50   # resolution
 lognormalize = True
 clip = None
 
@@ -103,18 +103,22 @@ ax = plot_landscape(
     contour_linewidth=0.5,
     contour_linealpha=0.5,
     include_cbar=True,
-    cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
+    # cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
+    cbar_title="",
     equal_axes=True,
     saveas=None,
     figsize=FIGSIZE,
     show=True,
 )
 for fp, fp_type, fp_color in zip(fps[0], fp_types[0], fp_colors[0]):
+    marker = FP_MARKERS[fp_type]
     ax.plot(
         fp[0], fp[1],
         color=fp_color, 
-        marker=FP_MARKERS[fp_type],
-        markersize=2,
+        marker=marker,
+        markersize=3,
+        markeredgecolor='w',
+        markeredgewidth=0.2 if marker == 'o' else 0.5,
     )
 
 # ax.set_xticks([])
@@ -192,7 +196,7 @@ plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight')
 FIGNAME = "phi1_inferred"
 FIGSIZE = (5.5*sf, 5.5*sf)
 
-r = 4       # box radius
+r = 2.5     # box radius
 res = 100   # resolution
 lognormalize = True
 clip = None
@@ -207,7 +211,8 @@ ax = plot_phi(
     contour_linewidth=0.5,
     contour_linealpha=0.5,
     include_cbar=True,
-    cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
+    # cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
+    cbar_title="",
     equal_axes=True,
     saveas=None,
     figsize=FIGSIZE,
@@ -385,7 +390,7 @@ ylims = ax.get_ylim()
 ax.vlines(
     idx, ylims[0], sigma_hist[idx],
     linestyles='--', colors='grey', linewidth=1, zorder=1, 
-    label=f"inferred $\sigma={model.get_sigma():.3g}$"
+    label=f"inferred $\sigma={model.get_sigma():.2g}$"
 )
 ax.set_ylabel("noise $\sigma$")
 ax.set_ylim(*ylims)
@@ -514,7 +519,7 @@ ax.set_ylabel("$s_2$")
 ax.set_xlim([-2, 2])
 ax.set_ylim([-1, 5])
 
-ax.set_title("Signal Prior")
+ax.set_title("Signal prior")
 
 plt.savefig(f"{OUTDIR}/{FIGNAME}", bbox_inches='tight', transparent=True)
 

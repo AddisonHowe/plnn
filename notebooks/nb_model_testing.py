@@ -132,7 +132,7 @@ modelstar, _ = AlgebraicPL.make_model(
     algebraic_phi_id="phi1",
     tilt_weights=[[-1, 0],[0, 1]],
     tilt_bias=[0, 0],
-    sigma=0.1,
+    sigma_init=0.1,
     signal_type="sigmoid",
     nsigparams=4,
 )

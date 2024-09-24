@@ -6,7 +6,7 @@ Generate plots used in Figure 6 of the accompanying manuscript.
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use('figures/manuscript/styles/fig_standard.mplstyle')
+plt.style.use('figures/manuscript/styles/fig_6.mplstyle')
 import matplotlib.ticker as ticker
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import jax
@@ -124,18 +124,18 @@ print("y range:", YMIN, YMAX)
 
 #################################  Loss history
 FIGNAME = "loss_history"
-FIGSIZE = (7*sf, 4*sf)
+FIGSIZE = (6*sf, 3*sf)
 
-fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
+fig, ax = plt.subplots(1, 1, figsize=FIGSIZE, layout='constrained')
 plot_loss_history(
     training_info['loss_hist_train'],
     training_info['loss_hist_valid'],
     log=True,
-    color_train='r', color_valid='b',
+    color_train='grey', color_valid='k',
     marker_train=None, marker_valid=None,
     linestyle_train='-', linestyle_valid='-',
     linewidth_train=1, linewidth_valid=1,
-    alpha_train=0.7, alpha_valid=0.6,
+    alpha_train=0.8, alpha_valid=1.0,
     ax=ax
 )
 ax.set_xlabel("")
@@ -153,7 +153,6 @@ plt.savefig(
 plt.close()
 
 
-
 # #################################  Main Heatmap Diagram
 FIGNAME = "phi_inferred_main"
 FIGSIZE = (4.2*sf, 4*sf)
@@ -162,7 +161,7 @@ SIG_TO_PLOT = [0.0, 1.0]
 PLOT_XLIMS = [-6, 5]
 PLOT_YLIMS = [-3, 5]
 
-res = 100   # resolution
+res = 50   # resolution
 lognormalize = True
 clip = None
 
@@ -218,7 +217,7 @@ plt.close()
 #################################  Heatmaps of inferred landscape
 
 FIGNAME = "phi_inferred"
-FIGSIZE = (5*sf, 5*sf)
+FIGSIZE = (3.5*sf, 3.5*sf)
 
 SIGNALS_TO_PLOT = [
     [0., 0.],
@@ -230,7 +229,7 @@ SIGNALS_TO_PLOT = [
 ]
 
 r = 8       # box radius
-res = 100   # resolution
+res = 50   # resolution
 lognormalize = True
 clip = None
 
@@ -243,10 +242,10 @@ for i, sig_to_plot in enumerate(SIGNALS_TO_PLOT):
         lognormalize=lognormalize,
         clip=clip,
         title=f"CHIR: {sig_to_plot[0]:.1f}, FGF: {sig_to_plot[1]:.1f}",
-        ncontours=10,
+        ncontours=6,
         contour_linewidth=0.5,
         contour_linealpha=0.5,
-        include_cbar=True,
+        include_cbar=False,
         cbar_title="",
         # cbar_title="$\ln\phi$" if lognormalize else "$\phi$",
         xlabel=None,
@@ -254,6 +253,7 @@ for i, sig_to_plot in enumerate(SIGNALS_TO_PLOT):
         equal_axes=False,
         saveas=None,
         show=True,
+        tight_layout=False,
         figsize=FIGSIZE,
     )
 
@@ -262,7 +262,8 @@ for i, sig_to_plot in enumerate(SIGNALS_TO_PLOT):
         width=INSET_SCALE,
         height=INSET_SCALE,
         loc='lower right',
-        bbox_to_anchor=(0.07, -0.1, 1, 1),
+        # bbox_to_anchor=(0.07, -0.1, 1, 1),
+        bbox_to_anchor=(0.03, -0.1, 1, 1),
         bbox_transform=ax.transAxes,
     )
     subax.set_aspect('equal')
@@ -421,6 +422,8 @@ FIGSIZE = (2.6*sf, 2.6*sf)
 XLIMS = [-8.461315377018, 10.01259687722186]
 YLIMS = [-3.8205954067127337, 8.523846462122545]
 
+res = 50
+
 
 rate = train_dset[0][0][3][0,-1]
 print("rate:", rate)
@@ -456,7 +459,7 @@ for cond_name in CONDITIONS:
             model, signal=sig, 
             xrange=XLIMS,
             yrange=YLIMS,
-            res=50,
+            res=res,
             lognormalize=True,
             clip=None,
             title=None,
@@ -477,7 +480,7 @@ for cond_name in CONDITIONS:
             xs[:,0], xs[:,1], '.',
             color='k',
             markersize=1,
-            rasterized=False,
+            rasterized=True,
             alpha=0.3
         )
         ax.set_xlim(*XLIMS)

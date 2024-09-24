@@ -370,7 +370,7 @@ for dt_idx, dt in enumerate(dt_list):
                 td2 = test_dset[data_idx]
                 assert np.all(td1[0][1] == td2[0][1]) and np.all(td1[1] == td2[1])
                 (t0, x0, t1, sp), x1 = test_dset[data_idx]
-                assert np.all(sp == conditions[condidx, tpidx])
+                assert np.allclose(sp, conditions[condidx, tpidx])
                 nbrs0 = NearestNeighbors(n_neighbors=10, algorithm='ball_tree').fit(x0)
                 dists0, idxs0 = nbrs0.kneighbors(x0)
                 nbrs1 = NearestNeighbors(n_neighbors=10, algorithm='ball_tree').fit(x1)

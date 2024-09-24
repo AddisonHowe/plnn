@@ -8,7 +8,7 @@ import warnings
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use('figures/manuscript/styles/fig_standard.mplstyle')
+plt.style.use('figures/manuscript/styles/fig_6.mplstyle')
 
 import tqdm.notebook as tqdm
 import jax
@@ -168,7 +168,7 @@ for dataset_key in KEY_LIST:
             plt.savefig(f"{OUTDIR}/{figname}.pdf")
             plt.close()
 
-print("Each line is the mean loss of a resampled initial condition, averaged over 10 simulations.")
+print(f"Each line is the mean loss of a resampled initial condition, averaged over {nreps} simulations.")
 print("Each line is the mean loss of a condition, " \
       f"averaged over all {nresamps} resamplings.")
 print("Error bars show 2 standard deviations.")
