@@ -9,9 +9,10 @@ import jax.numpy as jnp
 import jax.random as jrandom
 from jaxtyping import Array, Float
 import diffrax
-from diffrax import diffeqsolve, WeaklyDiagonalControlTerm, MultiTerm, ODETerm
+from diffrax import diffeqsolve, MultiTerm, ODETerm, ControlTerm
 from diffrax import VirtualBrownianTree, SaveAt, SubSaveAt
 from diffrax import PIDController, ConstantStepSize
+import lineax
 import equinox as eqx
 
 import plnn.pl as pl
@@ -315,7 +316,7 @@ class PLNN(eqx.Module):
         Returns:
             Array : Diffusion term. Shape (d,).
         """
-        return self.eval_g(t, y)
+        return lineax.DiagonalLinearOperator(self.eval_g(t, y))
     
     def simulate_path(
         self,
@@ -346,7 +347,7 @@ class PLNN(eqx.Module):
         )
         terms = MultiTerm(
             ODETerm(self.drift), 
-            WeaklyDiagonalControlTerm(self.diffusion, brownian_motion)
+            ControlTerm(self.diffusion, brownian_motion)
         )
         solver = _SOLVER_KEYS[self.solver]()
         pidc = _PIDC_KEYS[self.solver](
@@ -422,7 +423,7 @@ class PLNN(eqx.Module):
         )
         terms = MultiTerm(
             ODETerm(self.drift), 
-            WeaklyDiagonalControlTerm(self.diffusion, brownian_motion)
+            ControlTerm(self.diffusion, brownian_motion)
         )
         solver = _SOLVER_KEYS[self.solver]()
         pidc = _PIDC_KEYS[self.solver](
@@ -486,7 +487,7 @@ class PLNN(eqx.Module):
         )
         terms = MultiTerm(
             ODETerm(drift), 
-            WeaklyDiagonalControlTerm(diffusion, brownian_motion)
+            ControlTerm(diffusion, brownian_motion)
         )
         solver = _SOLVER_KEYS[self.solver]()
         saveat = SaveAt(t1=True)
