@@ -11,19 +11,19 @@
 * Normalize data beforehand?
 
 # Installation
-For the CPU:
+Basic setup, without GPU acceleration:
 ```bash
 mamba create -p ./env python=3.9 jax numpy matplotlib pytorch torchvision equinox optax ipykernel pytest
 mamba activate env
 pip install diffrax==0.4.1
 ```
 
-For the GPU, specifying cuda toolkit 11.2:
+For GPU support:
 ```bash
-mamba create -p <env-path> python=3.9 pytorch=1.11[build=cuda112*] numpy=1.25 matplotlib=3.7 pytest=7.4 tqdm ipykernel ipywidgets
-mamba activate env
-pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
-pip install optax==0.1.7 diffrax==0.4.1 equinox==0.11.2
+conda create -p ./env python=3.9 numpy=1.25 matplotlib=3.7 pytest=7.4 tqdm ipykernel ipywidgets --yes
+conda activate env
+pip install --upgrade pip
+pip install jax[cuda12] optax==0.1.7 diffrax==0.6.0 equinox==0.11.5 torch==2.0.1 torchvision torchaudio
 ```
 
 Then, to install the project,
