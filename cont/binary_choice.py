@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from cont.fold_curves import get_fold_curves, get_argparser, plot_diagrams
+from plnn.pl import CELL_COLORS
 
 
 F = lambda x, p: -np.array([
@@ -35,9 +36,9 @@ Fp = lambda x, p : np.array([[-1, 0], [0, -1]])
 
 
 XSTARTS = [
-    [[ 0.1891, -0.1581], 'b'],
-    [[ 0.9201, 0.6418], 'brown'],
-    [[-0.9201, 0.6418], 'g'],
+    [[ 0.1891, -0.1581], CELL_COLORS['cell blue']],
+    [[ 0.9201, 0.6418], CELL_COLORS['cell brown']],
+    [[-0.9201, 0.6418], CELL_COLORS['cell green']],
 ]
 
 P1 = lambda x: 4*x[0]**3 - 8*x[0]*x[1]

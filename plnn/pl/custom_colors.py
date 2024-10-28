@@ -19,6 +19,15 @@ from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 CHIR_COLOR = (0.18, 0.22, 0.73)  # Dark Plasma Blue
 FGF_COLOR  = (0.70, 0.09, 0.32)
 
+CELL_BLUE = (0.11, 0.49, 0.74)  # bluish
+CELL_GREEN = (0.29, 0.52, 0.08)  # greenish
+CELL_BROWN = (0.58, 0.20, 0.18)  # brownish
+
+CELL_COLORS = {
+    'cell blue': CELL_BLUE,
+    'cell green': CELL_GREEN,
+    'cell brown': CELL_BROWN,
+}
 
 def _lighten_color(color, amount=0.5):
     """
