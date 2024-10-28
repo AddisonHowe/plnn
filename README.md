@@ -7,14 +7,14 @@ An application using this architecture is contained in a separate repository, wh
 ## Setup
 Basic setup, without GPU acceleration:
 ```bash
-conda create -p ./env python=3.9 jax=0.4 numpy=1.26 matplotlib=3.8 scikit-learn=1.5 pytorch=2.0 torchvision equinox=0.11 optax=0.1 tqdm ipykernel pytest
+conda create -p ./env python=3.9 jax=0.4 numpy=1.26 matplotlib=3.8 scikit-learn=1.5 pytorch=2.0 torchvision equinox=0.11 optax=0.1 pyyaml=6.0 tqdm ipykernel pytest
 conda activate env
 pip install diffrax==0.6.0
 ```
 
 For GPU support:
 ```bash
-conda create -p ./env python=3.9 numpy=1.25 matplotlib=3.8 scikit-learn=1.5 pytest=7.4 cuda-compat=12.4 tqdm ipykernel ipywidgets --yes
+conda create -p ./env python=3.9 numpy=1.25 matplotlib=3.8 scikit-learn=1.5 pytest=7.4 cuda-compat=12.4 pyyaml=6.0 tqdm ipykernel ipywidgets --yes
 conda activate env
 pip install --upgrade pip
 pip install jax[cuda12] optax==0.1.7 diffrax==0.6.0 equinox==0.11.5 torch==2.0.1 torchvision torchaudio

@@ -12,4 +12,4 @@ from .plot_landscapes import plot_landscape
 
 from .plot_plnn import plot_phi, plot_f
 
-from .custom_colors import CHIR_COLOR, FGF_COLOR
+from .custom_colors import CHIR_COLOR, FGF_COLOR, CELL_COLORS
