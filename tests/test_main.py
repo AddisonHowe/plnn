@@ -125,3 +125,45 @@ def test_dt_schedule(argstring_fpath, expected_hist):
     remove_dir(args.outdir)
     assert np.all(dt_hist == expected_hist), \
         f"Expected {expected_hist}.\nGot {dt_hist}."
+
+# @pytest.mark.skip()
+@pytest.mark.parametrize('argstring_fpath, expected_hist', [
+    # 5 epochs, lr 0.1->0.01, warmup: 1, decay: -1, batch_size: 100/100
+    [f"{DATDIR}/test_main_args/argstring_lr_schedule1.txt",
+     [0.1, 0.1, 0.056234132519, 0.0316227766017, 0.0177827941004]],
+
+    # 5 epochs, lr 0.1->0.01, warmup: 1, decay: -1, batch_size: 200 > 100
+    [f"{DATDIR}/test_main_args/argstring_lr_schedule2.txt",
+     [0.1, 0.1, 0.056234132519, 0.0316227766017, 0.0177827941004]],
+
+    # 5 epochs, lr 0.1->0.01, warmup: 1, decay: -1, batch_size: 50 < 100
+    [f"{DATDIR}/test_main_args/argstring_lr_schedule3.txt",
+     [0.1, 0.0749894209332, 0.0421696503429, 0.0237137370566, 0.0133352143216]],
+
+    # 5 epochs, lr 0.1->0.01, warmup: 1, decay: 4, batch_size: 100/100
+     [f"{DATDIR}/test_main_args/argstring_lr_schedule4.txt",
+     [0.1, 0.1, 0.056234132519, 0.0316227766017, 0.0177827941004]],
+
+    # 5 epochs, lr 0.1->0.01, warmup: 1, decay: 10, batch_size: 100/100
+    [f"{DATDIR}/test_main_args/argstring_lr_schedule5.txt",
+    [0.1, 0.1, 0.0794328234724, 0.063095734448, 0.0501187233627]],
+
+    # 5 epochs, lr 0.1->0.01, warmup: 1, decay: -1, batch_size: 20 < 100
+    [f"{DATDIR}/test_main_args/argstring_lr_schedule6.txt",
+     [0.1, 0.063095734448, 0.0354813389234, 0.0199526231497, 0.011220184543]],
+
+    # 5 epochs, lr 0.1->0.01, warmup: 3, decay: -1, batch_size: 200 > 100
+    [f"{DATDIR}/test_main_args/argstring_lr_schedule7.txt",
+     [0.1, 0.1, 0.1, 0.1, 0.0316227766017]],
+])
+def test_lr_schedule(argstring_fpath, expected_hist):
+    argstring = get_args(argstring_fpath)
+    args = parse_args(argstring)
+    args.outdir = f"{TMPDIR}/{args.outdir}"
+    args.training_data = f"{DATDIR}/{args.training_data}"
+    args.validation_data = f"{DATDIR}/{args.validation_data}"
+    main(args)
+    lr_hist = np.load(f"{args.outdir}/learning_rate_history.npy")
+    remove_dir(args.outdir)
+    assert np.allclose(lr_hist, expected_hist), \
+        f"Expected {expected_hist}.\nGot {lr_hist}."

@@ -109,6 +109,7 @@ def get_model(
 ###############################   BEGIN TESTS   ###############################
 ###############################################################################
 
+# @pytest.mark.skip()
 @pytest.mark.parametrize('dtype', [jnp.float32, jnp.float64])
 @pytest.mark.parametrize('datdir_train, datdir_valid', [
     [f"{DATDIR}/simtest1/data_train", f"{DATDIR}/simtest1/data_valid"],
@@ -186,6 +187,7 @@ def test_fixed_sigma_training(dtype, datdir_train, datdir_valid,
     assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
     
 
+# @pytest.mark.skip()
 @pytest.mark.parametrize('dtype', [jnp.float32, jnp.float64])
 @pytest.mark.parametrize('sample_cells', [False, True])
 @pytest.mark.parametrize('fix_noise', [False, True])
@@ -411,6 +413,7 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
     assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
 
 
+# @pytest.mark.skip()
 @pytest.mark.parametrize('dtype', [jnp.float32, jnp.float64])
 @pytest.mark.parametrize('datdir_train, datdir_valid', [
     [f"{DATDIR}/simtest1/data_train", f"{DATDIR}/simtest1/data_valid"],
