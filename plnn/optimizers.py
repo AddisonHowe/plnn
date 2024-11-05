@@ -57,6 +57,7 @@ def select_optimizer(
 
     # Get the learning rate schedule.
     schedule = optim_args.get('lr_schedule')
+    batch_size = min(batch_size, dataset_size)
 
     if schedule == "exponential_decay":
         lr_sched = _get_exponential_decay_schedule(

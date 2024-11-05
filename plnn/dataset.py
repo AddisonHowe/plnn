@@ -392,13 +392,13 @@ def get_dataloaders(
 
     train_dataloader = NumpyLoader(
         train_dataset, 
-        batch_size=batch_size_train, 
+        batch_size=min(batch_size_train, len(train_dataset)), 
         shuffle=shuffle_train,
     )
 
     valid_dataloader = NumpyLoader(
         valid_dataset, 
-        batch_size=batch_size_valid, 
+        batch_size=min(batch_size_valid, len(valid_dataset)), 
         shuffle=shuffle_valid,
     )
 
@@ -415,7 +415,7 @@ def get_dataloaders(
         )
         test_dataloader = NumpyLoader(
             test_dataset, 
-            batch_size=batch_size_test, 
+            batch_size=min(batch_size_test, len(test_dataset)), 
             shuffle=shuffle_test,
         )
         return_datasets.append(test_dataset)

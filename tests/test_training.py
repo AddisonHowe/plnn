@@ -3,7 +3,9 @@
 """
 
 import pytest
+import os
 import numpy as np
+from argparse import Namespace
 import jax.numpy as jnp
 import jax.random as jrandom
 from contextlib import nullcontext as does_not_raise
@@ -12,8 +14,9 @@ from tests.conftest import DATDIR, TMPDIR, remove_dir
 
 from plnn.models import DeepPhiPLNN
 from plnn.dataset import get_dataloaders
-from plnn.loss_functions import mean_cov_loss, kl_divergence_loss
-from plnn.optimizers import get_optimizer_args, select_optimizer
+from plnn.loss_functions import select_loss_function
+from plnn.loss_functions import mean_cov_loss, kl_divergence_loss, mmd_loss
+from plnn.optimizers import get_optimizer_args, select_optimizer, get_dt_schedule
 from plnn.model_training import train_model
 from plnn.dataset import LandscapeSimulationDataset, NumpyLoader
 
@@ -105,7 +108,6 @@ def get_model(
 ###############################################################################
 ###############################   BEGIN TESTS   ###############################
 ###############################################################################
-
 
 @pytest.mark.parametrize('dtype', [jnp.float32, jnp.float64])
 @pytest.mark.parametrize('datdir_train, datdir_valid', [
@@ -406,4 +408,258 @@ def test_divergent_training(dtype, sample_cells, fix_noise, nan_max_attempts, ex
         )
         
     remove_dir(OUTDIR)
+    assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
+
+
+@pytest.mark.parametrize('dtype', [jnp.float32, jnp.float64])
+@pytest.mark.parametrize('datdir_train, datdir_valid', [
+    [f"{DATDIR}/simtest1/data_train", f"{DATDIR}/simtest1/data_valid"],
+])
+@pytest.mark.parametrize('sigma', [0.0])
+@pytest.mark.parametrize('loss_fn', ['mmd'])
+@pytest.mark.parametrize('opt_method', ['rms'])
+@pytest.mark.parametrize('dt_schedule_args, dt_history_exp', [
+    [{
+        'num_epochs' : 8,
+        'dt' : 0.1,
+        'dt_reduction_factor' : 0.5,
+        'dt_schedule' : 'stepped',
+        'dt_schedule_bounds' : [2, 4, 6],
+        'dt_schedule_scales' : [0.9, 0.8, 0.7],
+     }, np.array([0.1, 0.1, 0.09, 0.09, 0.072, 0.072, 0.0504, 0.0504])
+    ],
+])
+def test_dt_scheduler(dtype, datdir_train, datdir_valid, 
+                      sigma, loss_fn, opt_method, 
+                      dt_schedule_args, dt_history_exp):
+    nprng = np.random.default_rng()
+
+    train_dataloader, valid_dataloader, train_dset, _ = get_dataloaders(
+        datdir_train, datdir_valid, 4, 4, 
+        batch_size_train=1, batch_size_valid=1, 
+        ndims=2, return_datasets=True,
+    )
+
+    model = get_model([W1, W2, W3], [WT1], dtype, sigma=sigma, ncells=10)
+    
+    optimizer_args = {
+        'lr_schedule' : 'constant',
+        'learning_rate' : 0.01,
+        'momentum' : 0.9,
+        'weight_decay' : 0.5, 
+        'clip' : 1.0, 
+    }
+    optimizer = select_optimizer(
+        opt_method, optimizer_args,
+        batch_size=1, dataset_size=len(train_dset),
+    )
+
+    loss_fn = select_loss_function(loss_fn)
+
+    num_epochs = dt_schedule_args['num_epochs']
+    dt_schedule = dt_schedule_args['dt_schedule']
+    dt_sched = get_dt_schedule(dt_schedule, dt_schedule_args)
+
+    os.makedirs(OUTDIR, exist_ok=True)
+    logfpath = f"{OUTDIR}/log.txt"
+    def logprint(s, end='\n', flush=True):
+        print(s, end=end, flush=flush)
+        with open(logfpath, 'a+') as f:
+            f.write(s + end)
+
+    model = train_model(
+        model, 
+        loss_fn, 
+        optimizer,
+        train_dataloader, 
+        valid_dataloader,
+        key=jrandom.PRNGKey(nprng.integers(2**32)),
+        num_epochs=num_epochs,
+        dt_schedule=dt_sched,
+        batch_size=1,
+        fix_noise=True,
+        hyperparams={},
+        outdir=OUTDIR,
+        logprint=logprint,
+    )
+
+    dt_history = np.load(f"{OUTDIR}/dt_hist.npy")
+
+    errors = []
+    if not np.allclose(dt_history, dt_history_exp):
+        msg = f"dt_hist.npy differs from expected."
+        msg += f"\nExpected: {dt_history_exp}\nGot: {dt_history}"
+        errors.append(msg)
+
+    remove_dir(OUTDIR)
+
+    assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
+
+
+@pytest.mark.parametrize('dtype', [jnp.float64])
+@pytest.mark.parametrize('datdir_train, datdir_valid', [
+    [f"{DATDIR}/simtest1/data_train", f"{DATDIR}/simtest1/data_valid"],
+])
+@pytest.mark.parametrize('sigma', [0.0])
+@pytest.mark.parametrize('loss_fn', ['mmd'])
+@pytest.mark.parametrize('opt_method', ['rms'])
+@pytest.mark.parametrize(
+    'num_epochs, batch_size, lr_sched, lr_sched_args, lr_history_exp', [
+    [8, 4, 'constant', 
+     {
+        'learning_rate' : 0.1,
+        'nepochs_warmup' : 1,
+        'nepochs_decay' : -1,
+        'final_learning_rate' : 0.001,
+        'peak_learning_rate' : 0.02,
+        'warmup_cosine_decay_exponent' : 1.0,
+     }, 
+     np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
+    ],
+    [8, 4, 'exponential_decay', 
+     {
+        'learning_rate' : 0.1,
+        'nepochs_warmup' : 1,
+        'nepochs_decay' : 7,
+        'final_learning_rate' : 0.01,
+        'peak_learning_rate' : None,
+        'warmup_cosine_decay_exponent' : None,
+     }, 
+     np.array([0.1, 0.1, 0.0719685673001, 0.0517947467923, 0.0372759372031, 
+               0.0268269579528, 0.0193069772888, 0.0138949549437])
+    ],
+    [8, 4, 'exponential_decay', 
+     {
+        'learning_rate' : 0.1,
+        'nepochs_warmup' : 1,
+        'nepochs_decay' : -1,
+        'final_learning_rate' : 0.01,
+        'peak_learning_rate' : None,
+        'warmup_cosine_decay_exponent' : None,
+     }, 
+     np.array([0.1, 0.1, 0.0719685673001, 0.0517947467923, 0.0372759372031, 
+               0.0268269579528, 0.0193069772888, 0.0138949549437])
+    ],
+    [8, 4, 'exponential_decay', 
+     {
+        'learning_rate' : 0.1,
+        'nepochs_warmup' : 0,
+        'nepochs_decay' : 7,
+        'final_learning_rate' : 0.01,
+        'peak_learning_rate' : None,
+        'warmup_cosine_decay_exponent' : None,
+     }, 
+     np.array([0.1, 0.0719685673001, 0.0517947467923, 0.0372759372031, 
+               0.0268269579528, 0.0193069772888, 0.0138949549437, 0.01])
+    ],
+    [8, 4, 'exponential_decay', 
+     {
+        'learning_rate' : 0.1,
+        'nepochs_warmup' : 0,
+        'nepochs_decay' : 8,
+        'final_learning_rate' : 0.01,
+        'peak_learning_rate' : None,
+        'warmup_cosine_decay_exponent' : None,
+     }, 
+     np.array([0.1, 0.0749894209332, 0.056234132519, 0.0421696503429, 
+               0.0316227766017, 0.0237137370566, 0.0177827941004, 
+               0.0133352143216])
+    ],
+    [8, 12, 'exponential_decay', # Overly-large batch size
+     {
+        'learning_rate' : 0.1,
+        'nepochs_warmup' : 0,
+        'nepochs_decay' : 8,
+        'final_learning_rate' : 0.01,
+        'peak_learning_rate' : None,
+        'warmup_cosine_decay_exponent' : None,
+     }, 
+     np.array([0.1, 0.0749894209332, 0.056234132519, 0.0421696503429, 
+               0.0316227766017, 0.0237137370566, 0.0177827941004, 
+               0.0133352143216])
+    ],
+    [8, 2, 'exponential_decay', 
+     {
+        'learning_rate' : 0.1,
+        'nepochs_warmup' : 0,
+        'nepochs_decay' : 8,
+        'final_learning_rate' : 0.01,
+        'peak_learning_rate' : None,
+        'warmup_cosine_decay_exponent' : None,
+     }, 
+     np.array([0.086596432336, 0.0649381631576, 0.0486967525166, 
+               0.0365174127255, 0.0273841963426, 0.0205352502646, 
+               0.0153992652606, 0.0115478198469])
+    ],
+])
+def test_learning_rate_scheduler(
+    dtype, datdir_train, datdir_valid, 
+    sigma, loss_fn, opt_method, 
+    num_epochs, batch_size, lr_sched, lr_sched_args, lr_history_exp,
+):
+    nprng = np.random.default_rng()
+
+    train_dataloader, valid_dataloader, train_dset, _ = get_dataloaders(
+        datdir_train, datdir_valid, 4, 4, 
+        batch_size_train=batch_size, batch_size_valid=batch_size, 
+        ndims=2, return_datasets=True,
+    )
+
+    model = get_model([W1, W2, W3], [WT1], dtype, sigma=sigma, ncells=10)
+    
+    optimizer_args = Namespace(**{
+        'optimizer' : opt_method,
+        'momentum' : 0.9,
+        'weight_decay' : 0.5, 
+        'clip' : 1.0, 
+        'lr_schedule' : lr_sched,
+        'learning_rate' : lr_sched_args['learning_rate'],
+        'nepochs_warmup' : lr_sched_args['nepochs_warmup'],
+        'nepochs_decay' : lr_sched_args['nepochs_decay'],
+        'final_learning_rate' : lr_sched_args['final_learning_rate'],
+        'peak_learning_rate' : lr_sched_args['peak_learning_rate'],
+        'warmup_cosine_decay_exponent' : lr_sched_args['warmup_cosine_decay_exponent'],
+    })
+
+    optimizer_args = get_optimizer_args(optimizer_args, num_epochs)
+    optimizer = select_optimizer(
+        opt_method, optimizer_args,
+        batch_size=batch_size, dataset_size=len(train_dset),
+    )
+
+    loss_fn = select_loss_function(loss_fn)
+
+    os.makedirs(OUTDIR, exist_ok=True)
+    logfpath = f"{OUTDIR}/log.txt"
+    def logprint(s, end='\n', flush=True):
+        print(s, end=end, flush=flush)
+        with open(logfpath, 'a+') as f:
+            f.write(s + end)
+
+    model = train_model(
+        model, 
+        loss_fn, 
+        optimizer,
+        train_dataloader, 
+        valid_dataloader,
+        key=jrandom.PRNGKey(nprng.integers(2**32)),
+        num_epochs=num_epochs,
+        batch_size=batch_size,
+        fix_noise=True,
+        hyperparams={},
+        outdir=OUTDIR,
+        logprint=logprint,
+        report_every=1,
+    )
+
+    lr_history = np.load(f"{OUTDIR}/learning_rate_history.npy")
+
+    errors = []
+    if not np.allclose(lr_history, lr_history_exp):
+        msg = f"learning_rate_history.npy differs from expected."
+        msg += f"\nExpected: {lr_history_exp}\nGot: {lr_history}"
+        errors.append(msg)
+
+    remove_dir(OUTDIR)
+
     assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
