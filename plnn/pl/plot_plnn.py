@@ -31,7 +31,7 @@ def plot_phi(
         include_tilt_inset=False,
         inset_scale='30%',
         inset_loc='lower left',
-        inset_bbox_to_anchor=None,
+        inset_bbox_to_anchor=(0, 0, 1, 1),
         tilt_arrow_width=0.001,
         signal1_color=SIG1_COLOR,
         signal2_color=SIG2_COLOR,
