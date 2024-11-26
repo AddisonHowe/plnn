@@ -5,11 +5,12 @@
 import warnings
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import numpy as np
 from scipy.spatial import Delaunay
 import jax.numpy as jnp
 
-from .config import DEFAULT_CMAP
+from .config import DEFAULT_CMAP, SIG1_COLOR, SIG2_COLOR
 
 
 def plot_phi(
@@ -27,6 +28,13 @@ def plot_phi(
         normalize=False,
         minimum=None,
         clip=None,
+        include_tilt_inset=False,
+        inset_scale='30%',
+        inset_loc='lower left',
+        inset_bbox_to_anchor=None,
+        tilt_arrow_width=0.001,
+        signal1_color=SIG1_COLOR,
+        signal2_color=SIG2_COLOR,
         xlims=None, 
         ylims=None, 
         zlims=None, 
@@ -194,6 +202,41 @@ def plot_phi(
                 linestyles=contour_linestyle, 
             )
     
+    # Plot signal effect inset
+    if include_tilt_inset and not plot3d:
+        tilt_weights = model.get_parameters()['tilt.w'][0]
+        subax = inset_axes(ax,
+            width=inset_scale,
+            height=inset_scale,
+            loc=inset_loc,
+            bbox_to_anchor=inset_bbox_to_anchor,
+            bbox_transform=ax.transAxes,
+        )
+        subax.set_aspect('equal')
+        subax.axis('off')
+        subax.set_xlim([-1.25, 1.25])
+        subax.set_ylim([-1.25, 1.25])
+        scale = np.max(np.linalg.norm(tilt_weights, axis=0))
+        subax.arrow(
+            0, 0, -tilt_weights[0,0]/scale, -tilt_weights[1,0]/scale, 
+            width=tilt_arrow_width, 
+            head_width=100*tilt_arrow_width, 
+            length_includes_head=True, 
+            fc=signal1_color, 
+            ec=signal1_color,
+            label="$s_1$"
+        )
+        subax.arrow(
+            0, 0, -tilt_weights[0,1]/scale, -tilt_weights[1,1]/scale, 
+            width=tilt_arrow_width, 
+            head_width=100*tilt_arrow_width, 
+            length_includes_head=True, 
+            fc=signal2_color, 
+            ec=signal2_color,
+            label="$s_2$"
+        )
+        
+
     # Colorbar
     fig = ax.figure
     if include_cbar:
