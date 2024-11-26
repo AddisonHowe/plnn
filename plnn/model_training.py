@@ -241,6 +241,7 @@ def train_model(
                 f"Finished training in {time1-time0:.3f} seconds."
             if verbosity: 
                 logprint(msg)
+            np.save(f"{outdir}/dt_hist.npy", dt_hist)
             return model
         
     np.save(f"{outdir}/dt_hist.npy", dt_hist)
