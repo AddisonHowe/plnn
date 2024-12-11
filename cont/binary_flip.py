@@ -123,16 +123,18 @@ def plot_binary_flip_bifurcation_diagram(
         tight_layout=False,
         saveas=None,
         show=False,
+        add_flip_curves=False,
 ):
     if ax is None:
         fig, ax = plt.subplots(1, 1)
     bifcurves, bifcolors = get_binary_flip_curves(
-        rng=rng
+        rng=rng,
+        add_flip_curves=add_flip_curves,
     )
     for curve, color in zip(bifcurves, bifcolors):
         ax.plot(
             curve[:,0], curve[:,1], 
-            linestyle='-', 
+            linestyle='-' if color != 'purple' else '--', 
             color=color,
         )  
     ax.set_xlim(*xlim)
