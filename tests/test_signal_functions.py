@@ -28,8 +28,8 @@ class TestBinarySignal:
         ],
     ])
     def test_binary_signal_direct(self, tc, pi, pf, test_times, expected):
-        f = get_binary_function(tc, pi, pf)
-        ps = f(test_times)
+        f = get_binary_function(np.array(tc), np.array(pi), np.array(pf))
+        ps = f(np.array(test_times))
         errors = []
         for i, t in enumerate(test_times):
             if not np.allclose(expected[i], ps[i]):
