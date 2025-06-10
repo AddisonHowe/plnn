@@ -155,15 +155,25 @@ def get_metric_func(metric_name, metric_args):
     elif metric_name == 'saddle_v1':
         k1 = metric_args['k1']
         k2 = metric_args['k2']
+        theta = metric_args['theta']
+        rotinv = jnp.array([
+            [jnp.cos(theta), jnp.sin(theta)],
+            [-jnp.sin(theta), jnp.cos(theta)]
+        ])
         def mfunc(t, x):
-            x, y = x.T
-            g11 = 1 + (k2 * y)**2
-            g12 = k1 * k2 * x * y
-            g22 = 1 + (k1 * x)**2
+            xr, yr = rotinv @ x.T
+            hr_xr = k1 * xr
+            hr_yr = -k2 * yr
+            hx = hr_xr * jnp.cos(theta) - hr_yr * jnp.sin(theta)
+            hy = hr_xr * jnp.sin(theta) + hr_yr * jnp.cos(theta)
+            g11 = 1 + hy * hy
+            g12 = -hx * hy
+            g22 = 1 + hx * hx
+            denom = 1 + hx * hx + hy * hy
             g = jnp.array([
                 [g11, g12],
                 [g12, g22],
-            ]).T.swapaxes(1, 2)
+            ]).T.swapaxes(1, 2) / denom[:,None,None]
             return g
         return mfunc
     else:
