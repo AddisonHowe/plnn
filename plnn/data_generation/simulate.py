@@ -107,7 +107,7 @@ def get_landscape_field_func(landscape_name):
 
 def get_signal_func(nsignals, signal_schedule, sigparams):
     if sigparams.ndim == 1:
-        sigparams = np.array(sigparams).reshape([nsignals, -1])
+        sigparams = jnp.array(sigparams).reshape([nsignals, -1])
     nsigparams = sigparams.shape[1]
     if signal_schedule == 'binary':
         assert nsigparams == 3, f"Got {nsigparams} args instead of 3."

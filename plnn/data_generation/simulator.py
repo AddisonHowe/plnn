@@ -81,11 +81,11 @@ class Simulator:
 
         # Initialize state, signal, and parameter arrays
         x = xs_save[0].copy()
-        sig = sig0.copy()
-        p = p0.copy()
         
         @eqx.filter_jit
-        def stepper(t, x, p, dt, dw, include_metric):
+        def stepper(t, x, dt, dw, include_metric):
+            sig = self.signal_func(t)
+            p = self.param_func(t, sig, param_args)
             term1 = dt * self.f(t, x, p)
             term2 = dw * self.noise_func(t, x)
             if include_metric:
@@ -93,27 +93,28 @@ class Simulator:
                 xnew = x + jnp.einsum('ijk,ik->ij', g, term1 + term2)
             else:
                 xnew = x + term1 + term2
-            return xnew
+            return xnew, sig, p
         
         # Burnin steps: Update only x. Signal and parameters are fixed.
+        dws = np.sqrt(dt) * rng.standard_normal([burnin, *x.shape])
         for i in range(burnin):
-            dw[:] = np.sqrt(dt) * rng.standard_normal(x.shape)
-            x = stepper(t0, x, p, dt, dw, not (self.metric is None))
+            # dw = np.sqrt(dt) * rng.standard_normal(x.shape)
+            dw = dws[i]
+            x, _, _ = stepper(t0, x, dt, dw, self.metric is not None)
 
         # Reinitialize signals and parameters for main steps
         sig0 = self.signal_func(t0)
-        p0 = self.param_func(0., sig0, param_args)
+        p0 = self.param_func(t0, sig0, param_args)
 
         # Euler steps
         xs_save[0] = x
         sig_save[0] = sig0
         ps_save[0] = p0
         save_counter = 1
+        dws = np.sqrt(dt) * rng.standard_normal([len(ts), *x.shape])
         for i, t in zip(range(1, len(ts)), ts[0:-1]):
-            dw[:] = np.sqrt(dt) * rng.standard_normal(x.shape)
-            sig = self.signal_func(t)
-            p = self.param_func(t, sig, param_args)
-            x = stepper(t, x, p, dt, dw, not (self.metric is None))
+            dw = dws[i]
+            x, sig, p = stepper(t, x, dt, dw, self.metric is not None)
             if i % saverate == 0:
                 xs_save[save_counter] = x
                 sig_save[save_counter] = sig

@@ -1,8 +1,9 @@
 import numpy as np
+import jax.numpy as jnp
 
 def get_binary_function(tcrit, s0, s1):
     """Return a binary function that changes from s0 to s1 at time tcrit."""
-    return np.vectorize(
+    return jnp.vectorize(
         lambda t: s0 * (t < tcrit) + s1 * (t >= tcrit),
         signature='()->(n)',
     )
@@ -21,7 +22,7 @@ def get_sigmoid_function(tcrit, s0, s1, r):
             time. If the input is an ndarray of shape (*), the signal is 
             computed in a vectorized fashion, with output shape (*, nsignals).
     """
-    return np.vectorize(
-        lambda t: s0 + 0.5*(s1 - s0) * (1 + np.tanh(r*(t-tcrit))), 
+    return jnp.vectorize(
+        lambda t: s0 + 0.5*(s1 - s0) * (1 + jnp.tanh(r*(t-tcrit))), 
         signature='()->(n)',
     )
