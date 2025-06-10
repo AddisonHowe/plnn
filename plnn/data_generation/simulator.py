@@ -3,7 +3,7 @@ import numpy as np
 
 class Simulator:
 
-    def __init__(self, f, signal_func, param_func, noise_func) -> None:
+    def __init__(self, f, signal_func, param_func, noise_func, metric=None) -> None:
         """
         Args:
             f (callable): deterministic portion of dynamics. Args: t, x, p.
@@ -15,6 +15,7 @@ class Simulator:
         self.signal_func = signal_func
         self.param_func = param_func
         self.noise_func = noise_func
+        self.metric = metric
 
     def simulate(
             self, 
@@ -84,7 +85,11 @@ class Simulator:
             dw[:] = np.sqrt(dt) * rng.standard_normal(x.shape)
             term1 = dt * self.f(t0, x, p)
             term2 = dw * self.noise_func(t0, x)
-            x += term1 + term2
+            if self.metric is None:
+                x += term1 + term2
+            else:
+                g = self.metric(t0, x)
+                x += np.einsum('ijk,ik->ij', g, term1 + term2)
 
         # Reinitialize signals and parameters for main steps
         sig0 = self.signal_func(t0)
@@ -101,7 +106,11 @@ class Simulator:
             p = self.param_func(t, sig, param_args)
             term1 = dt * self.f(t, x, p)
             term2 = dw * self.noise_func(t, x)
-            x += term1 + term2
+            if self.metric is None:
+                x += term1 + term2
+            else:
+                g = self.metric(t, x)
+                x += np.einsum('ijk,ik->ij', g, term1 + term2)
             if i % saverate == 0:
                 xs_save[save_counter] = x
                 sig_save[save_counter] = sig

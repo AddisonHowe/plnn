@@ -28,6 +28,8 @@ def simulate_landscape(
         noise_schedule='constant',
         noise_args=[0.1],
         burnin_signal=None,
+        metric_name=None,
+        metric_args=None,
         seed=None,
         rng=None,
 ):
@@ -47,6 +49,8 @@ def simulate_landscape(
         param_func_name (str) : Parameter function identifier.
         noise_schedule (str) : Noise schedule identifier.
         noise_args (list) : Arguments for noise function.
+        metric_name (str) : Metric identifier.
+        metric_args (list) : Arguments for metric function.
         seed (int) : Random number generator seed. Default None.
         rng (Generator) : Random number generator object. Default None.
 
@@ -64,7 +68,8 @@ def simulate_landscape(
     signal_func = get_signal_func(nsignals, signal_schedule, sigparams)
     param_func = get_param_func(param_func_name, param_func_args)
     noise_func = get_noise_func(noise_schedule, noise_args)
-    simulator = Simulator(f, signal_func, param_func, noise_func)
+    metric_func = get_metric_func(metric_name, metric_args)
+    simulator = Simulator(f, signal_func, param_func, noise_func, metric_func)
     # Run the simulation
     ts, xs, sigs, ps = simulator.simulate(
         ncells, x0, tfin, dt=dt, burnin=burnin, dt_save=dt_save, 
@@ -139,6 +144,31 @@ def get_noise_func(noise_schedule, noise_args):
     else:
         raise NotImplementedError(f"Unknown noise_schedule: {noise_schedule}")
     return noise_func
+
+def get_metric_func(metric_name, metric_args):
+    if metric_name is None:
+        return None
+    elif metric_name.lower() in ["id", "identity"]:
+        dim = metric_args['dim']
+        id = jnp.eye(dim, dtype=float)[None,:,:]
+        return lambda t, x: jnp.broadcast_to(id, (x.shape[0], dim, dim))
+    elif metric_name == 'saddle_v1':
+        k1 = metric_args['k1']
+        k2 = metric_args['k2']
+        def mfunc(t, x):
+            x, y = x.T
+            g11 = 1 + (k2 * y)**2
+            g12 = k1 * k2 * x * y
+            g22 = 1 + (k1 * x)**2
+            g = jnp.array([
+                [g11, g12],
+                [g12, g22],
+            ]).T.swapaxes(1, 2)
+            return g
+        return mfunc
+    else:
+        msg = f"Unknown metric function identifer: {metric_name}"
+        raise NotImplementedError(msg)
 
 ##########################
 ##  Gradient Functions  ##

@@ -44,6 +44,10 @@ def parse_args(args):
                         choices=['constant'])
     parser.add_argument('--noise_args', type=float, nargs='+',
                         default=[0.01])
+    
+    parser.add_argument('--metric_name', type=str, default=None,
+                        choices=[None, "identity", "saddle_v1"])
+    parser.add_argument('--metric_args', nargs='*', default=[])
         
     parser.add_argument('--animate', action='store_true')
     parser.add_argument('--duration', type=int, default=10, 
@@ -128,6 +132,30 @@ def get_sigparams_sigmoid(
     ])
 
 
+def process_metric_args(metric_name, metric_args):
+    if len(metric_args) % 2 == 1:
+        raise RuntimeError(f"Got odd number of metric arguments: {metric_args}")
+    # Compile dictionary mapping argument name to value
+    d = {}
+    for i in range(len(metric_args) // 2):
+        d[metric_args[2*i]] = metric_args[2*i + 1]
+    # Checks and conversions
+    if metric_name is None or metric_name.lower() == 'none':
+        pass
+    elif metric_name.lower() in ['id', 'identity']:
+        if 'dim' not in d:
+            raise RuntimeError("Missing identity metric arg `dim`")
+        d['dim'] = int(d['dim'])
+    elif metric_name.lower() == 'saddle_v1':
+        if ('k1' not in d) or ('k2' not in d):
+            raise RuntimeError("Missing saddle_v1 metric args `k1` or `k2`")
+        d['k1'] = float(d['k1'])
+        d['k2'] = float(d['k2'])
+    else:
+        raise NotImplementedError(f"Metric `{metric_name}` not implemented.")
+    return d
+
+
 def main(args):
     outdir = args.outdir
     nsims = args.nsims
@@ -152,6 +180,8 @@ def main(args):
     param_func_name = args.param_func
     noise_schedule = args.noise_schedule
     noise_args = args.noise_args
+    metric_name = args.metric_name
+    metric_args = process_metric_args(metric_name, args.metric_args)
     seed = args.seed if args.seed else np.random.randint(2**32)
     do_animate = args.animate
 
@@ -237,6 +267,8 @@ def main(args):
             param_func_name=param_func_name,
             noise_schedule=noise_schedule, 
             noise_args=noise_args,
+            metric_name=metric_name,
+            metric_args=metric_args,
             rng=np.random.default_rng([sim_seed, sim_subseeds[simidx]]),
         )
         
@@ -273,6 +305,8 @@ def main(args):
                     param_func_name=param_func_name,
                     noise_schedule=args.noise_schedule, 
                     noise_args=args.noise_args,
+                    metric_name=metric_name,
+                    metric_args=metric_args,
                     rng=np.random.default_rng([sim_seed, sim_subseeds[simidx]]),
                 )
 
