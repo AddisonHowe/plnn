@@ -1,4 +1,8 @@
 import numpy as np
+import jax
+jax.config.update("jax_enable_x64", True)
+import jax.numpy as jnp
+import equinox as eqx
 # import torch
 
 class Simulator:
@@ -57,7 +61,7 @@ class Simulator:
         ts = np.linspace(0., tfin, 1 + int(tfin / dt))
         
         # Initialize all cells at given state `x0`
-        x0 = np.array(x0)
+        x0 = jnp.array(x0)
         dim = x0.shape[-1]
         xs_save = np.zeros([nsaves, ncells, dim])
         xs_save[0] = x0
@@ -80,16 +84,21 @@ class Simulator:
         sig = sig0.copy()
         p = p0.copy()
         
+        @eqx.filter_jit
+        def stepper(t, x, p, dt, dw, include_metric):
+            term1 = dt * self.f(t, x, p)
+            term2 = dw * self.noise_func(t, x)
+            if include_metric:
+                g = self.metric(t, x)
+                xnew = x + jnp.einsum('ijk,ik->ij', g, term1 + term2)
+            else:
+                xnew = x + term1 + term2
+            return xnew
+        
         # Burnin steps: Update only x. Signal and parameters are fixed.
         for i in range(burnin):
             dw[:] = np.sqrt(dt) * rng.standard_normal(x.shape)
-            term1 = dt * self.f(t0, x, p)
-            term2 = dw * self.noise_func(t0, x)
-            if self.metric is None:
-                x += term1 + term2
-            else:
-                g = self.metric(t0, x)
-                x += np.einsum('ijk,ik->ij', g, term1 + term2)
+            x = stepper(t0, x, p, dt, dw, not (self.metric is None))
 
         # Reinitialize signals and parameters for main steps
         sig0 = self.signal_func(t0)
@@ -104,13 +113,7 @@ class Simulator:
             dw[:] = np.sqrt(dt) * rng.standard_normal(x.shape)
             sig = self.signal_func(t)
             p = self.param_func(t, sig, param_args)
-            term1 = dt * self.f(t, x, p)
-            term2 = dw * self.noise_func(t, x)
-            if self.metric is None:
-                x += term1 + term2
-            else:
-                g = self.metric(t, x)
-                x += np.einsum('ijk,ik->ij', g, term1 + term2)
+            x = stepper(t, x, p, dt, dw, not (self.metric is None))
             if i % saverate == 0:
                 xs_save[save_counter] = x
                 sig_save[save_counter] = sig

@@ -1,5 +1,6 @@
 import sys, os, argparse
 import csv
+import tqdm
 import numpy as np
 from plnn.data_generation.simulate import simulate_landscape, get_landscape_func
 from plnn.data_generation.phi_animator import PhiSimulationAnimator
@@ -60,6 +61,7 @@ def parse_args(args):
     parser.add_argument('--save_animation_data', action='store_true')
     
     parser.add_argument('--seed', type=int, default=None)
+    parser.add_argument('--pbar', action="store_true")
     return parser.parse_args(args)
 
 
@@ -186,6 +188,7 @@ def main(args):
     metric_args = process_metric_args(metric_name, args.metric_args)
     seed = args.seed if args.seed else np.random.randint(2**32)
     do_animate = args.animate
+    pbar = args.pbar
 
     parent_rng = np.random.default_rng(seed=seed)
     os.makedirs(outdir, exist_ok=True)
@@ -220,7 +223,7 @@ def main(args):
 
     sim_subseeds = parent_rng.choice(2**32, size=nsims, replace=False)
     streams = parent_rng.spawn(nsims)
-    for simidx in range(nsims):
+    for simidx in tqdm.trange(nsims, disable=not pbar):
         simdir = f"{outdir}/sim{simidx}"
         os.makedirs(simdir, exist_ok=True)
         with open(f"{simdir}/args.txt", 'w') as f:

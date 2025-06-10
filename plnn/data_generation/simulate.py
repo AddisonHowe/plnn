@@ -220,14 +220,14 @@ def phi_stitched(t, xy, p):
 
 def phi1_field(t, x, p):
     """Vector field of first potential function in Saez et al."""
-    return -np.array([
+    return -jnp.array([
         4*x[:,0]**3 - 8*x[:,0]*x[:,1] + p[0],
         4*x[:,1]**3 + 3*x[:,1]*x[:,1] - 4*x[:,0]*x[:,0] + 2*x[:,1] + p[1]
     ]).T
 
 def phi2_field(t, x, p):
     """Vector field of second potential function in Saez et al."""
-    return -np.array([
+    return -jnp.array([
         4*x[:,0]**3 + 3*x[:,0]*x[:,0] - 2*x[:,1]*x[:,1] - 2*x[:,0] + p[0],
         4*x[:,1]**3 - 4*x[:,0]*x[:,1] + p[1]
     ]).T
@@ -236,7 +236,7 @@ def phiq_field(t, x, p):
     """Vector field of Qudaratic Potential with A=1/4, B=1/9."""
     a = 1/4
     b = 1/9
-    return -np.array([
+    return -jnp.array([
         2.*a*x[:,0] + p[0],
         2.*b*x[:,1] + p[1]
     ]).T
@@ -256,7 +256,7 @@ def phi_stitched_field(t, xy, p):
     # ]).T
     f1 = phi1_field(t, xy, p[0:2])
     f2 = phi2_field(t, xy - np.array([dx, dy]), p[2:4])
-    chi = (np.tanh(10*x - 5) + 1) / 2
+    chi = (jnp.tanh(10*x - 5) + 1) / 2
     return (1-chi[:,None]) * p[4] * f1 + chi[:,None] * p[5] * f2
 
 #####################
