@@ -47,7 +47,8 @@ def parse_args(args):
     
     parser.add_argument('--metric_name', type=str, default=None,
                         choices=[None, "identity", "saddle_v1"])
-    parser.add_argument('--metric_args', nargs='*', default=[])
+    parser.add_argument('--metric_args', nargs='*', default=[],
+                        help="identity: dim; saddle_v1: k1, k2, theta (in degrees)")
         
     parser.add_argument('--animate', action='store_true')
     parser.add_argument('--duration', type=int, default=10, 
@@ -151,6 +152,7 @@ def process_metric_args(metric_name, metric_args):
             raise RuntimeError("Missing saddle_v1 metric args `k1` or `k2`")
         d['k1'] = float(d['k1'])
         d['k2'] = float(d['k2'])
+        d['theta'] = float(d.get('theta', 0)) * np.pi / 180
     else:
         raise NotImplementedError(f"Metric `{metric_name}` not implemented.")
     return d

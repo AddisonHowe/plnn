@@ -24,9 +24,11 @@ def get_args(fpath):
 ###############################################################################
 
 @pytest.mark.parametrize('argstring_fpath', [
-    f"{DATDIR}/test_data_generation/argstring1.txt",
+    f"{DATDIR}/test_data_generation/argstring1a.txt",
     f"{DATDIR}/test_data_generation/argstring1b.txt",
-    f"{DATDIR}/test_data_generation/argstring2.txt",
+    f"{DATDIR}/test_data_generation/argstring2a.txt",
+    f"{DATDIR}/test_data_generation/argstring2b.txt",
+    f"{DATDIR}/test_data_generation/argstring2c.txt",
 ])
 @pytest.mark.filterwarnings(
     "ignore:divide by zero encountered in scalar divide",
