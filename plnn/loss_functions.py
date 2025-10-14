@@ -167,6 +167,24 @@ def mmd_loss(y_sim, y_obs, kernel='multiscale', bw_range=None) -> float:
 ##  Helper Functions  ##
 ########################
 
+def kl_vae_loss(mu, logvar):
+    kl_loss = jnp.mean(
+        0.5 * jnp.mean(-logvar - 1.0 + jnp.exp(logvar) + mu ** 2, axis=-1)
+    )
+    return kl_loss
+
+def batched_kl_vae_loss(mus, logvars):
+    return jnp.mean(jax.vmap(kl_vae_loss, 0)(mus, logvars))
+
+def l2_loss(x, y):
+    return jnp.sum(jnp.square(x - y))
+
+def l2_ensemble_loss(xs, ys):
+    return jnp.mean(jax.vmap(l2_loss, 0)(xs, ys))
+
+def batched_l2_ensemble_loss(batched_xs, batched_ys):
+    return jnp.mean(jax.vmap(l2_ensemble_loss, 0)(batched_xs, batched_ys))
+
 def euclidean_distance(x, y):
     return jnp.sqrt(jnp.sum(jnp.square(x - y)))
 

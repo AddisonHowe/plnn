@@ -11,7 +11,7 @@ from contextlib import nullcontext as does_not_raise
 from tests.conftest import DATDIR, TMPDIR, remove_dir
 
 from plnn.main import parse_args, main
-from plnn.models import DeepPhiPLNN
+from plnn.models import DeepPhiPLNN, VAEPLNN
 from plnn.dataset import NumpyLoader
 from plnn.dataset import LandscapeSimulationDataset as Dataset
 
@@ -36,6 +36,7 @@ def get_args(fpath):
     f"{DATDIR}/test_main_args/argstring3.txt",
     f"{DATDIR}/test_main_args/argstring4.txt",
     f"{DATDIR}/test_main_args/argstring_algphi1.txt",
+    f"{DATDIR}/test_main_args/argstring_vaeplnn1.txt",
 ])
 def test_main(argstring_fpath):
     argstring = get_args(argstring_fpath)
@@ -76,13 +77,14 @@ def test_main_nonhomogeneous(
     remove_dir(args.outdir)
 
 # @pytest.mark.skip()
-@pytest.mark.parametrize('argstring_fpath, modelname, dtype', [
-    [f"{DATDIR}/test_main_args/argstring1.txt", "model1", jnp.float32],
-    [f"{DATDIR}/test_main_args/argstring2.txt", "model2", jnp.float32],
-    [f"{DATDIR}/test_main_args/argstring3.txt", "model3", jnp.float32],
-    [f"{DATDIR}/test_main_args/argstring4.txt", "model4", jnp.float32],
+@pytest.mark.parametrize('argstring_fpath, modelname, modelclass, dtype', [
+    [f"{DATDIR}/test_main_args/argstring1.txt", "model1", DeepPhiPLNN, jnp.float32],
+    [f"{DATDIR}/test_main_args/argstring2.txt", "model2", DeepPhiPLNN, jnp.float32],
+    [f"{DATDIR}/test_main_args/argstring3.txt", "model3", DeepPhiPLNN, jnp.float32],
+    [f"{DATDIR}/test_main_args/argstring4.txt", "model4", DeepPhiPLNN, jnp.float32],
+    [f"{DATDIR}/test_main_args/argstring_vaeplnn1.txt", "modelvae1", VAEPLNN, jnp.float32],
 ])
-def test_reproducibility(argstring_fpath, modelname, dtype):
+def test_reproducibility(argstring_fpath, modelname, modelclass, dtype):
     argstring = get_args(argstring_fpath)
     args = parse_args(argstring)
     args.outdir = f"{TMPDIR}/{args.outdir}"
@@ -91,14 +93,14 @@ def test_reproducibility(argstring_fpath, modelname, dtype):
     assert args.seed > 0, f"This test requires a seed! See {argstring_fpath}."
     main(args)
     # Load first model instance
-    model1, hp1 = DeepPhiPLNN.load(
+    model1, hp1 = modelclass.load(
         f"{args.outdir}/states/{modelname}_1.pth",
         dtype=dtype
     )
     remove_dir(f"{TMPDIR}/tmp_test_main")
     # Re-run main
     main(args)
-    model2, hp2 = DeepPhiPLNN.load(
+    model2, hp2 = modelclass.load(
         f"{args.outdir}/states/{modelname}_1.pth",
         dtype=dtype
     )

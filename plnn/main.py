@@ -15,11 +15,12 @@ import jax.tree_util as jtu
 import equinox as eqx
 
 from plnn.dataset import get_dataloaders
-from plnn.models import DeepPhiPLNN, GMMPhiPLNN, NEDeepPhiPLNN, NEGMMPhiPLNN
+from plnn.models import VAEPLNN, DeepPhiPLNN, GMMPhiPLNN, NEDeepPhiPLNN, NEGMMPhiPLNN
 from plnn.models import AlgebraicPL
 from plnn.loss_functions import select_loss_function
 from plnn.optimizers import get_optimizer_args, select_optimizer, get_dt_schedule
 from plnn.model_training import train_model
+from plnn.model_training_vae import train_model_vae
 
 
 def parse_args(args):
@@ -32,8 +33,8 @@ def parse_args(args):
     parser.add_argument('-t', '--training_data', type=str, required=True)
     parser.add_argument('-v', '--validation_data', type=str, required=True)
     parser.add_argument('--model_type', type=str, default="deep_phi",
-                        choices=['deep_phi', 'gmm_phi', 
-                                 'binary_choice', 'binary_flip', 'quadratic'])
+                        choices=['deep_phi', 'gmm_phi', 'binary_choice', 
+                                 'binary_flip', 'quadratic', "vae_plnn"])
     parser.add_argument('-nt', '--nsims_training', type=int, default=None)
     parser.add_argument('-nv', '--nsims_validation', type=int, default=None)
     parser.add_argument('-e', '--num_epochs', type=int, default=50)
@@ -119,10 +120,24 @@ def parse_args(args):
     grp_ma.add_argument('--metric_final_act', type=str, default=None)
     grp_ma.add_argument('--metric_layer_normalize', action='store_true')
 
+    grp_ma.add_argument('--enc_hidden_dims', type=int, nargs='+', 
+                        default=[])
+    grp_ma.add_argument('--enc_hidden_acts', type=str, nargs='+', 
+                        default=None)
+    grp_ma.add_argument('--enc_layer_normalize', action='store_true')
+    grp_ma.add_argument('--dec_hidden_dims', type=int, nargs='+', 
+                        default=[])
+    grp_ma.add_argument('--dec_hidden_acts', type=str, nargs='+', 
+                        default=None)
+    grp_ma.add_argument('--dec_final_act', type=str, default=None)
+    grp_ma.add_argument('--dec_layer_normalize', action='store_true')
+
+
     grp_ma.add_argument('--fix_noise', action="store_true")
     grp_ma.add_argument('--sigma', type=float, default=1e-3,
                         help="Noise level if not inferring sigma. Otherwise, \
                             the initial value for the sigma parameter.")    
+    grp_ma.add_argument('--latent_dim', type=int, default=None)
 
     # Model initialization
     grp_init = parser.add_argument_group(
@@ -159,6 +174,27 @@ def parse_args(args):
                           choices=[None, 'constant', 'normal'])
     grp_init.add_argument('--init_metric_bias_args', type=float, nargs='*', 
                           default=None)
+    grp_init.add_argument('--init_enc_weights_method', type=str, 
+                          default='xavier_uniform', 
+                          choices=[None, 'xavier_uniform', 'constant', 'normal'])
+    grp_init.add_argument('--init_enc_weights_args', type=float, nargs='*', 
+                          default=[])
+    grp_init.add_argument('--init_enc_bias_method', type=str, 
+                          default=None, 
+                          choices=[None, 'constant', 'normal'])
+    grp_init.add_argument('--init_enc_bias_args', type=float, nargs='*', 
+                          default=None)
+    grp_init.add_argument('--init_dec_weights_method', type=str, 
+                          default='xavier_uniform', 
+                          choices=[None, 'xavier_uniform', 'constant', 'normal'])
+    grp_init.add_argument('--init_dec_weights_args', type=float, nargs='*', 
+                          default=[])
+    grp_init.add_argument('--init_dec_bias_method', type=str, 
+                          default=None, 
+                          choices=[None, 'constant', 'normal'])
+    grp_init.add_argument('--init_dec_bias_args', type=float, nargs='*', 
+                          default=None)
+    
 
     # Loss function
     parser.add_argument('--loss', type=str, default="kl", 
@@ -308,6 +344,8 @@ def main(args):
         model_class = NEGMMPhiPLNN
     elif model_type in ['binary_choice', 'binary_flip', 'quadratic']:
         model_class = AlgebraicPL
+    elif model_type == 'vae_plnn':
+        model_class = VAEPLNN
     else:
         msg = f"Unknown model type specification: {model_type}."
         log_and_raise_runtime_error(msg)
@@ -388,34 +426,64 @@ def main(args):
     }
 
     # Train the model
-    model = train_model(
-        model,
-        loss_fn, 
-        optimizer,
-        train_dataloader, 
-        valid_dataloader,
-        key=trainkey,
-        num_epochs=num_epochs,
-        batch_size=batch_size,
-        patience=patience,
-        min_epochs=min_epochs,
-        dt_schedule=dt_schedule,
-        fix_noise=fix_noise,
-        model_name=model_name,
-        hyperparams=hyperparams,
-        outdir=outdir,
-        save_all=args.save_all,
-        plotting=do_plot,
-        plotting_opts=plotting_opts,
-        report_every=args.report_every,
-        logprint=logprint,
-        error_raiser=log_and_raise_runtime_error,
-        reduce_dt_on_nan=reduce_dt_on_nan,
-        dt_reduction_factor=dt_reduction_factor,
-        reduce_cf_on_nan=reduce_cf_on_nan,
-        cf_reduction_factor=cf_reduction_factor,
-        nan_max_attempts=nan_max_attempts,
-    )
+    if model_type != "vae_plnn":
+        model = train_model(
+            model,
+            loss_fn, 
+            optimizer,
+            train_dataloader, 
+            valid_dataloader,
+            key=trainkey,
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            patience=patience,
+            min_epochs=min_epochs,
+            dt_schedule=dt_schedule,
+            fix_noise=fix_noise,
+            model_name=model_name,
+            hyperparams=hyperparams,
+            outdir=outdir,
+            save_all=args.save_all,
+            plotting=do_plot,
+            plotting_opts=plotting_opts,
+            report_every=args.report_every,
+            logprint=logprint,
+            error_raiser=log_and_raise_runtime_error,
+            reduce_dt_on_nan=reduce_dt_on_nan,
+            dt_reduction_factor=dt_reduction_factor,
+            reduce_cf_on_nan=reduce_cf_on_nan,
+            cf_reduction_factor=cf_reduction_factor,
+            nan_max_attempts=nan_max_attempts,
+        )
+    else:
+        model = train_model_vae(
+            model,
+            loss_fn, 
+            optimizer,
+            train_dataloader, 
+            valid_dataloader,
+            key=trainkey,
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            patience=patience,
+            min_epochs=min_epochs,
+            dt_schedule=dt_schedule,
+            fix_noise=fix_noise,
+            model_name=model_name,
+            hyperparams=hyperparams,
+            outdir=outdir,
+            save_all=args.save_all,
+            plotting=do_plot,
+            plotting_opts=plotting_opts,
+            report_every=args.report_every,
+            logprint=logprint,
+            error_raiser=log_and_raise_runtime_error,
+            reduce_dt_on_nan=reduce_dt_on_nan,
+            dt_reduction_factor=dt_reduction_factor,
+            reduce_cf_on_nan=reduce_cf_on_nan,
+            cf_reduction_factor=cf_reduction_factor,
+            nan_max_attempts=nan_max_attempts,
+        )
 
     return model
 
@@ -479,7 +547,7 @@ def get_model_args(model_type, args):
     }
 
     # Add extra args based on Deep or GMM PLNN
-    if model_type == 'deep_phi' or model_type == 'ne_deep_phi':
+    if model_type in ['deep_phi', 'ne_deep_phi', 'vae_plnn']:
         args_make.update({
             'include_phi_bias' : False,
             'phi_hidden_dims' : args.phi_hidden_dims,
@@ -497,6 +565,39 @@ def get_model_args(model_type, args):
         args_make.update({})
         args_init.update({})
         raise NotImplementedError()
+    
+    # Add extra args for VAEPLNN
+    if model_type in ['vae_plnn']:
+        args_make.update({
+            'latent_dim' : args.latent_dim,
+            'include_enc_bias' : False,
+            'enc_hidden_dims' : args.enc_hidden_dims,
+            'enc_hidden_acts' : args.enc_hidden_acts,
+            'enc_layer_normalize' : args.enc_layer_normalize,
+            'include_dec_bias' : False,
+            'dec_hidden_dims' : args.dec_hidden_dims,
+            'dec_hidden_acts' : args.dec_hidden_acts,
+            'dec_final_act' : args.dec_final_act,
+            'dec_layer_normalize' : args.dec_layer_normalize,
+        })
+        args_init.update({
+            'init_enc_mlp_weights_method' : args.init_enc_weights_method,
+            'init_enc_mlp_weights_args' : args.init_enc_weights_args,
+            'init_enc_mlp_bias_method' : args.init_enc_bias_method,
+            'init_enc_mlp_bias_args' : args.init_enc_bias_args,
+            'init_enc_mu_weights_method' : args.init_enc_weights_method,
+            'init_enc_mu_weights_args' : args.init_enc_weights_args,
+            'init_enc_mu_bias_method' : args.init_enc_bias_method,
+            'init_enc_mu_bias_args' : args.init_enc_bias_args,
+            'init_enc_logvar_weights_method' : args.init_enc_weights_method,
+            'init_enc_logvar_weights_args' : args.init_enc_weights_args,
+            'init_enc_logvar_bias_method' : args.init_enc_bias_method,
+            'init_enc_logvar_bias_args' : args.init_enc_bias_args,
+            'init_dec_weights_method' : args.init_dec_weights_method,
+            'init_dec_weights_args' : args.init_dec_weights_args,
+            'init_dec_bias_method' : args.init_dec_bias_method,
+            'init_dec_bias_args' : args.init_dec_bias_args,
+        })
 
     # Add extra args for AlgebraicPL models
     if model_type == 'binary_choice':
