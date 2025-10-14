@@ -43,6 +43,7 @@ class AEPLNN(DeepPhiPLNN):
         key, subkey = jrandom.split(key, 2)
         super().__init__(subkey, dtype=dtype, **kwargs)
         
+        self.model_type = "ae_plnn"
         self.latent_dim = latent_dim
         self.include_enc_bias = include_enc_bias
         self.include_dec_bias = include_dec_bias

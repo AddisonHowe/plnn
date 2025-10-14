@@ -2,6 +2,7 @@
 
 """
 
+import json
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
@@ -44,6 +45,7 @@ class VAEPLNN(DeepPhiPLNN):
         key, subkey = jrandom.split(key, 2)
         super().__init__(subkey, dtype=dtype, **kwargs)
         
+        self.model_type = "vae_plnn"
         self.latent_dim = latent_dim
         self.include_enc_bias = include_enc_bias
         self.include_dec_bias = include_dec_bias
@@ -85,6 +87,7 @@ class VAEPLNN(DeepPhiPLNN):
         y0: Float[Array, "b ncells ndims"],
         sigparams: Float[Array, "b nsigs nsigparams"],
         key: Array,
+        return_all: bool = False,
     ) -> Float[Array, "b ncells ndims"]:
         """Forward call. Acts on batched data.
 
@@ -113,11 +116,23 @@ class VAEPLNN(DeepPhiPLNN):
         batch_keys = jax.random.split(key, t0.shape[0])
         
         # Encode the inputs
-        z0, _, _ = encvec(y0, batch_enc_keys)
+        z0, z0_mu, z0_logvar = encvec(y0, batch_enc_keys)
+        # Decode the inputs
+        y0hat = decvec(z0)
         # Evolve in latent space
         z1 = fwdvec(t0, t1, z0, sigparams, batch_keys)
         # Decode the evolved inputs
         y1 = decvec(z1)
+        all_outputs = {
+            "z0": z0,
+            "z0": z0,
+            "z0_mu": z0_mu,
+            "z0_logvar": z0_logvar,
+            "y0hat": y0hat,
+            "z1": z1,
+        }
+        if return_all:
+            return y1, all_outputs
         return y1
     
     ######################
@@ -136,16 +151,14 @@ class VAEPLNN(DeepPhiPLNN):
         """
         d = super().get_parameters()
         enc_mlp_linlayers = self._get_linear_module_layers(self.encoder_mlp)
-        enc_mu_linlayers = self._get_linear_module_layers(self.encoder_mu)
-        enc_logvar_linlayers = self._get_linear_module_layers(self.encoder_logvar)
         dec_linlayers = self._get_linear_module_layers(self.decoder)
         d.update({
             'encoder_mlp.w' : [l.weight for l in enc_mlp_linlayers],
             'encoder_mlp.b' : [l.bias for l in enc_mlp_linlayers],
-            'encoder_mu.w' : [l.weight for l in enc_mu_linlayers],
-            'encoder_mu.b' : [l.bias for l in enc_mu_linlayers],
-            'encoder_logvar.w' : [l.weight for l in enc_logvar_linlayers],
-            'encoder_logvar.b' : [l.bias for l in enc_logvar_linlayers],
+            'encoder_mu.w' : self.encoder_mu.weight,
+            'encoder_mu.b' : self.encoder_mu.bias,
+            'encoder_logvar.w' : self.encoder_logvar.weight,
+            'encoder_logvar.b' : self.encoder_logvar.bias,
             'decoder.w' : [l.weight for l in dec_linlayers],
             'decoder.b' : [l.bias for l in dec_linlayers],
         })
@@ -339,6 +352,10 @@ class VAEPLNN(DeepPhiPLNN):
         hyperparams = model.get_hyperparameters()
         # Append to dictionary those hyperparams not stored internally.
         hyperparams.update({
+            'phi_hidden_dims' : phi_hidden_dims,
+            'phi_hidden_acts' : phi_hidden_acts,
+            'phi_final_act' : phi_final_act,
+            'phi_layer_normalize' : phi_layer_normalize,
             'enc_hidden_dims' : enc_hidden_dims,
             'enc_hidden_acts' : enc_hidden_acts,
             'enc_layer_normalize' : enc_layer_normalize,
@@ -416,6 +433,29 @@ class VAEPLNN(DeepPhiPLNN):
             include_biases=self.include_dec_bias,
         )
         return model
+    
+    ############################
+    ##  Model Saving/Loading  ##
+    ############################
+
+    @staticmethod
+    def load(fname:str, dtype=jnp.float32) -> tuple['VAEPLNN', dict]:
+        """Load a model from a binary parameter file.
+        
+        Args:
+            fname (str): Parameter file to load.
+            dtype : Datatype. Either jnp.float32 or jnp.float64.
+
+        Returns:
+            VAEPLNN: Model instance.
+            dict: Model hyperparameters.
+        """
+        with open(fname, "rb") as f:
+            hyperparams = json.loads(f.readline().decode())
+            model, _ = VAEPLNN.make_model(
+                key=jrandom.PRNGKey(0), dtype=dtype, **hyperparams
+            )
+            return eqx.tree_deserialise_leaves(f, model), hyperparams
     
     ###################################
     ##  Construction Helper Methods  ##
