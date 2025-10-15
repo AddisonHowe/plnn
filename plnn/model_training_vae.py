@@ -414,9 +414,10 @@ def compute_loss(model, x, y, loss_fn, key):
     z0_mu = res["z0_mu"]
     z0_logvar = res["z0_logvar"]
     y0hat = res["y0hat"]
+    y0samp = res["y0"]
     # Sum distributional loss, reconstruction loss, and KL divergence loss
     dist_loss = loss_fn(y_pred, y)
-    rec_loss = batched_l2_ensemble_loss(y0hat, y0)
+    rec_loss = batched_l2_ensemble_loss(y0hat, y0samp)
     kl_loss = batched_kl_vae_loss(z0_mu, z0_logvar)
     loss = dist_loss + rec_loss + kl_loss
     return loss
@@ -438,9 +439,10 @@ def compute_loss_partitioned(diff_model, static_model, x, y, loss_fn, key):
     z0_mu = res["z0_mu"]
     z0_logvar = res["z0_logvar"]
     y0hat = res["y0hat"]
+    y0samp = res["y0"]
     # Sum distributional loss, reconstruction loss, and KL divergence loss
     dist_loss = loss_fn(y_pred, y)
-    rec_loss = batched_l2_ensemble_loss(y0hat, y0)
+    rec_loss = batched_l2_ensemble_loss(y0hat, y0samp)
     kl_loss = batched_kl_vae_loss(z0_mu, z0_logvar)
     loss = dist_loss + rec_loss + kl_loss
     return loss
@@ -465,9 +467,10 @@ def validation_step(model, x, y, loss_fn, key):
     z0_mu = res["z0_mu"]
     z0_logvar = res["z0_logvar"]
     y0hat = res["y0hat"]
+    y0samp = res["y0"]
     # Sum distributional loss, reconstruction loss, and KL divergence loss
     dist_loss = loss_fn(y_pred, y)
-    rec_loss = batched_l2_ensemble_loss(y0hat, y0)
+    rec_loss = batched_l2_ensemble_loss(y0hat, y0samp)
     kl_loss = batched_kl_vae_loss(z0_mu, z0_logvar)
     loss = dist_loss + rec_loss + kl_loss
     return loss
