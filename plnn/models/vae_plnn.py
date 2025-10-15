@@ -43,7 +43,7 @@ class VAEPLNN(DeepPhiPLNN):
             **kwargs
     ):
         key, subkey = jrandom.split(key, 2)
-        super().__init__(subkey, dtype=dtype, **kwargs)
+        super().__init__(subkey, dtype=dtype, latent_dim=latent_dim, **kwargs)
         
         self.model_type = "vae_plnn"
         self.latent_dim = latent_dim

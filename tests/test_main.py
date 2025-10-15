@@ -37,6 +37,7 @@ def get_args(fpath):
     f"{DATDIR}/test_main_args/argstring4.txt",
     f"{DATDIR}/test_main_args/argstring_algphi1.txt",
     f"{DATDIR}/test_main_args/argstring_vaeplnn1.txt",
+    f"{DATDIR}/test_main_args/argstring_vaeplnn2.txt",
 ])
 def test_main(argstring_fpath):
     argstring = get_args(argstring_fpath)

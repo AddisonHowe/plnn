@@ -98,6 +98,7 @@ class PLNN(eqx.Module):
     
     model_type: str  # (abstract)
     ndims: int
+    latent_dim: int
     nparams: int
     nsigs: int
     ncells: int
@@ -134,6 +135,7 @@ class PLNN(eqx.Module):
         tilt_hidden_acts,
         tilt_final_act,
         tilt_layer_normalize,
+        latent_dim=None,
     ):
         super().__init__()
         
@@ -151,6 +153,10 @@ class PLNN(eqx.Module):
         self.confinement_factor = confinement_factor
         self.sample_cells = sample_cells
         self.include_tilt_bias = include_tilt_bias
+        if latent_dim is None:
+            self.latent_dim = ndims
+        else:
+            self.latent_dim = latent_dim
 
         key, key_tilt = jax.random.split(key, 2)
 
@@ -1304,7 +1310,7 @@ class PLNN(eqx.Module):
     def _construct_tilt_module(self, key, hidden_dims, hidden_acts, final_act, 
                           layer_normalize, bias=False, dtype=jnp.float32):
         return self._construct_ffn(
-            key, self.nsigs, self.ndims, 
+            key, self.nsigs, self.latent_dim, 
             hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
         )
     
