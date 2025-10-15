@@ -128,6 +128,7 @@ class VAEPLNN(DeepPhiPLNN):
             "z0": z0,
             "z0_mu": z0_mu,
             "z0_logvar": z0_logvar,
+            "y0": y0,
             "y0hat": y0hat,
             "z1": z1,
         }
