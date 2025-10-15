@@ -16,6 +16,7 @@ from .plnn import PLNN
 class DeepPhiPLNN(PLNN):
 
     include_phi_bias: bool
+    latent_dim: int
 
     def __init__(
             self, 
@@ -25,13 +26,18 @@ class DeepPhiPLNN(PLNN):
             phi_hidden_acts='softplus',
             phi_final_act=None,
             phi_layer_normalize=False,
+            latent_dim=None,
             **kwargs
     ):
         key, subkey = jrandom.split(key, 2)
-        super().__init__(subkey, dtype=dtype, **kwargs)
+        super().__init__(subkey, dtype=dtype, latent_dim=latent_dim, **kwargs)
         
         self.model_type = "deep_phi_plnn"
         self.include_phi_bias = include_phi_bias
+        if latent_dim is None:
+            self.latent_dim = self.ndims
+        else:
+            self.latent_dim = latent_dim
 
         key, subkey = jrandom.split(key, 2)
         self.phi_module = self._construct_phi_module(
@@ -341,6 +347,6 @@ class DeepPhiPLNN(PLNN):
     def _construct_phi_module(self, key, hidden_dims, hidden_acts, final_act, 
                               layer_normalize, bias=True, dtype=jnp.float32):
         return self._construct_ffn(
-            key, self.ndims, 1,
+            key, self.latent_dim, 1,
             hidden_dims, hidden_acts, final_act, layer_normalize, bias, dtype
         )
