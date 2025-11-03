@@ -12,41 +12,36 @@ description = "A machine learning approach to parameterized landscapes"
 authors = [
   {name = "Addison Howe"},
 ]
-dependencies = [
-  "jax>=0.4",
-  "numpy==1.26",
-  "matplotlib==3.8",
-  "scikit-learn==1.5",
-  "torch==2.0",
-  "torchvision",
-  "equinox>=0.11",
-  "optax>=0.1",
-  "pyyaml==6.0",
-  "diffrax>=0.6",
-  "pytest==7.4",
-  "tqdm",
-  "ipykernel",
-]
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+local_scheme = "node-and-date"
+write_to = "src/plnn/_version.py"
 
 [project.scripts]
 plnn = "plnn.__main__:main"
 model_eval = "plnn.eval.__main__:main"
 generate_data = "plnn.data_generation.__main__:main"
 
-[project.optional-dependencies]
-cuda = [
-  "cuda-compat==12.4",
-  "numpy==1.25",
-  "torch==2.0",
-  "jax[cuda12_pip]",
-  "torchvision",
-  "torchaudio",
-]
-dev = [
-  "setuptools-scm",
-]
+# -------------------------------------------------------------------
+# Environment configuration metadata (for humans + tools)
+# -------------------------------------------------------------------
+[tool.plnn.env]
+default = "environment.yml"
+cuda = "environment-cuda.yml"
 
-[tool.setuptools_scm]
-version_scheme = "post-release"
-local_scheme = "node-and-date"
-write_to = "src/plnn/_version.py"
+[tool.plnn.env.commands]
+create_default = "conda env create -p ./env -f environment.yml"
+create_cuda = "conda env create -p ./env -f environment-cuda.yml"
+activate = "conda activate ./env"
+
+[tool.plnn.notes]
+usage = """
+Use 'environment.yml' for CPU or minimal installs.
+Use 'environment-cuda.yml' for GPU setups with CUDA 12.4 support.
+
+Example commands:
+  conda env create -p ./env -f environment.yml
+  conda env create -p ./env -f environment-cuda.yml
+  conda activate ./env
+"""

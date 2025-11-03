@@ -1,11 +1,34 @@
 channels:
+  - pytorch
+  - nvidia
   - conda-forge
   - defaults
 dependencies:
+  # Dependencies for GPU version (using CUDA). For CPU, see environment.yml
+  # ---- Core Python ----
   - python=3.9
   - pip
-  - setuptools
-  - wheel
-  - build
+  # ---- CUDA ----
+  - cuda-compat=12.4
+  # ---- Scientific stack ----
+  - numpy=1.25  # seem to need this version for compatibility
+  - matplotlib=3.8
+  - scikit-learn=1.5
+  # ---- Misc ----
+  - pytest>=7.4
+  - pyyaml>=6.0
+  - tqdm
+  - ipykernel
+  - ipywidgets
   - pip:
-    - -e .[cuda]
+    # ---- JAX (GPU) ----
+    - jax[cuda12]
+    - optax==0.1.7
+    - diffrax==0.6.0
+    - equinox==0.11.5
+    # ---- PyTorch ----
+    - torch==2.6.0+cu124
+    - torchvision
+    - torchaudio
+    - --extra-index-url https://download.pytorch.org/whl/cu124
+    - -e .  # editable install

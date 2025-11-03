@@ -1,37 +1,70 @@
 # PLNN: A machine learning approach to parameterized landscapes
 
-This repository implements the Parameterized Landscape Neural Network architecture described in "[Dynamical systems theory informed learning of cellular differentiation landscapes](https://www.biorxiv.org/content/10.1101/2024.09.21.614191v1)."
+This repository implements the Parameterized Landscape Neural Network architecture described in "[Dynamical systems theory informed learning of cellular differentiation landscapes](https://journals.aps.org/prx/abstract/10.1103/8vpj-bj7d)."
 An application using this architecture is contained in a separate repository, which can be found at [https://github.com/AddisonHowe/dynamical-landscape-inference](https://github.com/AddisonHowe/dynamical-landscape-inference).
 
 
 ## Setup
-Basic setup, without GPU acceleration:
+
+### Standard setup (CPU)
+
+For a standard setup, without GPU acceleration, and an editable installation, clone the repository and create a conda environment as follows:
+
 ```bash
-conda create -p ./env python=3.9 jax=0.4 numpy=1.26 matplotlib=3.8 scikit-learn=1.5 pytorch=2.0 torchvision equinox=0.11 optax=0.1 pyyaml=6.0 tqdm ipykernel pytest
-conda activate env
-pip install diffrax==0.6.0
+git clone https://github.com/AddisonHowe/plnn
+cd plnn
+conda env create -p ./env -f environment.yml
 ```
 
-For GPU support:
+### GPU support (CUDA 12.4)
+
+For a setup enabling GPU support (CUDA 12.4) run
+
 ```bash
-conda create -p ./env python=3.9 numpy=1.25 matplotlib=3.8 scikit-learn=1.5 pytest=7.4 cuda-compat=12.4 pyyaml=6.0 tqdm ipykernel ipywidgets --yes
-conda activate env
-pip install --upgrade pip
-pip install jax[cuda12] optax==0.1.7 diffrax==0.6.0 equinox==0.11.5 torch==2.0.1 torchvision torchaudio
+git clone https://github.com/AddisonHowe/plnn
+cd plnn
+conda env create -p ./env -f environment-cuda.yml
 ```
 
-Then, to install the project,
-```bash
-pip install -e .
-```
+If desired, check that things have been installed correctly and that all tests are passing.
+Note that this may take some time.
 
-Check that things have been installed correctly and that all tests are passing.
 ```bash
 export JAX_ENABLE_X64=1
 pytest tests/  # run only non-GPU tests
 # pytest --use_gpu tests/  # include GPU-related tests:
 ```
 
+### Alternative installations
+
+Alternatively, the following commands might be used to create the conda environment. 
+(Please note that when it comes to GPU support, these installations may be sensitive to your system's configuration.)
+
+#### Standard setup (CPU)
+
+```bash
+conda create -p ./env python=3.9 jax=0.4 numpy=1.26 matplotlib=3.8 scikit-learn=1.5 pytorch=2.0 torchvision equinox=0.11 optax=0.1 pyyaml=6.0 tqdm ipykernel ipywidgets pytest --yes
+conda activate env
+pip install diffrax==0.6.0
+```
+
+#### GPU support (CUDA 12.4)
+
+```bash
+conda create -p ./env python=3.9 numpy=1.25 matplotlib=3.8 scikit-learn=1.5 pytest=7.4 cuda-compat=12.4 pyyaml=6.0 tqdm ipykernel ipywidgets --yes
+conda activate env
+pip install jax[cuda12] optax==0.1.7 diffrax==0.6.0 equinox==0.11.5
+pip install torch==2.6.0+cu124 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+```
+
+#### GPU support (CUDA 12.0)
+
+```bash
+conda create -p ./env python=3.9 numpy=1.25 matplotlib=3.8 scikit-learn=1.5 pytest=7.4 cuda-compat=12.4 pyyaml=6.0 tqdm ipykernel ipywidgets --yes
+conda activate env
+pip install --upgrade pip
+pip install jax[cuda12] optax==0.1.7 diffrax==0.6.0 equinox==0.11.5 torch==2.0.1 torchvision torchaudio
+```
 
 # Usage
 

@@ -2,10 +2,27 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  # Dependencies for CPU version (default). For GPU, see environment-cuda.yml
+  # ---- Core Python ----
   - python=3.9
   - pip
-  - setuptools
-  - wheel
-  - build
+  # ---- Scientific stack ----
+  - numpy=1.26
+  - matplotlib=3.8
+  - scikit-learn=1.5
+  # ---- JAX ----
+  - jax=0.4
+  - optax=0.1
+  - equinox=0.11
+  # ---- PyTorch ----
+  - pytorch=2.0
+  - torchvision
+  # ---- Misc ----
+  - tqdm
+  - ipykernel
+  - ipywidgets
+  - pytest
+  - pyyaml=6.0
   - pip:
-    - -e .
+    - diffrax==0.6.0  # pip to avoid compatibility issue
+    - -e .  # editable install
